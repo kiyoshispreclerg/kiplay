@@ -8,8 +8,7 @@ e chat de live gravado (lateral e danmaku). Leia o `PLANO.md` antes de
 começar uma fase (arquitetura, estado, medições) e o `docs/FORMATOS.md`
 antes de mexer num leitor.
 
-Fase atual: 0 feita (falta só calibrar o tamanho da fonte das legendas).
-Próxima: 1 (esqueleto).
+Fase atual: 0 feita. Próxima: 1 (esqueleto).
 
 O usuário escreve em português (pt-BR) e quer as respostas em português.
 Comentários e identificadores no código, em inglês. A interface vai usar
@@ -23,7 +22,7 @@ make test            # testes de unidade (tests/unit/test_*.c)
 make asan            # os testes com ASan/UBSan
 make lint            # cppcheck + funções proibidas (strcpy, strcat, sprintf, vsprintf, gets)
 make BUILD=build/clang CC=clang test   # também tem que passar com clang
-build/proto/subconv [-s LxA] [-e fração] X.srv3 > X.ass
+build/proto/subconv [-s LxA] [-e fração] [-g contorno] X.srv3 > X.ass
 build/proto/embed [--sub X.ass] VIDEO        # mpv embutido no GTK2 (KP_MPV_AO=1: sem som)
 build/proto/audio [-d null] [-m] ARQUIVO     # protótipo do kiplay-audio
 ```

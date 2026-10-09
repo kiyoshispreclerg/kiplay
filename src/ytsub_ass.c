@@ -9,8 +9,9 @@ void kp_ytass_opts_default(kp_ytass_opts *o)
 {
     o->width = 1920;
     o->height = 1080;
-    /* To be calibrated against YouTube's player (docs/FORMATOS.md). */
-    o->em_ratio = 0.05;
+    /* Calibrated against a recording of YouTube's player (docs/FORMATOS.md). */
+    o->em_ratio = 0.0625;
+    o->edge_scale = 1.0;
     /* YouTube's families, with the substitutes fontconfig doesn't pick by
      * itself (Monotype Corsiva would fall back to a sans). */
     o->fonts[0] = "Roboto";
@@ -116,8 +117,12 @@ static void put_box_seg(GString *out, const kp_ytass_opts *o, const kp_ytpen *p,
 }
 
 /* Text and edge of one segment (layer 1). */
-static void put_text_seg(GString *out, const kp_ytass_opts *o, const kp_ytpen *p, double em)
+static void put_text_seg(GString *out, const kp_ytass_opts *o, const kp_ytpen *p, double em,
+                         double base)
 {
+    /* YouTube draws edges at a fixed width from the base size, not the
+     * pen's: a sz=2100 "YEAH!!" gets the same thin line as normal text. */
+    double edge = base * 0.03 * o->edge_scale;
     g_string_append_c(out, '{');
     put_font(out, o, p, em);
     put_color(out, "1c", p->fc);
@@ -126,8 +131,9 @@ static void put_text_seg(GString *out, const kp_ytass_opts *o, const kp_ytpen *p
     case KP_YT_EDGE_GLOW:
         put_color(out, "3c", p->ec);
         put_alpha(out, "3a", p->fo);
-        put_num(out, "bord", fmax(1.0, em * 0.06));
-        put_num(out, "blur", em * 0.02);
+        put_num(out, "bord", fmax(1.0, o->edge_scale > 1.0 ? em * 0.03 * o->edge_scale : edge));
+        if (o->edge_scale > 1.0)
+            put_num(out, "blur", em * 0.01 * o->edge_scale);
         g_string_append(out, "\\shad0");
         break;
     case KP_YT_EDGE_SOFT_SHADOW:
@@ -135,14 +141,14 @@ static void put_text_seg(GString *out, const kp_ytass_opts *o, const kp_ytpen *p
         put_color(out, "4c", p->ec);
         put_alpha(out, "4a", p->fo);
         g_string_append(out, "\\bord0");
-        put_num(out, "shad", fmax(1.0, em * (p->et == KP_YT_EDGE_SOFT_SHADOW ? 0.05 : 0.06)));
+        put_num(out, "shad", fmax(1.0, edge * (p->et == KP_YT_EDGE_SOFT_SHADOW ? 1.5 : 2.0)));
         break;
     case KP_YT_EDGE_BEVEL:
         put_color(out, "4c", p->ec);
         put_alpha(out, "4a", p->fo);
         g_string_append(out, "\\bord0");
-        put_num(out, "xshad", fmax(1.0, em * 0.03));
-        put_num(out, "yshad", fmax(1.0, em * 0.03));
+        put_num(out, "xshad", fmax(1.0, edge));
+        put_num(out, "yshad", fmax(1.0, edge));
         break;
     default:
         g_string_append(out, "\\bord0\\shad0");
@@ -193,7 +199,7 @@ static void put_event(GString *out, const kp_ytsub *s, const kp_ytevent *e,
             if (layer == 0)
                 put_box_seg(out, o, p, em);
             else
-                put_text_seg(out, o, p, em);
+                put_text_seg(out, o, p, em, base);
             put_text(out, e->segs[i].text);
         }
         g_string_append_c(out, '\n');

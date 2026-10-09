@@ -19,6 +19,9 @@ typedef struct {
     int width, height; /* PlayResX/Y: the video's size */
     /* ASS font size at sz=100, as a fraction of the video height. */
     double em_ratio;
+    /* Edge thickness: 1.0 = YouTube's (a thin line); larger values give
+     * the thick blurred glow some people prefer. */
+    double edge_scale;
     /* Font family for each pen fs (0 = default). */
     const char *fonts[KP_YT_FONT_STYLES];
 } kp_ytass_opts;

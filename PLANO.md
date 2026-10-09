@@ -285,6 +285,24 @@ fiel. Pontos de cuidado:
 - Referência para conferir semântica (não copiar código sem checar a
   licença): YTSubConverter (arcusmaximus), que converte ASS ↔ srv3.
 
+Calibrado contra uma gravação do player do YouTube (ver
+`docs/FORMATOS.md`): tamanho e posições batem. Opções para o usuário:
+
+- **Contorno**: "como no YouTube" (linha fina, padrão) ou "brilho forte"
+  (contorno grosso e borrado, mais legível; `edge_scale` do conversor).
+- **Fonte para U+3164**: o desenho de caixas com `ㅤ` depende de a fonte
+  dar largura a esse caractere (ver `docs/FORMATOS.md`).
+- **Mover as legendas com o mouse** (depois): arrastar uma legenda sobre o
+  vídeo, como no YouTube, mas o deslocamento vale para **todas** as
+  legendas daquele vídeo e fica salvo nas opções do arquivo. Viável porque
+  o Kiplay conhece a posição de cada evento: o clique cai na área de vídeo
+  do Kiplay (o mpv roda com `--input-cursor=no`), o Kiplay acha qual
+  evento está sob o cursor pelo modelo (`kp_ytsub` + medida do texto),
+  e ao soltar regera o ASS com `(dx, dy)` somados a todos os `\pos` e
+  manda `sub-reload` (442 eventos convertem em milissegundos). Durante o
+  arraste, uma prévia leve pelo `osd-overlay` do mpv. Para legendas
+  comuns (srt/vtt), o mesmo efeito com `sub-pos`/`sub-margin-x`.
+
 O ASS gerado vai para `~/.cache/kiplay/subs/<hash>.ass` (refeito se o srv3
 mudar) e entra no backend por `sub-add`. Também sai pela linha de comando:
 `kiplay --convert X.srv3 > X.ass`, útil para teste e para quem quiser usar
@@ -380,7 +398,7 @@ identificadores em inglês; interface pelo gettext com msgids em inglês.
 
 ## Fases
 
-0. **Investigação** *(feita, exceto a calibração)*:
+0. **Investigação** *(feita)*:
    - arquivos de teste em `testes/` (fora do repositório): "Bassline
      Yatteru" (webm, vtt/srv3/json3 em en, es-419, id, it, ko) e o 3DMV da
      Akirose (mp4, vtt/srv3/json3 em en e ja, `live_chat.json`); formatos
@@ -388,8 +406,8 @@ identificadores em inglês; interface pelo gettext com msgids em inglês.
    - srv3 → ASS já em `src/` (`srv3.c`, `ytsub.c`, `ytsub_ass.c`, com
      testes) e `proto/subconv`: a legenda coreana sai posicionada, com os
      contornos, as caixas e os textos gigantes do original;
-     *falta calibrar o tamanho base da fonte* contra o player do YouTube
-     (capturas no mesmo instante, feitas pelo usuário no navegador);
+     tamanho e borda calibrados contra uma gravação do player do YouTube
+     feita pelo usuário (`em_ratio` 0,0625, borda fina de largura fixa);
    - `proto/embed`: mpv com `--wid` numa `GtkDrawingArea` + IPC pelo
      `GSocketClient` funciona; o Kiplay mínimo fica em **3 MB** de memória
      própria. O mpv com vídeo só dá para medir no X de verdade (no Xvfb
@@ -461,4 +479,3 @@ identificadores em inglês; interface pelo gettext com msgids em inglês.
 
 - Leitor de tags (fase 3, pela medição): libavformat ou leitor próprio de
   ID3/Vorbis/MP4.
-- Tamanho base da fonte das legendas do YouTube (calibração).

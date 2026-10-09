@@ -73,11 +73,23 @@ yt-dlp --skip-download --write-subs --sub-langs "all,-live_chat" \
 Monotype Corsiva e Comic Sans caem em fontes sem relação. O conversor usa
 `Z003` (URW Chancery) para `fs=6`. Configurável depois.
 
-### Tamanho base
+### Calibração (gravação do player do YouTube)
 
-`em_ratio = 0.05` (fonte ASS a 5% da altura com `sz=100`) é um chute
-inicial. **Falta calibrar** comparando capturas do player do YouTube com as
-do mpv no mesmo instante.
+O usuário gravou o player do YouTube (Chrome no Linux, 992×558) tocando o
+"Bassline Yatteru" com a legenda coreana. Os quadros do mpv batem com a
+gravação deslocada de 1,117 s. Resultado:
+
+- **Tamanho**: `em_ratio = 0.0625` (fonte ASS a 6,25% da altura com
+  `sz=100`). Com 0,05 o texto ficava 15–28% menor que o do YouTube.
+- **Borda** (`et`): o YouTube desenha uma linha fina de largura fixa,
+  calculada pelo tamanho base, não pelo `sz` do pen. Um "YEAH!!" de
+  `sz="600"` tem a mesma linha fina do texto normal. Fica em
+  `base × 0,03`; `edge_scale > 1` dá o brilho grosso e borrado (opção).
+- **U+3164 (preenchimento hangul)**: o autor desenha caixas coloridas com
+  linhas de `ㅤ`. No Chrome do usuário esse caractere tem largura quase zero
+  e a caixa vira uma tira; com a Noto Sans CJK ele tem largura cheia e a
+  caixa aparece inteira (provavelmente o que o autor via). Depende da
+  fonte, não do conversor.
 
 ## json3
 

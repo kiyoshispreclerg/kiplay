@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later
  *
  * Phase 0 prototype: srv3 -> ASS on stdout.
- *   subconv [-s WxH] [-e EM_RATIO] file.srv3 > file.ass
+ *   subconv [-s WxH] [-e EM_RATIO] [-g EDGE_SCALE] file.srv3 > file.ass
  * Becomes `kiplay --convert` once the program exists. */
 #include <glib.h>
 #include <stdio.h>
@@ -21,9 +21,11 @@ int main(int argc, char **argv)
             sscanf(argv[i + 1], "%dx%d", &o.width, &o.height);
         else if (!strcmp(argv[i], "-e"))
             o.em_ratio = g_ascii_strtod(argv[i + 1], NULL);
+        else if (!strcmp(argv[i], "-g"))
+            o.edge_scale = g_ascii_strtod(argv[i + 1], NULL);
     }
     if (i >= argc) {
-        fprintf(stderr, "uso: %s [-s LxA] [-e fração] arquivo.srv3\n", argv[0]);
+        fprintf(stderr, "uso: %s [-s LxA] [-e fração] [-g contorno] arquivo.srv3\n", argv[0]);
         return 2;
     }
     char *err = NULL;
