@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+  <rect x="3" y="7" width="42" height="34" rx="6" fill="#2b2f3a"/>
+  <rect x="7" y="11" width="34" height="20" rx="2" fill="#11131a"/>
+  <path d="M20 14.5 L30 21 L20 27.5 Z" fill="#ef3f72"/>
+  <rect x="7" y="34" width="22" height="3" rx="1.5" fill="#88cbbd"/>
+  <rect x="31" y="34" width="10" height="3" rx="1.5" fill="#5b6070"/>
+</svg>

@@ -1,0 +1,6 @@
+# fontconfig keeps a process-wide font cache that is never freed.
+leak:libfontconfig.so
+
+# GTK 2 leaks a string when a themed icon (repeat/shuffle) is looked up
+# and the theme lacks it (Xvfb runs with no icon theme).
+leak:gtk_icon_info_load_icon

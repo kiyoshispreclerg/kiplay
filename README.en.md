@@ -14,8 +14,9 @@ close to the original as possible:
   it (danmaku);
 - ordinary subtitles (srt, ass, vtt...).
 
-**Status:** in development, phase 0 (investigation). There is no usable
-program yet; see the [plan](PLANO.md) (in Portuguese).
+**Status:** in development, phase 1 (skeleton): the window, the tabbed
+playlists and the configurable layout exist, but nothing plays yet. See
+the [plan](PLANO.md) (in Portuguese).
 
 To download a video with captions in the right format:
 
@@ -33,6 +34,8 @@ libswresample), with their `-dev` packages.
 ```sh
 make
 make test
+make run             # runs from build/, with the translations
+sudo make install    # into /usr/local
 ```
 
 ## License

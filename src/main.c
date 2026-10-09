@@ -1,0 +1,94 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+#include <locale.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+
+#include <gtk/gtk.h>
+
+#include "i18n.h"
+#include "log.h"
+#include "util.h"
+#include "window.h"
+
+/* Folder of the executable, "" if unknown. */
+static char self_dir[KP_PATH_MAX];
+
+static void find_self_dir(void)
+{
+    ssize_t n = readlink("/proc/self/exe", self_dir, sizeof self_dir - 1);
+    self_dir[n > 0 ? n : 0] = '\0';
+    char *slash = strrchr(self_dir, '/');
+    if (slash)
+        *slash = '\0';
+    else
+        self_dir[0] = '\0';
+}
+
+/* Translations: locale/ next to the executable (a build tree), else the
+ * installed ones. */
+static void setup_gettext(void)
+{
+    char dir[KP_PATH_MAX];
+    const char *localedir = LOCALEDIR;
+    if (self_dir[0] && kp_pathf(dir, sizeof dir, "%s/locale", self_dir) && kp_dir_exists(dir))
+        localedir = dir;
+    bindtextdomain(KP_GETTEXT_DOMAIN, localedir);
+    bind_textdomain_codeset(KP_GETTEXT_DOMAIN, "UTF-8");
+    textdomain(KP_GETTEXT_DOMAIN);
+}
+
+static void usage(FILE *f)
+{
+    fprintf(f, _("Usage: kiplay [OPTION]...\n"
+                 "Audio and video player with tabbed playlists.\n"
+                 "\n"
+                 "  -c, --config FILE    settings file (default ~/.config/kiplay/kiplay.ini)\n"
+                 "  -v, --verbose        print what is going on\n"
+                 "  -V, --version        print the version and exit\n"
+                 "  -h, --help           print this help and exit\n"));
+}
+
+int main(int argc, char **argv)
+{
+    kp_window_opts opts = {.start_us = g_get_monotonic_time()};
+    setlocale(LC_ALL, "");
+    find_self_dir();
+    setup_gettext();
+
+    for (int i = 1; i < argc; i++) {
+        const char *a = argv[i];
+        bool more = i + 1 < argc;
+        if (strcmp(a, "-h") == 0 || strcmp(a, "--help") == 0) {
+            usage(stdout);
+            return 0;
+        } else if (strcmp(a, "-V") == 0 || strcmp(a, "--version") == 0) {
+            printf("kiplay %s\n", KP_VERSION);
+            return 0;
+        } else if (strcmp(a, "-v") == 0 || strcmp(a, "--verbose") == 0) {
+            kp_log_set_verbose(true);
+        } else if ((strcmp(a, "-c") == 0 || strcmp(a, "--config") == 0) && more) {
+            opts.prefs_path = argv[++i];
+        } else if (strcmp(a, "--exit-after-map") == 0) {
+            /* Undocumented: for startup timing and tests. */
+            opts.exit_after_map = true;
+        } else {
+            usage(stderr);
+            return 2;
+        }
+    }
+
+    if (!gtk_init_check(&argc, &argv)) {
+        kp_log_error(_("cannot open the display"));
+        return 1;
+    }
+    kp_log_debug("%.1f ms: gtk_init", (double)(g_get_monotonic_time() - opts.start_us) / 1000.0);
+    /* Run from a build tree: the icon is still in ../data. */
+    char data[KP_PATH_MAX];
+    if (self_dir[0] && kp_pathf(data, sizeof data, "%s/../data/kiplay.svg", self_dir) &&
+        kp_file_exists(data)) {
+        data[strlen(data) - strlen("/kiplay.svg")] = '\0';
+        gtk_icon_theme_append_search_path(gtk_icon_theme_get_default(), data);
+    }
+    return kp_window_run(&opts);
+}

@@ -1,0 +1,7 @@
+src/main.c
+src/prefs.c
+src/log.c
+ui/window.c
+ui/playlists.c
+ui/controls.c
+ui/layout.c

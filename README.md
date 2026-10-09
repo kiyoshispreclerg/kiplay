@@ -13,8 +13,9 @@ possível do original:
   a tela (danmaku);
 - as legendas comuns (srt, ass, vtt...).
 
-**Estado:** em desenvolvimento, fase 0 (investigação). Ainda não há
-programa para usar; veja o [plano](PLANO.md).
+**Estado:** em desenvolvimento, fase 1 (esqueleto): a janela, as
+playlists em abas e o layout configurável já existem, mas ainda não toca
+nada. Veja o [plano](PLANO.md).
 
 Para baixar um vídeo com as legendas no formato certo:
 
@@ -32,6 +33,8 @@ libavcodec, libswresample), com os pacotes `-dev`.
 ```sh
 make
 make test
+make run             # roda do build/, com as traduções
+sudo make install    # em /usr/local
 ```
 
 ## Licença

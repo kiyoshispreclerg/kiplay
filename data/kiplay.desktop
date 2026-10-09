@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Kiplay
+GenericName=Media player
+GenericName[pt_BR]=Reprodutor de mídia
+Comment=Audio and video player with tabbed playlists and YouTube captions
+Comment[pt_BR]=Reprodutor de áudio e vídeo com playlists em abas e legendas do YouTube
+Exec=kiplay
+Icon=kiplay
+Terminal=false
+Categories=AudioVideo;Audio;Video;Player;GTK;
+Keywords=music;video;player;playlist;subtitles;chat;música;vídeo;reprodutor;legendas;
+StartupNotify=true

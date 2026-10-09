@@ -1,0 +1,223 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR Kiplay contributors
+# This file is distributed under the same license as the kiplay package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: kiplay\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-09 16:27-0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: src/main.c:43
+#, c-format
+msgid ""
+"Usage: kiplay [OPTION]...\n"
+"Audio and video player with tabbed playlists.\n"
+"\n"
+"  -c, --config FILE    settings file (default ~/.config/kiplay/kiplay.ini)\n"
+"  -v, --verbose        print what is going on\n"
+"  -V, --version        print the version and exit\n"
+"  -h, --help           print this help and exit\n"
+msgstr ""
+
+#: src/main.c:82
+msgid "cannot open the display"
+msgstr ""
+
+#: src/prefs.c:40
+#, c-format
+msgid "could not read %s"
+msgstr ""
+
+#: src/log.c:29
+msgid "warning: "
+msgstr ""
+
+#: src/log.c:37
+msgid "error: "
+msgstr ""
+
+#: ui/window.c:107
+msgid ""
+"Light audio and video player for KiDesktop, with YouTube's styled captions "
+"and recorded live chat."
+msgstr ""
+
+#: ui/window.c:124
+#, c-format
+msgid "could not save the settings: %s"
+msgstr ""
+
+#: ui/window.c:138
+msgid "_File"
+msgstr ""
+
+#: ui/window.c:139
+msgid "_Add files..."
+msgstr ""
+
+#: ui/window.c:142
+msgid "_Quit"
+msgstr ""
+
+#: ui/window.c:144
+msgid "_Playlist"
+msgstr ""
+
+#: ui/window.c:145
+msgid "_New"
+msgstr ""
+
+#: ui/window.c:146
+msgid "_Rename..."
+msgstr ""
+
+#: ui/window.c:147
+msgid "_Close"
+msgstr ""
+
+#: ui/window.c:150
+msgid "Remove _selected"
+msgstr ""
+
+#: ui/window.c:152
+msgid "_View"
+msgstr ""
+
+#: ui/window.c:153
+msgid "_Video area"
+msgstr ""
+
+#: ui/window.c:159
+msgid "Video _above the playlists"
+msgstr ""
+
+#: ui/window.c:160
+msgid "Video on the _left"
+msgstr ""
+
+#: ui/window.c:161
+msgid "Video on the _right"
+msgstr ""
+
+#: ui/window.c:165
+msgid "Controls at the _bottom"
+msgstr ""
+
+#: ui/window.c:166
+msgid "Controls at the _top"
+msgstr ""
+
+#: ui/window.c:170
+msgid "_Help"
+msgstr ""
+
+#: ui/window.c:171
+msgid "_About"
+msgstr ""
+
+#: ui/window.c:256
+msgid "out of memory"
+msgstr ""
+
+#: ui/window.c:261
+msgid "cannot find the settings folder (is $HOME set?)"
+msgstr ""
+
+#: ui/playlists.c:39
+#, c-format
+msgid "could not save the playlists: %s"
+msgstr ""
+
+#: ui/playlists.c:117
+msgid "Empty playlist"
+msgstr ""
+
+#: ui/playlists.c:119
+#, c-format
+msgid "%zu track"
+msgid_plural "%zu tracks"
+msgstr[0] ""
+msgstr[1] ""
+
+#: ui/playlists.c:120
+#, c-format
+msgid "%zu track, %s"
+msgid_plural "%zu tracks, %s"
+msgstr[0] ""
+msgstr[1] ""
+
+#: ui/playlists.c:151
+msgid "Add files"
+msgstr ""
+
+#: ui/playlists.c:270
+msgid "Title"
+msgstr ""
+
+#: ui/playlists.c:275
+msgid "Length"
+msgstr ""
+
+#: ui/playlists.c:326
+#, c-format
+msgid "Playlist %zu"
+msgstr ""
+
+#: ui/playlists.c:341
+msgid "Rename playlist"
+msgstr ""
+
+#: ui/playlists.c:375
+#, c-format
+msgid "Close the playlist \"%s\"?"
+msgstr ""
+
+#: ui/playlists.c:378
+#, c-format
+msgid "Its %zu track will be removed from the list (the file stays)."
+msgid_plural "Its %zu tracks will be removed from the list (the files stay)."
+msgstr[0] ""
+msgstr[1] ""
+
+#: ui/playlists.c:405
+msgid "Playlist 1"
+msgstr ""
+
+#: ui/controls.c:56
+msgid "Previous"
+msgstr ""
+
+#: ui/controls.c:56
+msgid "Play"
+msgstr ""
+
+#: ui/controls.c:57
+msgid "Pause"
+msgstr ""
+
+#: ui/controls.c:57
+msgid "Stop"
+msgstr ""
+
+#: ui/controls.c:58
+msgid "Next"
+msgstr ""
+
+#: ui/controls.c:65
+msgid "Repeat"
+msgstr ""
+
+#: ui/controls.c:68
+msgid "Shuffle"
+msgstr ""

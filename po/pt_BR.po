@@ -1,0 +1,233 @@
+# Portuguese translations for kiplay package
+# Traduções em português brasileiro para o pacote kiplay.
+# Copyright (C) 2026 Kiplay contributors
+# This file is distributed under the same license as the kiplay package.
+# Automatically generated, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: kiplay\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-09 16:27-0300\n"
+"PO-Revision-Date: 2026-10-09 16:23-0300\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
+"Language: pt_BR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#: src/main.c:43
+#, c-format
+msgid ""
+"Usage: kiplay [OPTION]...\n"
+"Audio and video player with tabbed playlists.\n"
+"\n"
+"  -c, --config FILE    settings file (default ~/.config/kiplay/kiplay.ini)\n"
+"  -v, --verbose        print what is going on\n"
+"  -V, --version        print the version and exit\n"
+"  -h, --help           print this help and exit\n"
+msgstr ""
+"Uso: kiplay [OPÇÃO]...\n"
+"Reprodutor de áudio e vídeo com playlists em abas.\n"
+"\n"
+"  -c, --config ARQ     arquivo de configuração (padrão ~/.config/kiplay/"
+"kiplay.ini)\n"
+"  -v, --verbose        mostra o que está acontecendo\n"
+"  -V, --version        mostra a versão e sai\n"
+"  -h, --help           mostra esta ajuda e sai\n"
+
+#: src/main.c:82
+msgid "cannot open the display"
+msgstr "não foi possível abrir a tela"
+
+#: src/prefs.c:40
+#, c-format
+msgid "could not read %s"
+msgstr "não foi possível ler %s"
+
+#: src/log.c:29
+msgid "warning: "
+msgstr "aviso: "
+
+#: src/log.c:37
+msgid "error: "
+msgstr "erro: "
+
+#: ui/window.c:107
+msgid ""
+"Light audio and video player for KiDesktop, with YouTube's styled captions "
+"and recorded live chat."
+msgstr ""
+"Reprodutor leve de áudio e vídeo para o KiDesktop, com as legendas "
+"estilizadas do YouTube e o chat de lives gravadas."
+
+#: ui/window.c:124
+#, c-format
+msgid "could not save the settings: %s"
+msgstr "não foi possível salvar a configuração: %s"
+
+#: ui/window.c:138
+msgid "_File"
+msgstr "_Arquivo"
+
+#: ui/window.c:139
+msgid "_Add files..."
+msgstr "_Adicionar arquivos..."
+
+#: ui/window.c:142
+msgid "_Quit"
+msgstr "_Sair"
+
+#: ui/window.c:144
+msgid "_Playlist"
+msgstr "_Playlist"
+
+#: ui/window.c:145
+msgid "_New"
+msgstr "_Nova"
+
+#: ui/window.c:146
+msgid "_Rename..."
+msgstr "_Renomear..."
+
+#: ui/window.c:147
+msgid "_Close"
+msgstr "_Fechar"
+
+#: ui/window.c:150
+msgid "Remove _selected"
+msgstr "Remover _selecionadas"
+
+#: ui/window.c:152
+msgid "_View"
+msgstr "_Exibir"
+
+#: ui/window.c:153
+msgid "_Video area"
+msgstr "Área de _vídeo"
+
+#: ui/window.c:159
+msgid "Video _above the playlists"
+msgstr "Vídeo _acima das playlists"
+
+#: ui/window.c:160
+msgid "Video on the _left"
+msgstr "Vídeo à _esquerda"
+
+#: ui/window.c:161
+msgid "Video on the _right"
+msgstr "Vídeo à _direita"
+
+#: ui/window.c:165
+msgid "Controls at the _bottom"
+msgstr "Controles no _rodapé"
+
+#: ui/window.c:166
+msgid "Controls at the _top"
+msgstr "Controles no _topo"
+
+#: ui/window.c:170
+msgid "_Help"
+msgstr "Aj_uda"
+
+#: ui/window.c:171
+msgid "_About"
+msgstr "_Sobre"
+
+#: ui/window.c:256
+msgid "out of memory"
+msgstr "memória insuficiente"
+
+#: ui/window.c:261
+msgid "cannot find the settings folder (is $HOME set?)"
+msgstr "não achei a pasta de configuração ($HOME está definido?)"
+
+#: ui/playlists.c:39
+#, c-format
+msgid "could not save the playlists: %s"
+msgstr "não foi possível salvar as playlists: %s"
+
+#: ui/playlists.c:117
+msgid "Empty playlist"
+msgstr "Playlist vazia"
+
+#: ui/playlists.c:119
+#, c-format
+msgid "%zu track"
+msgid_plural "%zu tracks"
+msgstr[0] "%zu faixa"
+msgstr[1] "%zu faixas"
+
+#: ui/playlists.c:120
+#, c-format
+msgid "%zu track, %s"
+msgid_plural "%zu tracks, %s"
+msgstr[0] "%zu faixa, %s"
+msgstr[1] "%zu faixas, %s"
+
+#: ui/playlists.c:151
+msgid "Add files"
+msgstr "Adicionar arquivos"
+
+#: ui/playlists.c:270
+msgid "Title"
+msgstr "Título"
+
+#: ui/playlists.c:275
+msgid "Length"
+msgstr "Duração"
+
+#: ui/playlists.c:326
+#, c-format
+msgid "Playlist %zu"
+msgstr "Playlist %zu"
+
+#: ui/playlists.c:341
+msgid "Rename playlist"
+msgstr "Renomear playlist"
+
+#: ui/playlists.c:375
+#, c-format
+msgid "Close the playlist \"%s\"?"
+msgstr "Fechar a playlist \"%s\"?"
+
+#: ui/playlists.c:378
+#, c-format
+msgid "Its %zu track will be removed from the list (the file stays)."
+msgid_plural "Its %zu tracks will be removed from the list (the files stay)."
+msgstr[0] "A %zu faixa sai da lista (o arquivo continua no disco)."
+msgstr[1] "As %zu faixas saem da lista (os arquivos continuam no disco)."
+
+#: ui/playlists.c:405
+msgid "Playlist 1"
+msgstr "Playlist 1"
+
+#: ui/controls.c:56
+msgid "Previous"
+msgstr "Anterior"
+
+#: ui/controls.c:56
+msgid "Play"
+msgstr "Tocar"
+
+#: ui/controls.c:57
+msgid "Pause"
+msgstr "Pausar"
+
+#: ui/controls.c:57
+msgid "Stop"
+msgstr "Parar"
+
+#: ui/controls.c:58
+msgid "Next"
+msgstr "Próxima"
+
+#: ui/controls.c:65
+msgid "Repeat"
+msgstr "Repetir"
+
+#: ui/controls.c:68
+msgid "Shuffle"
+msgstr "Aleatório"

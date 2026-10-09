@@ -417,9 +417,27 @@ identificadores em inglês; interface pelo gettext com msgids em inglês.
      gravado").
    Lições: `g_strescape` não serve para JSON (escapa UTF-8 em octal); o
    `observe_property` de `time-pos` chega a cada quadro.
-1. **Esqueleto**: Makefile, `config.mk`, log/ini/util vindos do kidisks,
-   gettext, harness de testes, `make test/asan/lint/pot`; janela com abas de
-   playlist vazias.
+1. **Esqueleto** *(feita)*: Makefile, `config.mk`, log/ini/util/prefs
+   vindos do kidisks, gettext (pt_BR), `make test/asan/asan-run/lint/pot`,
+   `.desktop` e ícone. Janela com menus, abas de playlist (nova, renomear
+   com F2 ou duplo clique, fechar, reordenar arrastando, Alt+1..9),
+   adicionar arquivos (diálogo ou arrastar do gerenciador) e remover (Del);
+   playlists em `~/.config/kiplay/playlists/<id>.m3u8` com `#PLAYLIST:`,
+   ordem e aba ativa no `kiplay.ini`. Barra de controle (ainda inativa) e
+   layout pelo menu Exibir: área de vídeo acima, à esquerda ou à direita,
+   ou escondida; controles no rodapé ou no topo. Medido no Xvfb: **4,1 MB**
+   de memória própria só com a playlist, 5,1 MB com a área de vídeo;
+   primeira pintura em ~75 ms. Lições:
+   - `gtk_widget_reparent` mantém a janela X da área de vídeo (conferido
+     com `-v`: o XID não muda ao trocar o layout), mas exige um pai; a área
+     fica estacionada numa janela popup escondida enquanto não aparece;
+   - salvar tudo antes do `destroy` da janela: depois dele o notebook já
+     não tem páginas nem o paned a posição;
+   - a divisória de cada layout é salva antes de o layout mudar
+     (`split_above`, `split_side`);
+   - no pt_BR o gettext trata 0 como singular ("0 faixa"): playlist vazia
+     ganha texto próprio;
+   - UBSan: `qsort` com ponteiro nulo numa pasta vazia.
 2. **Backend mpv**: tocar áudio e vídeo embutido, barra de tempo, volume,
    pausa, seek, tela cheia, troca de faixa, reinício se o mpv morrer;
    layouts (vídeo acima/ao lado/escondido, controles no topo/rodapé).
