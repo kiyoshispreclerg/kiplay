@@ -14,8 +14,9 @@ close to the original as possible:
   it (danmaku);
 - ordinary subtitles (srt, ass, vtt...).
 
-**Status:** in development, phase 2: already a minimal player (plays
-audio and video through mpv, tabbed playlists, configurable layout).
+**Status:** in development, phase 2b: already a minimal player (video
+through mpv, music through its own `kiplay-audio` engine with gapless and
+NSF/SPC/GBS/VGM game music, tabbed playlists, configurable layout).
 YouTube captions and chat aren't wired into the program yet. See the
 [plan](PLANO.md) (in Portuguese).
 
@@ -52,6 +53,12 @@ program = mpv
 use_config = false
 # extra options, as in SMPlayer
 extra = --hwdec=auto
+
+[playback]
+# auto: music on kiplay-audio (light, gapless); mpv: everything on mpv
+engine = auto
+# ALSA device for kiplay-audio
+device = default
 ```
 
 (Comments only on lines of their own: after a value, the `#` would be

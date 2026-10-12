@@ -13,8 +13,9 @@ possível do original:
   a tela (danmaku);
 - as legendas comuns (srt, ass, vtt...).
 
-**Estado:** em desenvolvimento, fase 2: já é um player mínimo (toca
-áudio e vídeo pelo mpv, playlists em abas, layout configurável). As
+**Estado:** em desenvolvimento, fase 2b: já é um player mínimo (vídeo
+pelo mpv, música pelo motor próprio `kiplay-audio` com gapless e música
+de console NSF/SPC/GBS/VGM, playlists em abas, layout configurável). As
 legendas do YouTube e o chat ainda não estão ligados ao programa. Veja o
 [plano](PLANO.md).
 
@@ -52,6 +53,12 @@ program = mpv
 use_config = false
 # opções extras, como no SMPlayer
 extra = --hwdec=auto
+
+[playback]
+# auto: música no kiplay-audio (leve, gapless); mpv: tudo pelo mpv
+engine = auto
+# dispositivo ALSA do kiplay-audio
+device = default
 ```
 
 (Comentários só em linha própria: depois do valor, o `#` faria parte

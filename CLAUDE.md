@@ -8,8 +8,8 @@ e chat de live gravado (lateral e danmaku). Leia o `PLANO.md` antes de
 começar uma fase (arquitetura, estado, medições) e o `docs/FORMATOS.md`
 antes de mexer num leitor.
 
-Fase atual: 2 feita (player mínimo pelo mpv). Próxima: 2b (`kiplay-audio`)
-ou 3 (playlists), conforme o que o usuário achar testando.
+Fase atual: 2b feita (motor de música `kiplay-audio`; vídeo pelo mpv).
+Próxima: 3 (playlists, com a comparação com o Audacious).
 
 O usuário escreve em português (pt-BR) e quer as respostas em português.
 Comentários e identificadores no código, em inglês. A interface é
@@ -34,7 +34,9 @@ make lint            # cppcheck + funções proibidas (strcpy, strcat, sprintf, 
 make BUILD=build/clang CC=clang test   # também tem que passar com clang
 build/proto/subconv [-s LxA] [-e fração] [-g contorno] X.srv3 > X.ass
 build/proto/embed [--sub X.ass] VIDEO        # mpv embutido no GTK2 (KP_MPV_AO=1: sem som)
-build/proto/audio [-d null] [-m] ARQUIVO     # protótipo do kiplay-audio
+build/proto/audio [-d null] [-m] ARQUIVO     # protótipo da fase 0 (o motor de verdade é o build/kiplay-audio)
+printf 'tick 1\nload 0 ARQ\n' | build/kiplay-audio -d null   # o motor à mão (protocolo em audio/cmd.h)
+tools/bench-audio.sh [-d null|default] [-s S] ARQ...       # motor × mpv: memória e CPU
 ```
 
 - `testes/` tem os vídeos e legendas reais (fora do git). Não copie nada
@@ -64,8 +66,11 @@ build/proto/audio [-d null] [-m] ARQUIVO     # protótipo do kiplay-audio
   `xdotool search --onlyvisible --name '^Kiplay$'` e `windowactivate`.
 - Títulos em japonês na playlist custam ~5–8 MB (fontes CJK no Pango):
   para medir o Kiplay em si, use arquivos de nome ASCII.
-- Áudio em teste: dispositivo ALSA `null` (o `proto/audio` marca o ritmo
-  pelo relógio), `--ao=null` no mpv. Fora disso toca nas caixas do usuário.
+- Áudio em teste: dispositivo ALSA `null` (o `kiplay-audio` e o
+  `proto/audio` marcam o ritmo pelo relógio), `--ao=null` no mpv; no
+  Kiplay, `[playback] device = null` e `[mpv] extra = --ao=null`. Fora
+  disso toca nas caixas do usuário (o `bench-audio.sh -d default` toca em
+  volume 0). `test_audio` roda o motor de verdade no `null`.
 - Memória: meça a própria (`Private_Dirty` em `/proc/PID/smaps_rollup`),
   não o RSS.
 - `pkill -f <algo>` casa com o próprio shell que roda o comando: use
@@ -93,9 +98,13 @@ build/proto/audio [-d null] [-m] ARQUIVO     # protótipo do kiplay-audio
 | `po/` | `kiplay.pot`, `LINGUAS`, `POTFILES.in`, um `.po` por idioma |
 | `tools/fill_po.py`, `tools/lsan.supp` | traduções em lote; vazamentos conhecidos do GTK/fontconfig |
 | `src/backend.h`, `src/mpv.c` | o processo que toca: mpv `--idle` pelo JSON IPC, eventos neutros (`kp_event`), JSON sempre no locale C |
+| `src/lineio.c`, `src/child.c` | linhas com um processo sem bloquear (fila, escrita não bloqueante); processo iniciado e acompanhado |
+| `src/backend.c`, `src/backend_impl.h` | `kp_backend` como tabela de funções (mpv, kiplay-audio) |
+| `src/audioback.c` | o `kp_backend` do kiplay-audio (pipes, protocolo de texto) |
+| `audio/` | o `kiplay-audio`: `main.c` (threads, gapless, pausa), `dec.c` (libav → 48 kHz pela FIFO, libgme, busca), `out.c` (ALSA; `null` com relógio), `cmd.c` (protocolo). Sem GLib |
 | `src/json.c` | caminhos `a.b[0]` no cJSON (vindo do kiremote); `vendor/cjson/` |
 | `src/instance.c` | instância única: socket unix por pasta de configuração, repasse de arquivos |
-| `ui/player.c` | o controlador: o que toca, avanço, erros, queda do mpv, área de vídeo automática, título da janela |
+| `ui/player.c` | o controlador: qual motor (extensão), o que toca, avanço, gapless, erros, quedas, mpv ocioso, área de vídeo, título |
 | `src/ytsub.c` | modelo neutro das legendas do YouTube (pens, posições, estilos, eventos) e os padrões |
 | `src/srv3.c` | leitor de srv3 (GMarkup) |
 | `src/ytsub_ass.c` | kp_ytsub → ASS: `\an`+`\pos`, cores, bordas; caixa (layer 0) e texto (layer 1) |

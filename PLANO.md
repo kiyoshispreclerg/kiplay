@@ -199,6 +199,47 @@ Medido com o protótipo `proto/audio.c` (libavformat → ALSA, dispositivo
 Boa parte dos ~5 MB é a pilha ALSA → plugin do PulseAudio/PipeWire, que
 qualquer programa paga.
 
+### Como ficou (fase 2b)
+
+`audio/` (sem GLib: libav, ALSA, pthreads). Uma thread lê comandos de
+texto no stdin (`audio/cmd.h`); outra decodifica e escreve no ALSA no
+ritmo do dispositivo (buffer de 250 ms). A conversão para 48 kHz estéreo
+passa por uma FIFO: o resampler só é esvaziado no fim do arquivo
+(esvaziá-lo no meio estalaria). Detalhes que custaram:
+
+- **Música de console**: o demuxer `libgme` do ffmpeg 4.4 **não busca**
+  (a busca genérica lê o arquivo até o fim, e a música "acabava"); a busca
+  decodifica até o ponto (a emulação roda ~1000x o tempo real: 3 min em
+  0,14–0,38 s). Arquivos sem duração gravada terminam em 3 min com fade de
+  8 s (o libgme também termina sozinho quando a música acaba em
+  silêncio). Título "Jogo - Música" pelas tags `game`/`song`. Subfaixa
+  `?N` = `track_index` N−1.
+- **Gapless**: `queue` com o próximo arquivo; o motor emenda e avisa
+  `next`; o tempo da faixa nova começa negativo (o fim da anterior ainda
+  está no buffer) e só anda quando ela soa.
+- **Pausa** pelo `snd_pcm_pause` ou, se o dispositivo não pausa,
+  descartando o buffer e voltando ao ponto. O dispositivo é fechado 3 s
+  depois do último som.
+- O player escolhe o motor pela extensão (`[playback] engine = mpv` manda
+  tudo para o mpv) e encerra um mpv sem uso há 60 s.
+
+Medido com `tools/bench-audio.sh` (os mesmos arquivos nos dois, memória
+própria aos 5 s, CPU nos 15 s seguintes, dispositivo real em volume 0,
+ou seja, com o custo do servidor de som):
+
+| Arquivo | kiplay-audio | mpv (como o Kiplay o roda) |
+|---|---|---|
+| MP3 320 kbps | 5,9 MB, 0,80% | 34,1 MB, 1,60% |
+| Ogg Vorbis | 5,6 MB, 0,66% | 23,5 MB, 1,60% |
+| SPC (Super Nintendo) | 5,5 MB, 1,46% | 23,1 MB, 2,40% |
+| AAC em MP4 | 6,3 MB, 0,66% | 34,3 MB, 1,33% |
+| FLAC | 5,6 MB, 0,60% | 23,2 MB, 1,13% |
+| Opus | 5,5 MB, 0,93% | 23,3 MB, 1,80% |
+
+**Compensa**: 4 a 6 vezes menos memória e cerca de metade da CPU, além
+do gapless, das subfaixas e do fim com fade da música de console, que o
+mpv não faz. A música fica no motor próprio por padrão.
+
 ## Playlists (o lado Audacious)
 
 - Abas com nome; criar, renomear, fechar, reordenar arrastando; cada uma
@@ -470,8 +511,12 @@ identificadores em inglês; interface pelo gettext com msgids em inglês.
      memória e CPU do mpv só valem no X real.
    Fica para depois: subfaixas `?N` (o mpv recebe o arquivo sem o `?N` e
    toca a primeira; resolve no `kiplay-audio`), gapless entre arquivos.
-2b. **`kiplay-audio`**: motor de música com gapless, ReplayGain, troca
-   automática de backend entre faixa de áudio e de vídeo, reinício se cair.
+2b. **`kiplay-audio`** *(feita)*: motor de música com gapless, música de
+   console (subfaixas, busca, fim com fade), troca automática de motor
+   entre faixa de áudio e de vídeo, reinício se cair, mpv ocioso
+   encerrado. Medições em "Motor de áudio". Falta: MIDI (fluidsynth),
+   ReplayGain, equalizador, crossfade, duração padrão da música de console
+   configurável.
 3. **Playlists**: abas, m3u8, tags em thread com cache, fila, aleatório,
    repetir, busca, arrastar e soltar, gapless. Decidir libavformat × leitor
    próprio de tags pela medição.
