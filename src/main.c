@@ -7,6 +7,7 @@
 #include <gtk/gtk.h>
 
 #include "i18n.h"
+#include "instance.h"
 #include "log.h"
 #include "util.h"
 #include "window.h"
@@ -40,9 +41,12 @@ static void setup_gettext(void)
 
 static void usage(FILE *f)
 {
-    fprintf(f, _("Usage: kiplay [OPTION]...\n"
+    fprintf(f, _("Usage: kiplay [OPTION]... [FILE]...\n"
                  "Audio and video player with tabbed playlists.\n"
+                 "The files go to the playlist on screen and the first one plays; if\n"
+                 "Kiplay is already open, they go to that window.\n"
                  "\n"
+                 "  -e, --enqueue        add the files without playing them\n"
                  "  -c, --config FILE    settings file (default ~/.config/kiplay/kiplay.ini)\n"
                  "  -v, --verbose        print what is going on\n"
                  "  -V, --version        print the version and exit\n"
@@ -52,6 +56,8 @@ static void usage(FILE *f)
 int main(int argc, char **argv)
 {
     kp_window_opts opts = {.start_us = g_get_monotonic_time()};
+    GPtrArray *files = g_ptr_array_new_with_free_func(g_free);
+    bool options_done = false;
     setlocale(LC_ALL, "");
     find_self_dir();
     setup_gettext();
@@ -59,11 +65,21 @@ int main(int argc, char **argv)
     for (int i = 1; i < argc; i++) {
         const char *a = argv[i];
         bool more = i + 1 < argc;
-        if (strcmp(a, "-h") == 0 || strcmp(a, "--help") == 0) {
+        if (options_done || a[0] != '-' || strcmp(a, "-") == 0) {
+            /* Playlists keep absolute paths: a relative one would mean
+             * something else from the next folder Kiplay runs in. */
+            g_ptr_array_add(files, kp_instance_absolute(argv[i]));
+        } else if (strcmp(a, "--") == 0) {
+            options_done = true;
+        } else if (strcmp(a, "-e") == 0 || strcmp(a, "--enqueue") == 0) {
+            opts.enqueue = true;
+        } else if (strcmp(a, "-h") == 0 || strcmp(a, "--help") == 0) {
             usage(stdout);
+            g_ptr_array_free(files, TRUE);
             return 0;
         } else if (strcmp(a, "-V") == 0 || strcmp(a, "--version") == 0) {
             printf("kiplay %s\n", KP_VERSION);
+            g_ptr_array_free(files, TRUE);
             return 0;
         } else if (strcmp(a, "-v") == 0 || strcmp(a, "--verbose") == 0) {
             kp_log_set_verbose(true);
@@ -74,9 +90,24 @@ int main(int argc, char **argv)
             opts.exit_after_map = true;
         } else {
             usage(stderr);
+            g_ptr_array_free(files, TRUE);
             return 2;
         }
     }
+
+    g_ptr_array_add(files, NULL);
+    opts.files = (char **)files->pdata;
+
+    /* Already open: hand the files over and leave, before paying for GTK. */
+    char dir[KP_PATH_MAX];
+    char *sock = kp_config_path(dir, sizeof dir, "") ? kp_instance_socket_path(dir) : NULL;
+    if (sock && kp_instance_forward(sock, opts.files, opts.enqueue)) {
+        kp_log_debug("handed %u file(s) to the running kiplay", files->len - 1);
+        g_free(sock);
+        g_ptr_array_free(files, TRUE);
+        return 0;
+    }
+    opts.instance_socket = sock;
 
     if (!gtk_init_check(&argc, &argv)) {
         kp_log_error(_("cannot open the display"));
@@ -90,5 +121,8 @@ int main(int argc, char **argv)
         data[strlen(data) - strlen("/kiplay.svg")] = '\0';
         gtk_icon_theme_append_search_path(gtk_icon_theme_get_default(), data);
     }
-    return kp_window_run(&opts);
+    int ret = kp_window_run(&opts);
+    g_free(sock);
+    g_ptr_array_free(files, TRUE);
+    return ret;
 }

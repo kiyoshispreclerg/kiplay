@@ -290,6 +290,15 @@ void kp_player_set_volume(kp_app *app, int volume)
         kp_backend_set_volume(app->playing.backend, volume);
 }
 
+void kp_player_open(kp_app *app, char **locations, bool enqueue)
+{
+    long first;
+    int id = kp_playlists_open(app, locations, &first);
+    if (first >= 0 && !enqueue)
+        kp_player_play_at(app, id, first);
+    gtk_window_present(GTK_WINDOW(app->window));
+}
+
 void kp_player_playlist_closed(kp_app *app, int id)
 {
     if (id == app->playing.playlist_id) {

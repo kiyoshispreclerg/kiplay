@@ -13,9 +13,49 @@ possível do original:
   a tela (danmaku);
 - as legendas comuns (srt, ass, vtt...).
 
-**Estado:** em desenvolvimento, fase 1 (esqueleto): a janela, as
-playlists em abas e o layout configurável já existem, mas ainda não toca
-nada. Veja o [plano](PLANO.md).
+**Estado:** em desenvolvimento, fase 2: já é um player mínimo (toca
+áudio e vídeo pelo mpv, playlists em abas, layout configurável). As
+legendas do YouTube e o chat ainda não estão ligados ao programa. Veja o
+[plano](PLANO.md).
+
+## Uso
+
+```sh
+kiplay                      # abre a janela
+kiplay video.mkv musica.mp3 # adiciona à playlist da tela e toca o primeiro
+kiplay -e *.mp3             # só adiciona (enfileira)
+```
+
+Com o Kiplay aberto, `kiplay ARQUIVO` manda o arquivo para a janela que
+já existe. Depois do `make install` ele aparece no "Abrir com" dos tipos
+de áudio e vídeo.
+
+| Tecla | Faz |
+|---|---|
+| Espaço, tecla de mídia | tocar / pausar |
+| ← / → | volta / avança 5 s (Shift: 1 min) |
+| + / − | volume |
+| F, F11, duplo clique no vídeo | tela cheia (Esc sai) |
+| Enter, duplo clique na lista | toca a faixa |
+| Del | remove da playlist |
+| Ctrl+T, F2, Ctrl+W | nova playlist, renomear, fechar |
+| Alt+1..9 | vai para a playlist |
+
+Configuração em `~/.config/kiplay/kiplay.ini`; por enquanto, o mpv se
+ajusta à mão:
+
+```ini
+[mpv]
+# o programa, ou o caminho completo
+program = mpv
+# true: lê também o seu ~/.config/mpv/mpv.conf
+use_config = false
+# opções extras, como no SMPlayer
+extra = --hwdec=auto
+```
+
+(Comentários só em linha própria: depois do valor, o `#` faria parte
+dele.)
 
 Para baixar um vídeo com as legendas no formato certo:
 

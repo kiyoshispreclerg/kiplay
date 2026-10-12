@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: kiplay\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-12 09:08-0300\n"
+"POT-Creation-Date: 2026-10-12 09:12-0300\n"
 "PO-Revision-Date: 2026-10-09 16:23-0300\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -18,27 +18,22 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
-#: src/main.c:43
+#: src/main.c:44
 #, c-format
 msgid ""
-"Usage: kiplay [OPTION]...\n"
+"Usage: kiplay [OPTION]... [FILE]...\n"
 "Audio and video player with tabbed playlists.\n"
+"The files go to the playlist on screen and the first one plays; if\n"
+"Kiplay is already open, they go to that window.\n"
 "\n"
+"  -e, --enqueue        add the files without playing them\n"
 "  -c, --config FILE    settings file (default ~/.config/kiplay/kiplay.ini)\n"
 "  -v, --verbose        print what is going on\n"
 "  -V, --version        print the version and exit\n"
 "  -h, --help           print this help and exit\n"
-msgstr ""
-"Uso: kiplay [OPÇÃO]...\n"
-"Reprodutor de áudio e vídeo com playlists em abas.\n"
-"\n"
-"  -c, --config ARQ     arquivo de configuração (padrão ~/.config/kiplay/"
-"kiplay.ini)\n"
-"  -v, --verbose        mostra o que está acontecendo\n"
-"  -V, --version        mostra a versão e sai\n"
-"  -h, --help           mostra esta ajuda e sai\n"
+msgstr "Uso: kiplay [OPÇÃO]... [ARQUIVO]...\nReprodutor de áudio e vídeo com playlists em abas.\nOs arquivos entram na playlist que está na tela e o primeiro toca; se o\nKiplay já estiver aberto, vão para aquela janela.\n\n  -e, --enqueue        adiciona os arquivos sem tocar\n  -c, --config ARQ     arquivo de configuração (padrão ~/.config/kiplay/kiplay.ini)\n  -v, --verbose        mostra o que está acontecendo\n  -V, --version        mostra a versão e sai\n  -h, --help           mostra esta ajuda e sai\n"
 
-#: src/main.c:82
+#: src/main.c:113
 msgid "cannot open the display"
 msgstr "não foi possível abrir a tela"
 
@@ -55,7 +50,7 @@ msgstr "aviso: "
 msgid "error: "
 msgstr "erro: "
 
-#: ui/window.c:112
+#: ui/window.c:114
 msgid ""
 "Light audio and video player for KiDesktop, with YouTube's styled captions "
 "and recorded live chat."
@@ -63,108 +58,108 @@ msgstr ""
 "Reprodutor leve de áudio e vídeo para o KiDesktop, com as legendas "
 "estilizadas do YouTube e o chat de lives gravadas."
 
-#: ui/window.c:132
+#: ui/window.c:134
 #, c-format
 msgid "could not save the settings: %s"
 msgstr "não foi possível salvar a configuração: %s"
 
-#: ui/window.c:146
+#: ui/window.c:148
 msgid "_File"
 msgstr "_Arquivo"
 
-#: ui/window.c:147
+#: ui/window.c:149
 msgid "_Add files..."
 msgstr "_Adicionar arquivos..."
 
-#: ui/window.c:150
+#: ui/window.c:152
 msgid "_Quit"
 msgstr "_Sair"
 
-#: ui/window.c:152
+#: ui/window.c:154
 msgid "_Playlist"
 msgstr "_Playlist"
 
-#: ui/window.c:153
+#: ui/window.c:155
 msgid "_New"
 msgstr "_Nova"
 
-#: ui/window.c:154
+#: ui/window.c:156
 msgid "_Rename..."
 msgstr "_Renomear..."
 
-#: ui/window.c:155
+#: ui/window.c:157
 msgid "_Close"
 msgstr "_Fechar"
 
-#: ui/window.c:158
+#: ui/window.c:160
 msgid "Remove _selected"
 msgstr "Remover _selecionadas"
 
-#: ui/window.c:160
+#: ui/window.c:162
 msgid "_View"
 msgstr "_Exibir"
 
-#: ui/window.c:161
+#: ui/window.c:163
 msgid "_Video area"
 msgstr "Área de _vídeo"
 
-#: ui/window.c:167
+#: ui/window.c:169
 msgid "Video _above the playlists"
 msgstr "Vídeo _acima das playlists"
 
-#: ui/window.c:168
+#: ui/window.c:170
 msgid "Video on the _left"
 msgstr "Vídeo à _esquerda"
 
-#: ui/window.c:169
+#: ui/window.c:171
 msgid "Video on the _right"
 msgstr "Vídeo à _direita"
 
-#: ui/window.c:173
+#: ui/window.c:175
 msgid "Controls at the _bottom"
 msgstr "Controles no _rodapé"
 
-#: ui/window.c:174
+#: ui/window.c:176
 msgid "Controls at the _top"
 msgstr "Controles no _topo"
 
-#: ui/window.c:178
+#: ui/window.c:180
 msgid "Play_back"
 msgstr "_Reprodução"
 
-#: ui/window.c:179
+#: ui/window.c:181
 msgid "_Play / Pause"
 msgstr "_Tocar / Pausar"
 
-#: ui/window.c:180
+#: ui/window.c:182
 msgid "_Stop"
 msgstr "_Parar"
 
-#: ui/window.c:181
+#: ui/window.c:183
 msgid "P_revious"
 msgstr "_Anterior"
 
-#: ui/window.c:182
+#: ui/window.c:184
 msgid "_Next"
 msgstr "_Próxima"
 
-#: ui/window.c:184
+#: ui/window.c:186
 msgid "_Fullscreen"
 msgstr "Tela _cheia"
 
-#: ui/window.c:186
+#: ui/window.c:188
 msgid "_Help"
 msgstr "Aj_uda"
 
-#: ui/window.c:187
+#: ui/window.c:189
 msgid "_About"
 msgstr "_Sobre"
 
-#: ui/window.c:354
+#: ui/window.c:361
 msgid "out of memory"
 msgstr "memória insuficiente"
 
-#: ui/window.c:359
+#: ui/window.c:366
 msgid "cannot find the settings folder (is $HOME set?)"
 msgstr "não achei a pasta de configuração ($HOME está definido?)"
 
@@ -191,40 +186,40 @@ msgid_plural "%zu tracks, %s"
 msgstr[0] "%zu faixa, %s"
 msgstr[1] "%zu faixas, %s"
 
-#: ui/playlists.c:230
+#: ui/playlists.c:266
 msgid "Add files"
 msgstr "Adicionar arquivos"
 
-#: ui/playlists.c:374
+#: ui/playlists.c:410
 msgid "Title"
 msgstr "Título"
 
-#: ui/playlists.c:380
+#: ui/playlists.c:416
 msgid "Length"
 msgstr "Duração"
 
-#: ui/playlists.c:432
+#: ui/playlists.c:468
 #, c-format
 msgid "Playlist %zu"
 msgstr "Playlist %zu"
 
-#: ui/playlists.c:447
+#: ui/playlists.c:483
 msgid "Rename playlist"
 msgstr "Renomear playlist"
 
-#: ui/playlists.c:481
+#: ui/playlists.c:517
 #, c-format
 msgid "Close the playlist \"%s\"?"
 msgstr "Fechar a playlist \"%s\"?"
 
-#: ui/playlists.c:484
+#: ui/playlists.c:520
 #, c-format
 msgid "Its %zu track will be removed from the list (the file stays)."
 msgid_plural "Its %zu tracks will be removed from the list (the files stay)."
 msgstr[0] "A %zu faixa sai da lista (o arquivo continua no disco)."
 msgstr[1] "As %zu faixas saem da lista (os arquivos continuam no disco)."
 
-#: ui/playlists.c:512
+#: ui/playlists.c:548
 msgid "Playlist 1"
 msgstr "Playlist 1"
 
@@ -266,18 +261,21 @@ msgid ""
 "%s\n"
 "\n"
 "Install mpv, or set its path in kiplay.ini ([mpv] program = ...)."
-msgstr "%s\n\nInstale o mpv ou informe o caminho dele no kiplay.ini ([mpv] program = ...)."
+msgstr ""
+"%s\n"
+"\n"
+"Instale o mpv ou informe o caminho dele no kiplay.ini ([mpv] program = ...)."
 
-#: ui/player.c:309
+#: ui/player.c:318
 #, c-format
 msgid "Could not play %s"
 msgstr "Não foi possível tocar %s"
 
-#: ui/player.c:338
+#: ui/player.c:347
 #, c-format
 msgid "the player program stopped (%s)"
 msgstr "o programa que toca parou (%s)"
 
-#: ui/player.c:341
+#: ui/player.c:350
 msgid "The player program keeps stopping; giving up for now."
 msgstr "O programa que toca continua parando; desisti por enquanto."

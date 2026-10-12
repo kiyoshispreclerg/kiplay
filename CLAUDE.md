@@ -8,7 +8,8 @@ e chat de live gravado (lateral e danmaku). Leia o `PLANO.md` antes de
 começar uma fase (arquitetura, estado, medições) e o `docs/FORMATOS.md`
 antes de mexer num leitor.
 
-Fase atual: 1 feita. Próxima: 2 (backend mpv).
+Fase atual: 2 feita (player mínimo pelo mpv). Próxima: 2b (`kiplay-audio`)
+ou 3 (playlists), conforme o que o usuário achar testando.
 
 O usuário escreve em português (pt-BR) e quer as respostas em português.
 Comentários e identificadores no código, em inglês. A interface é
@@ -28,7 +29,7 @@ make test            # testes de unidade (tests/unit/test_*.c)
 make asan            # os testes com ASan/UBSan
 make asan-run ARGS=--exit-after-map   # o programa com ASan (supressões em tools/lsan.supp)
 make pot             # recria po/kiplay.pot e mescla nos .po
-build/kiplay -v [-c X.ini]            # tempos da abertura; troca de layout loga o XID do vídeo
+build/kiplay -v [-c X.ini] [ARQ...]   # -v: tempos, linhas do mpv (mpv<), eventos, XID do vídeo
 make lint            # cppcheck + funções proibidas (strcpy, strcat, sprintf, vsprintf, gets)
 make BUILD=build/clang CC=clang test   # também tem que passar com clang
 build/proto/subconv [-s LxA] [-e fração] [-g contorno] X.srv3 > X.ass
@@ -52,6 +53,17 @@ build/proto/audio [-d null] [-m] ARQUIVO     # protótipo do kiplay-audio
   GTK ignora).
 - Quadros com legenda sem janela: `mpv --no-config --no-audio --start=T
   --frames=1 --vo=image --vo-image-outdir=DIR --sub-file=X.ass VIDEO`.
+- Kiplay tocando em teste: `XDG_CONFIG_HOME=<scratchpad>/cfg` com
+  `[mpv] extra = --ao=null` no `kiplay.ini` (sem som). A instância única
+  usa um socket por pasta de configuração, então o Kiplay de teste nunca
+  manda arquivos para o do usuário. `test_mpv` roda um mpv de verdade
+  (`--ao=null --vo=null`); mate só o PID dele (`kp_backend_pid`), nunca
+  `pkill mpv` (pode haver um do usuário).
+- Gerenciador de janelas no Xvfb (para tela cheia, foco): `openbox
+  --sm-disable &`; a janela fica centralizada e decorada, use
+  `xdotool search --onlyvisible --name '^Kiplay$'` e `windowactivate`.
+- Títulos em japonês na playlist custam ~5–8 MB (fontes CJK no Pango):
+  para medir o Kiplay em si, use arquivos de nome ASCII.
 - Áudio em teste: dispositivo ALSA `null` (o `proto/audio` marca o ritmo
   pelo relógio), `--ao=null` no mpv. Fora disso toca nas caixas do usuário.
 - Memória: meça a própria (`Private_Dirty` em `/proc/PID/smaps_rollup`),
@@ -76,10 +88,14 @@ build/proto/audio [-d null] [-m] ARQUIVO     # protótipo do kiplay-audio
 | `ui/window.c` | janela, menus, atalhos, preferências da janela, salvar ao fechar |
 | `ui/layout.c` | monta vídeo + abas + controles; move a área de vídeo sem trocar o XID |
 | `ui/playlists.c` | abas: nova, renomear, fechar, reordenar, adicionar (diálogo e arrastar), remover |
-| `ui/controls.c` | barra de controle (inativa até a fase 2), repetir/aleatório e volume lembrados |
+| `ui/controls.c` | barra de controle: botões, barra de tempo (pula para o clique), volume |
 | `data/` | `.desktop` e ícone (achado em `../data` quando roda do `build/`) |
 | `po/` | `kiplay.pot`, `LINGUAS`, `POTFILES.in`, um `.po` por idioma |
 | `tools/fill_po.py`, `tools/lsan.supp` | traduções em lote; vazamentos conhecidos do GTK/fontconfig |
+| `src/backend.h`, `src/mpv.c` | o processo que toca: mpv `--idle` pelo JSON IPC, eventos neutros (`kp_event`), JSON sempre no locale C |
+| `src/json.c` | caminhos `a.b[0]` no cJSON (vindo do kiremote); `vendor/cjson/` |
+| `src/instance.c` | instância única: socket unix por pasta de configuração, repasse de arquivos |
+| `ui/player.c` | o controlador: o que toca, avanço, erros, queda do mpv, área de vídeo automática, título da janela |
 | `src/ytsub.c` | modelo neutro das legendas do YouTube (pens, posições, estilos, eventos) e os padrões |
 | `src/srv3.c` | leitor de srv3 (GMarkup) |
 | `src/ytsub_ass.c` | kp_ytsub → ASS: `\an`+`\pos`, cores, bordas; caixa (layer 0) e texto (layer 1) |

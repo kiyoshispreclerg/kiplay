@@ -14,9 +14,48 @@ close to the original as possible:
   it (danmaku);
 - ordinary subtitles (srt, ass, vtt...).
 
-**Status:** in development, phase 1 (skeleton): the window, the tabbed
-playlists and the configurable layout exist, but nothing plays yet. See
-the [plan](PLANO.md) (in Portuguese).
+**Status:** in development, phase 2: already a minimal player (plays
+audio and video through mpv, tabbed playlists, configurable layout).
+YouTube captions and chat aren't wired into the program yet. See the
+[plan](PLANO.md) (in Portuguese).
+
+## Usage
+
+```sh
+kiplay                      # opens the window
+kiplay video.mkv song.mp3   # adds to the playlist on screen and plays the first
+kiplay -e *.mp3             # only adds (enqueues)
+```
+
+With Kiplay open, `kiplay FILE` sends the file to the existing window.
+After `make install` it shows up in "Open with" for audio and video types.
+
+| Key | Does |
+|---|---|
+| Space, media key | play / pause |
+| ← / → | back / forward 5 s (Shift: 1 min) |
+| + / − | volume |
+| F, F11, double click on the video | fullscreen (Esc leaves) |
+| Enter, double click on the list | plays the track |
+| Del | removes from the playlist |
+| Ctrl+T, F2, Ctrl+W | new playlist, rename, close |
+| Alt+1..9 | goes to that playlist |
+
+Settings live in `~/.config/kiplay/kiplay.ini`; for now mpv is tuned by
+hand:
+
+```ini
+[mpv]
+# the program, or its full path
+program = mpv
+# true: also reads your ~/.config/mpv/mpv.conf
+use_config = false
+# extra options, as in SMPlayer
+extra = --hwdec=auto
+```
+
+(Comments only on lines of their own: after a value, the `#` would be
+part of it.)
 
 To download a video with captions in the right format:
 

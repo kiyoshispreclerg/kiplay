@@ -14,6 +14,11 @@ typedef struct {
     const char *prefs_path;
     /* Quits right after the window is first drawn (startup timing, tests). */
     bool exit_after_map;
+    /* Files to add (and play, unless enqueue) once the window is up. */
+    char **files;
+    bool enqueue;
+    /* The single-instance socket to listen on (kp_instance), or NULL. */
+    const char *instance_socket;
     /* g_get_monotonic_time() when main started, for the -v startup time. */
     long long start_us;
 } kp_window_opts;

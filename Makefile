@@ -10,6 +10,7 @@ LIB_SRC = src/log.c \
       src/prefs.c \
       src/playlist.c \
       src/plset.c \
+      src/instance.c \
       src/json.c \
       src/mpv.c \
       src/ytsub.c \

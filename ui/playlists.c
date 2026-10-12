@@ -203,21 +203,57 @@ void kp_playlists_update_status(kp_app *app)
 
 /* ---- adding files -------------------------------------------------------- */
 
-static void add_locations(kp_app *app, GtkWidget *page, kp_playlist *pl, char **uris)
+/* Adds uris (or plain paths) at the end; with dedupe, one already in the
+ * playlist isn't added again. Returns the index of the first one (added
+ * or found), -1 if none. */
+static long add_locations_full(kp_app *app, GtkWidget *page, kp_playlist *pl, char **uris,
+                               bool dedupe)
 {
     GtkListStore *store = GTK_LIST_STORE(gtk_tree_view_get_model(view_of(page)));
+    long first = -1;
     for (char **u = uris; *u; u++) {
         if (!**u)
             continue;
         /* Local files are kept as plain paths; anything else as the URI. */
         char *path = g_filename_from_uri(*u, NULL, NULL);
-        kp_playlist_add(pl, path ? path : *u, NULL, -1);
+        const char *loc = path ? path : *u;
+        long found = -1;
+        for (size_t i = 0; dedupe && found < 0 && i < kp_playlist_count(pl); i++)
+            if (!strcmp(kp_playlist_get(pl, i)->location, loc))
+                found = (long)i;
+        if (found < 0) {
+            kp_playlist_add(pl, loc, NULL, -1);
+            found = (long)kp_playlist_count(pl) - 1;
+            append_row(store, (size_t)found, kp_playlist_get(pl, (size_t)found));
+        }
+        if (first < 0)
+            first = found;
         g_free(path);
-        size_t i = kp_playlist_count(pl) - 1;
-        append_row(store, i, kp_playlist_get(pl, i));
     }
     schedule_save(app);
     kp_playlists_update_status(app);
+    return first;
+}
+
+static void add_locations(kp_app *app, GtkWidget *page, kp_playlist *pl, char **uris)
+{
+    add_locations_full(app, page, pl, uris, false);
+}
+
+int kp_playlists_open(kp_app *app, char **locations, long *first)
+{
+    kp_playlist *pl;
+    GtkWidget *page = current_page(app, &pl);
+    *first = -1;
+    if (!page || !pl)
+        return -1;
+    *first = add_locations_full(app, page, pl, locations, true);
+    if (*first >= 0) {
+        GtkTreePath *tp = gtk_tree_path_new_from_indices((int)*first, -1);
+        gtk_tree_view_scroll_to_cell(view_of(page), tp, NULL, FALSE, 0, 0);
+        gtk_tree_path_free(tp);
+    }
+    return page_id(page);
 }
 
 void kp_playlists_add_files(kp_app *app)

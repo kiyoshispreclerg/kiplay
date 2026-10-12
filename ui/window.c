@@ -8,12 +8,14 @@
 #include <string.h>
 
 #include "app.h"
+#include "instance.h"
 #include "i18n.h"
 #include "log.h"
 #include "util.h"
 
 typedef struct {
     kp_app app;
+    kp_instance *instance;
     /* Last unmaximized size, for the prefs. */
     int width, height;
     bool maximized;
@@ -345,6 +347,11 @@ static gboolean on_first_expose(GtkWidget *widget, GdkEventExpose *ev, gpointer 
     return FALSE;
 }
 
+static void on_instance_files(void *ud, char **locations, bool enqueue)
+{
+    kp_player_open(ud, locations, enqueue);
+}
+
 int kp_window_run(const kp_window_opts *opts)
 {
     kp_window w = {.opts = opts};
@@ -409,6 +416,16 @@ int kp_window_run(const kp_window_opts *opts)
     kp_layout_apply(app);
     kp_playlists_update_status(app);
     kp_player_init(app);
+    if (opts->instance_socket) {
+        char *err = NULL;
+        w.instance = kp_instance_listen(opts->instance_socket, on_instance_files, app, &err);
+        if (!w.instance) {
+            kp_log_debug("instance: %s", err);
+            g_free(err);
+        }
+    }
+    if (opts->files && opts->files[0])
+        kp_player_open(app, opts->files, opts->enqueue);
 
     g_signal_connect(app->window, "key-press-event", G_CALLBACK(on_key), app);
     g_signal_connect(app->window, "configure-event", G_CALLBACK(on_configure), &w);
@@ -422,6 +439,7 @@ int kp_window_run(const kp_window_opts *opts)
     gtk_widget_show(app->window);
     gtk_main();
 
+    kp_instance_free(w.instance);
     g_source_remove(sig_int);
     g_source_remove(sig_term);
     g_object_unref(app->video);

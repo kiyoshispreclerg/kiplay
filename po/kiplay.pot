@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: kiplay\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-12 09:08-0300\n"
+"POT-Creation-Date: 2026-10-12 09:12-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,19 +18,22 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 
-#: src/main.c:43
+#: src/main.c:44
 #, c-format
 msgid ""
-"Usage: kiplay [OPTION]...\n"
+"Usage: kiplay [OPTION]... [FILE]...\n"
 "Audio and video player with tabbed playlists.\n"
+"The files go to the playlist on screen and the first one plays; if\n"
+"Kiplay is already open, they go to that window.\n"
 "\n"
+"  -e, --enqueue        add the files without playing them\n"
 "  -c, --config FILE    settings file (default ~/.config/kiplay/kiplay.ini)\n"
 "  -v, --verbose        print what is going on\n"
 "  -V, --version        print the version and exit\n"
 "  -h, --help           print this help and exit\n"
 msgstr ""
 
-#: src/main.c:82
+#: src/main.c:113
 msgid "cannot open the display"
 msgstr ""
 
@@ -47,114 +50,114 @@ msgstr ""
 msgid "error: "
 msgstr ""
 
-#: ui/window.c:112
+#: ui/window.c:114
 msgid ""
 "Light audio and video player for KiDesktop, with YouTube's styled captions "
 "and recorded live chat."
 msgstr ""
 
-#: ui/window.c:132
+#: ui/window.c:134
 #, c-format
 msgid "could not save the settings: %s"
 msgstr ""
 
-#: ui/window.c:146
+#: ui/window.c:148
 msgid "_File"
 msgstr ""
 
-#: ui/window.c:147
+#: ui/window.c:149
 msgid "_Add files..."
 msgstr ""
 
-#: ui/window.c:150
+#: ui/window.c:152
 msgid "_Quit"
 msgstr ""
 
-#: ui/window.c:152
+#: ui/window.c:154
 msgid "_Playlist"
 msgstr ""
 
-#: ui/window.c:153
+#: ui/window.c:155
 msgid "_New"
 msgstr ""
 
-#: ui/window.c:154
+#: ui/window.c:156
 msgid "_Rename..."
 msgstr ""
 
-#: ui/window.c:155
+#: ui/window.c:157
 msgid "_Close"
 msgstr ""
 
-#: ui/window.c:158
+#: ui/window.c:160
 msgid "Remove _selected"
 msgstr ""
 
-#: ui/window.c:160
+#: ui/window.c:162
 msgid "_View"
 msgstr ""
 
-#: ui/window.c:161
+#: ui/window.c:163
 msgid "_Video area"
 msgstr ""
 
-#: ui/window.c:167
+#: ui/window.c:169
 msgid "Video _above the playlists"
 msgstr ""
 
-#: ui/window.c:168
+#: ui/window.c:170
 msgid "Video on the _left"
 msgstr ""
 
-#: ui/window.c:169
+#: ui/window.c:171
 msgid "Video on the _right"
 msgstr ""
 
-#: ui/window.c:173
+#: ui/window.c:175
 msgid "Controls at the _bottom"
 msgstr ""
 
-#: ui/window.c:174
+#: ui/window.c:176
 msgid "Controls at the _top"
 msgstr ""
 
-#: ui/window.c:178
+#: ui/window.c:180
 msgid "Play_back"
 msgstr ""
 
-#: ui/window.c:179
+#: ui/window.c:181
 msgid "_Play / Pause"
 msgstr ""
 
-#: ui/window.c:180
+#: ui/window.c:182
 msgid "_Stop"
 msgstr ""
 
-#: ui/window.c:181
+#: ui/window.c:183
 msgid "P_revious"
 msgstr ""
 
-#: ui/window.c:182
+#: ui/window.c:184
 msgid "_Next"
 msgstr ""
 
-#: ui/window.c:184
+#: ui/window.c:186
 msgid "_Fullscreen"
 msgstr ""
 
-#: ui/window.c:186
+#: ui/window.c:188
 msgid "_Help"
 msgstr ""
 
-#: ui/window.c:187
+#: ui/window.c:189
 msgid "_About"
 msgstr ""
 
-#: ui/window.c:354
+#: ui/window.c:361
 msgid "out of memory"
 msgstr ""
 
-#: ui/window.c:359
+#: ui/window.c:366
 msgid "cannot find the settings folder (is $HOME set?)"
 msgstr ""
 
@@ -181,40 +184,40 @@ msgid_plural "%zu tracks, %s"
 msgstr[0] ""
 msgstr[1] ""
 
-#: ui/playlists.c:230
+#: ui/playlists.c:266
 msgid "Add files"
 msgstr ""
 
-#: ui/playlists.c:374
+#: ui/playlists.c:410
 msgid "Title"
 msgstr ""
 
-#: ui/playlists.c:380
+#: ui/playlists.c:416
 msgid "Length"
 msgstr ""
 
-#: ui/playlists.c:432
+#: ui/playlists.c:468
 #, c-format
 msgid "Playlist %zu"
 msgstr ""
 
-#: ui/playlists.c:447
+#: ui/playlists.c:483
 msgid "Rename playlist"
 msgstr ""
 
-#: ui/playlists.c:481
+#: ui/playlists.c:517
 #, c-format
 msgid "Close the playlist \"%s\"?"
 msgstr ""
 
-#: ui/playlists.c:484
+#: ui/playlists.c:520
 #, c-format
 msgid "Its %zu track will be removed from the list (the file stays)."
 msgid_plural "Its %zu tracks will be removed from the list (the files stay)."
 msgstr[0] ""
 msgstr[1] ""
 
-#: ui/playlists.c:512
+#: ui/playlists.c:548
 msgid "Playlist 1"
 msgstr ""
 
@@ -258,16 +261,16 @@ msgid ""
 "Install mpv, or set its path in kiplay.ini ([mpv] program = ...)."
 msgstr ""
 
-#: ui/player.c:309
+#: ui/player.c:318
 #, c-format
 msgid "Could not play %s"
 msgstr ""
 
-#: ui/player.c:338
+#: ui/player.c:347
 #, c-format
 msgid "the player program stopped (%s)"
 msgstr ""
 
-#: ui/player.c:341
+#: ui/player.c:350
 msgid "The player program keeps stopping; giving up for now."
 msgstr ""

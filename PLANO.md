@@ -438,9 +438,38 @@ identificadores em inglês; interface pelo gettext com msgids em inglês.
    - no pt_BR o gettext trata 0 como singular ("0 faixa"): playlist vazia
      ganha texto próprio;
    - UBSan: `qsort` com ponteiro nulo numa pasta vazia.
-2. **Backend mpv**: tocar áudio e vídeo embutido, barra de tempo, volume,
-   pausa, seek, tela cheia, troca de faixa, reinício se o mpv morrer;
-   layouts (vídeo acima/ao lado/escondido, controles no topo/rodapé).
+2. **Backend mpv** *(feita)*: `src/backend.h` + `src/mpv.c` (mpv em
+   `--idle` pelo JSON IPC, sem bloquear: `GSubprocess`, fila até o socket
+   existir, escrita não bloqueante); `ui/player.c` toca a playlist (duplo
+   clique/Enter, avanço com repetir/aleatório, pula arquivos com erro,
+   volta no mesmo ponto se o mpv cair, desiste após 3 quedas por minuto).
+   A área de vídeo aparece com vídeo e some com música (capa de álbum não
+   conta); tela cheia (F, F11, duplo clique). Barra de tempo pula para o
+   clique; atalhos Espaço, ←/→, Shift+←/→, +/−, teclas de mídia. A playlist
+   aprende duração e "Artista - Título" (`metadata` do mpv). Linha de
+   comando: `kiplay ARQUIVO...` (`-e` enfileira) e instância única por
+   socket unix (`src/instance.c`): o segundo `kiplay` entrega os arquivos
+   e sai em ~8 ms, sem abrir o GTK. `.desktop` com `%U` e os tipos MIME do
+   SMPlayer + Audacious. Medido no Xvfb: Kiplay tocando vídeo **6,0 MB**
+   de memória própria (5,2 MB parado) com títulos em ASCII; com títulos em
+   japonês, 9,6/14,5 MB: o Pango carrega as fontes CJK (Noto CJK) para
+   desenhá-los, custo de qualquer programa GTK (comparar com o Audacious
+   na fase 3). Lições:
+   - **o cJSON segue o LC_NUMERIC**: em pt_BR não lia `268.05` e
+     escreveria `12,5`; o JSON do mpv é tratado no locale C (`uselocale`);
+   - o mpv só sobe na primeira vez que algo toca;
+   - entre dois arquivos o `track-list` fica vazio por um instante: a
+     área de vídeo só muda com o arquivo já carregado, ou pisca;
+   - o `media-title` do mpv é só o título (sem artista): para a playlist
+     vale a propriedade `metadata` (nomes de tag em qualquer caixa);
+   - no GTK 2 só o botão do meio pula a barra para o clique: o botão 1 é
+     tratado como 2;
+   - caminhos da linha de comando viram absolutos já na primeira
+     instância, ou a playlist guarda caminhos relativos;
+   - o mpv do Xvfb renderiza por software e pode mostrar preto: imagem,
+     memória e CPU do mpv só valem no X real.
+   Fica para depois: subfaixas `?N` (o mpv recebe o arquivo sem o `?N` e
+   toca a primeira; resolve no `kiplay-audio`), gapless entre arquivos.
 2b. **`kiplay-audio`**: motor de música com gapless, ReplayGain, troca
    automática de backend entre faixa de áudio e de vídeo, reinício se cair.
 3. **Playlists**: abas, m3u8, tags em thread com cache, fila, aleatório,

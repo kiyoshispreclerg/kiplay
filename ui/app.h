@@ -104,6 +104,10 @@ int kp_playlists_selection(kp_app *app, long *index);
 void kp_playlists_mark_playing(kp_app *app, int id, long index);
 /* Redraws one row after its entry changed (title, length). */
 void kp_playlists_refresh_row(kp_app *app, int id, long index);
+/* Files from the command line or another kiplay: added to the visible
+ * playlist (ones already there are found, not repeated). Returns its id;
+ * *first = the index of the first file, -1 if none. */
+int kp_playlists_open(kp_app *app, char **locations, long *first);
 /* Something changed in a playlist: write it soon. */
 void kp_playlists_changed(kp_app *app);
 
@@ -127,6 +131,8 @@ void kp_player_prev(kp_app *app);
 void kp_player_seek(kp_app *app, double seconds);
 void kp_player_seek_relative(kp_app *app, double seconds);
 void kp_player_set_volume(kp_app *app, int volume);
+/* Adds the files and, unless enqueue, plays the first; raises the window. */
+void kp_player_open(kp_app *app, char **locations, bool enqueue);
 /* A playlist was closed: stop if it was playing. */
 void kp_player_playlist_closed(kp_app *app, int id);
 
