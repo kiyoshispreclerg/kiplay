@@ -15,6 +15,7 @@ LIB_SRC = src/log.c \
       src/lineio.c \
       src/child.c \
       src/backend.c \
+      src/audioback.c \
       src/mpv.c \
       src/ytsub.c \
       src/srv3.c \
@@ -30,6 +31,14 @@ APP_SRC = src/main.c \
       ui/controls.c \
       ui/player.c
 APP_OBJ = $(patsubst %.c,$(BUILD)/%.o,$(APP_SRC))
+
+# kiplay-audio: the music engine, its own process. No GLib in it: libav,
+# ALSA and pthreads only, to stay small.
+AUDIO_SRC = audio/main.c audio/cmd.c audio/dec.c audio/out.c
+AUDIO_OBJ = $(patsubst %.c,$(BUILD)/%.o,$(AUDIO_SRC))
+ENGINE_PKGS = alsa libavformat libavcodec libavutil libswresample
+ENGINE_CFLAGS = $(shell $(PKG_CONFIG) --cflags $(ENGINE_PKGS) | sed 's/-I/-isystem /g')
+ENGINE_LIBS = $(shell $(PKG_CONFIG) --libs $(ENGINE_PKGS)) -lpthread -lm
 
 # Phase 0 prototypes (proto/*.c, one program each).
 PROTOS = $(BUILD)/proto/subconv $(BUILD)/proto/embed $(BUILD)/proto/audio
@@ -47,7 +56,7 @@ LINGUAS = $(shell sed 's/\#.*//' po/LINGUAS)
 HAVE_MSGFMT := $(shell command -v msgfmt >/dev/null 2>&1 && echo 1)
 MO_FILES = $(if $(HAVE_MSGFMT),$(foreach l,$(LINGUAS),$(BUILD)/locale/$(l)/LC_MESSAGES/kiplay.mo))
 
-all: $(BUILD)/kiplay $(MO_FILES) $(PROTOS)
+all: $(BUILD)/kiplay $(BUILD)/kiplay-audio $(MO_FILES) $(PROTOS)
 locale: $(MO_FILES)
 
 $(BUILD)/locale/%/LC_MESSAGES/kiplay.mo: po/%.po
@@ -66,6 +75,13 @@ pot update-po:
 
 $(BUILD)/kiplay: $(APP_OBJ) $(LIBKP)
 	$(CC) $(ALL_LDFLAGS) -o $@ $^ $(GTK_LIBS) $(LDLIBS)
+
+$(BUILD)/kiplay-audio: $(AUDIO_OBJ)
+	$(CC) $(ALL_LDFLAGS) -o $@ $^ $(ENGINE_LIBS)
+
+$(AUDIO_OBJ): $(BUILD)/%.o: %.c
+	@mkdir -p $(@D)
+	$(CC) -Iaudio $(STDFLAGS) $(OPTFLAGS) $(SANFLAGS) $(CFLAGS) $(ENGINE_CFLAGS) $(WARNFLAGS) -MMD -MP -c -o $@ $<
 
 $(APP_OBJ): $(BUILD)/%.o: %.c
 	@mkdir -p $(@D)
@@ -99,12 +115,18 @@ $(BUILD)/proto/audio: proto/audio.c
 
 # ---- tests ----------------------------------------------------------------
 
-TEST_CPPFLAGS = -DKP_FIXTURES_DIR='"$(CURDIR)/tests/fixtures"'
+TEST_CPPFLAGS = -DKP_FIXTURES_DIR='"$(CURDIR)/tests/fixtures"' \
+                -DKP_AUDIO_BIN='"$(CURDIR)/$(BUILD)/kiplay-audio"'
+
+# test_audio also links the engine's own parts (they aren't in libkp).
+$(BUILD)/tests/test_audio: TEST_EXTRA = $(BUILD)/audio/cmd.o $(BUILD)/audio/dec.o $(ENGINE_LIBS)
+$(BUILD)/tests/test_audio: TEST_EXTRA_CFLAGS = -Iaudio $(ENGINE_CFLAGS)
+$(BUILD)/tests/test_audio: $(BUILD)/audio/cmd.o $(BUILD)/audio/dec.o $(BUILD)/kiplay-audio
 
 $(BUILD)/tests/%: tests/unit/%.c tests/harness.h $(LIBKP)
 	@mkdir -p $(@D)
-	$(CC) $(CPPFLAGS) $(TEST_CPPFLAGS) $(ALL_CFLAGS) $(WARNFLAGS) -MMD -MP \
-		$(ALL_LDFLAGS) -o $@ $< $(LIBKP) $(LDLIBS)
+	$(CC) $(CPPFLAGS) $(TEST_CPPFLAGS) $(TEST_EXTRA_CFLAGS) $(ALL_CFLAGS) $(WARNFLAGS) -MMD -MP \
+		$(ALL_LDFLAGS) -o $@ $< $(LIBKP) $(TEST_EXTRA) $(LDLIBS)
 
 test: all $(UNIT_TESTS)
 	@fail=0; for t in $(UNIT_TESTS); do \
@@ -126,26 +148,27 @@ asan-run:
 	ASAN_OPTIONS=fast_unwind_on_malloc=0 LSAN_OPTIONS=suppressions=$(CURDIR)/tools/lsan.supp \
 		$(BUILD)/asan/kiplay $(ARGS)
 
-install: $(BUILD)/kiplay $(MO_FILES)
+install: $(BUILD)/kiplay $(BUILD)/kiplay-audio $(MO_FILES)
 	install -Dm755 $< $(DESTDIR)$(BINDIR)/kiplay
+	install -Dm755 $(BUILD)/kiplay-audio $(DESTDIR)$(BINDIR)/kiplay-audio
 	install -Dm644 data/kiplay.desktop $(DESTDIR)$(DATADIR)/applications/kiplay.desktop
 	install -Dm644 data/kiplay.svg $(DESTDIR)$(DATADIR)/icons/hicolor/scalable/apps/kiplay.svg
 	$(foreach l,$(if $(MO_FILES),$(LINGUAS)),install -Dm644 $(BUILD)/locale/$(l)/LC_MESSAGES/kiplay.mo \
 		$(DESTDIR)$(LOCALEDIR)/$(l)/LC_MESSAGES/kiplay.mo;)
 
 uninstall:
-	rm -f $(DESTDIR)$(BINDIR)/kiplay
+	rm -f $(DESTDIR)$(BINDIR)/kiplay $(DESTDIR)$(BINDIR)/kiplay-audio
 	for l in $(LINGUAS); do rm -f $(DESTDIR)$(LOCALEDIR)/$$l/LC_MESSAGES/kiplay.mo; done
 	rm -f $(DESTDIR)$(DATADIR)/applications/kiplay.desktop \
 	      $(DESTDIR)$(DATADIR)/icons/hicolor/scalable/apps/kiplay.svg
 
 lint:
-	@if grep -nE '\b(strcpy|strcat|sprintf|vsprintf|gets)[[:space:]]*\(' src/*.c src/*.h ui/*.c ui/*.h proto/*.c tests/unit/*.c; then \
+	@if grep -nE '\b(strcpy|strcat|sprintf|vsprintf|gets)[[:space:]]*\(' src/*.c src/*.h ui/*.c ui/*.h audio/*.c audio/*.h proto/*.c tests/unit/*.c; then \
 		echo "*** banned function used"; exit 1; fi
 	@command -v cppcheck >/dev/null || { echo "*** cppcheck not installed"; exit 1; }
 	cppcheck --std=c11 --enable=warning,performance,portability \
-		--error-exitcode=1 --inline-suppr --quiet -Isrc -Ivendor/cjson --suppress='*:vendor/*' \
-		-D_XOPEN_SOURCE=700 -DKP_VERSION='"lint"' -DKP_FIXTURES_DIR='"."' src ui proto tests/unit
+		--error-exitcode=1 --inline-suppr --quiet -Isrc -Iaudio -Ivendor/cjson --suppress='*:vendor/*' \
+		-D_XOPEN_SOURCE=700 -DKP_VERSION='"lint"' -DKP_FIXTURES_DIR='"."' src ui audio proto tests/unit
 
 clean:
 	rm -rf $(BUILD)
