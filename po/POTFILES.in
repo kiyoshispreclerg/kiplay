@@ -5,3 +5,4 @@ ui/window.c
 ui/playlists.c
 ui/controls.c
 ui/layout.c
+ui/player.c

@@ -22,7 +22,8 @@ typedef enum {
     KP_EV_TIME,     /* value = seconds played */
     KP_EV_PAUSED,   /* flag = paused */
     KP_EV_VIDEO,    /* flag = the file has a real video track (not cover art) */
-    KP_EV_TITLE,    /* text = the title the player found (tags, stream) */
+    KP_EV_TITLE,    /* text = what to call it now (tags, stream title, file name) */
+    KP_EV_TAGS,     /* text = "Artist - Title" from the file's tags (NULL: none) */
     KP_EV_ENDED,    /* the file ended by itself (flag = with an error) */
     KP_EV_IDLE,     /* nothing loaded */
     KP_EV_CRASHED,  /* the process went away; text = why */

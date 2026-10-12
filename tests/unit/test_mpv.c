@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 #include <glib.h>
 #include <glib/gstdio.h>
+#include <locale.h>
 #include <math.h>
 #include <signal.h>
 #include <stdio.h>
@@ -70,6 +71,43 @@ TEST(parses_events)
     CHECK(r.ev[7].flag);
     CHECK_STR_EQ(r.ev[7].text, "no such file");
     CHECK_INT_EQ(r.ev[8].type, KP_EV_IDLE);
+}
+
+/* Under a locale with a decimal comma (pt_BR), numbers must still parse. */
+TEST(numbers_ignore_the_locale)
+{
+    const char *names[] = {"pt_BR.UTF-8", "de_DE.UTF-8", "fr_FR.UTF-8", NULL};
+    const char *got = NULL;
+    for (int i = 0; names[i] && !got; i++)
+        got = setlocale(LC_NUMERIC, names[i]);
+    if (!got) {
+        fprintf(stderr, "  (no decimal-comma locale installed: skipped)\n");
+        return;
+    }
+    recorder r = {0};
+    kp_mpv_parse_line("{\"event\":\"property-change\",\"id\":1,\"data\":268.052}", record, &r);
+    setlocale(LC_NUMERIC, "C");
+    CHECK_INT_EQ(r.n, 1);
+    CHECK(fabs(r.ev[0].value - 268.052) < 1e-9);
+}
+
+TEST(tags_make_artist_dash_title)
+{
+    recorder r = {0};
+    kp_mpv_parse_line("{\"event\":\"property-change\",\"id\":5,\"name\":\"metadata\",\"data\":"
+                      "{\"ARTIST\":\"DJ Ross\",\"TITLE\":\"Emotion\",\"album\":\"x\"}}",
+                      record, &r);
+    kp_mpv_parse_line("{\"event\":\"property-change\",\"id\":5,\"name\":\"metadata\",\"data\":"
+                      "{\"title\":\"Só título\"}}",
+                      record, &r);
+    kp_mpv_parse_line("{\"event\":\"property-change\",\"id\":5,\"name\":\"metadata\",\"data\":"
+                      "{\"encoder\":\"Lavf\"}}",
+                      record, &r);
+    CHECK_INT_EQ(r.n, 3);
+    CHECK_INT_EQ(r.ev[0].type, KP_EV_TAGS);
+    CHECK_STR_EQ(r.ev[0].text, "DJ Ross - Emotion");
+    CHECK_STR_EQ(r.ev[1].text, "Só título");
+    CHECK(r.ev[2].text == NULL);
 }
 
 TEST(cover_art_is_not_video)
@@ -225,6 +263,8 @@ TEST(plays_with_real_mpv)
 int main(void)
 {
     RUN(parses_events);
+    RUN(numbers_ignore_the_locale);
+    RUN(tags_make_artist_dash_title);
     RUN(cover_art_is_not_video);
     RUN(plays_with_real_mpv);
     return harness_report();

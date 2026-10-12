@@ -81,6 +81,24 @@ TEST(remove_and_totals)
     kp_playlist_free(pl);
 }
 
+TEST(info_from_the_player)
+{
+    kp_playlist *pl = kp_playlist_parse_m3u("#EXTINF:61,Old\n/a.mp3\n/b.mp3\n", NULL, "x");
+    CHECK(!kp_playlist_dirty(pl));
+    /* Same title, same second: nothing to save. */
+    CHECK(!kp_playlist_set_info(pl, 0, "Old", 61400));
+    CHECK(!kp_playlist_dirty(pl));
+    CHECK(kp_playlist_set_info(pl, 1, NULL, 198556));
+    CHECK_INT_EQ(kp_playlist_get(pl, 1)->length_ms, 198556);
+    CHECK(kp_playlist_get(pl, 1)->title == NULL);
+    CHECK(kp_playlist_set_info(pl, 0, "New", -1));
+    CHECK_STR_EQ(kp_playlist_get(pl, 0)->title, "New");
+    CHECK_INT_EQ(kp_playlist_get(pl, 0)->length_ms, 61000);
+    CHECK(kp_playlist_dirty(pl));
+    CHECK(!kp_playlist_set_info(pl, 9, "x", 1));
+    kp_playlist_free(pl);
+}
+
 TEST(set_keeps_ids_order_and_files)
 {
     char *dir = g_dir_make_tmp("kp-test-XXXXXX", NULL);
@@ -141,6 +159,7 @@ int main(void)
     RUN(name_defaults_without_header);
     RUN(dump_round_trips);
     RUN(remove_and_totals);
+    RUN(info_from_the_player);
     RUN(set_keeps_ids_order_and_files);
     return harness_report();
 }

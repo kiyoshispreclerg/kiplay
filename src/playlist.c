@@ -70,6 +70,27 @@ void kp_playlist_add(kp_playlist *pl, const char *location, const char *title,
     pl->dirty = true;
 }
 
+bool kp_playlist_set_info(kp_playlist *pl, size_t i, const char *title, int64_t length_ms)
+{
+    if (i >= pl->n)
+        return false;
+    kp_entry *e = &pl->items[i];
+    bool changed = false;
+    if (title && *title && (!e->title || strcmp(e->title, title) != 0)) {
+        e->title = g_string_chunk_insert(pl->strings, title);
+        changed = true;
+    }
+    /* m3u keeps whole seconds: compare at that precision, or every play
+     * would rewrite the file. */
+    if (length_ms >= 0 && (e->length_ms < 0 || e->length_ms / 1000 != length_ms / 1000)) {
+        e->length_ms = length_ms;
+        changed = true;
+    }
+    if (changed)
+        pl->dirty = true;
+    return changed;
+}
+
 void kp_playlist_remove(kp_playlist *pl, size_t i)
 {
     if (i >= pl->n)

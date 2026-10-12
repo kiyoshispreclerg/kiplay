@@ -45,6 +45,10 @@ const kp_entry *kp_playlist_get(const kp_playlist *pl, size_t i);
 void kp_playlist_add(kp_playlist *pl, const char *location, const char *title,
                      int64_t length_ms);
 void kp_playlist_remove(kp_playlist *pl, size_t i);
+/* What the player found out about entry i: a title (NULL = keep) and a
+ * length (< 0 = keep). Marks the playlist dirty only if something changed.
+ * Returns whether it did. */
+bool kp_playlist_set_info(kp_playlist *pl, size_t i, const char *title, int64_t length_ms);
 void kp_playlist_clear(kp_playlist *pl);
 
 /* Sum of the known lengths, and how many are unknown. */

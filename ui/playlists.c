@@ -11,7 +11,7 @@
 /* Each notebook page is a scrolled window holding one tree view; the page
  * carries the playlist id ("kp-id"), which survives reordering. */
 
-enum { COL_NUM, COL_TITLE, COL_LENGTH, N_COLS };
+enum { COL_NUM, COL_TITLE, COL_LENGTH, COL_WEIGHT, N_COLS };
 
 static guint save_timer;
 
@@ -93,7 +93,18 @@ static void append_row(GtkListStore *store, size_t i, const kp_entry *e)
     char *title = display_title(e);
     GtkTreeIter it;
     gtk_list_store_insert_with_values(store, &it, -1, COL_NUM, (int)(i + 1), COL_TITLE, title,
-                                      COL_LENGTH, len, -1);
+                                      COL_LENGTH, len, COL_WEIGHT, PANGO_WEIGHT_NORMAL, -1);
+    g_free(title);
+}
+
+/* Rewrites row i from the entry, keeping its weight. */
+static void set_row(GtkListStore *store, GtkTreeIter *it, const kp_entry *e)
+{
+    char len[32] = "";
+    if (e->length_ms >= 0)
+        kp_format_duration(len, sizeof len, e->length_ms);
+    char *title = display_title(e);
+    gtk_list_store_set(store, it, COL_TITLE, title, COL_LENGTH, len, -1);
     g_free(title);
 }
 
@@ -102,6 +113,74 @@ static void refill(GtkListStore *store, const kp_playlist *pl)
     gtk_list_store_clear(store);
     for (size_t i = 0; i < kp_playlist_count(pl); i++)
         append_row(store, i, kp_playlist_get(pl, i));
+}
+
+/* The page of the playlist with that id, or NULL. */
+static GtkWidget *page_for(kp_app *app, int id)
+{
+    int n = gtk_notebook_get_n_pages(GTK_NOTEBOOK(app->notebook));
+    for (int i = 0; i < n; i++) {
+        GtkWidget *page = gtk_notebook_get_nth_page(GTK_NOTEBOOK(app->notebook), i);
+        if (page_id(page) == id)
+            return page;
+    }
+    return NULL;
+}
+
+static bool row_iter(kp_app *app, int id, long index, GtkListStore **store, GtkTreeIter *it)
+{
+    GtkWidget *page = index >= 0 ? page_for(app, id) : NULL;
+    if (!page)
+        return false;
+    *store = GTK_LIST_STORE(gtk_tree_view_get_model(view_of(page)));
+    return gtk_tree_model_iter_nth_child(GTK_TREE_MODEL(*store), it, NULL, (int)index);
+}
+
+void kp_playlists_mark_playing(kp_app *app, int id, long index)
+{
+    static int marked_id = -1;
+    static long marked_index = -1;
+    GtkListStore *store;
+    GtkTreeIter it;
+    if (row_iter(app, marked_id, marked_index, &store, &it))
+        gtk_list_store_set(store, &it, COL_WEIGHT, PANGO_WEIGHT_NORMAL, -1);
+    marked_id = id;
+    marked_index = index;
+    if (row_iter(app, id, index, &store, &it))
+        gtk_list_store_set(store, &it, COL_WEIGHT, PANGO_WEIGHT_BOLD, -1);
+}
+
+void kp_playlists_refresh_row(kp_app *app, int id, long index)
+{
+    GtkListStore *store;
+    GtkTreeIter it;
+    long pi = kp_plset_find(app->playlists, id);
+    const kp_entry *e = pi >= 0 ? kp_playlist_get(kp_plset_get(app->playlists, (size_t)pi),
+                                                  (size_t)index)
+                                : NULL;
+    if (e && row_iter(app, id, index, &store, &it))
+        set_row(store, &it, e);
+    kp_playlists_update_status(app);
+}
+
+void kp_playlists_changed(kp_app *app)
+{
+    schedule_save(app);
+}
+
+int kp_playlists_selection(kp_app *app, long *index)
+{
+    *index = -1;
+    GtkWidget *page = current_page(app, NULL);
+    if (!page)
+        return -1;
+    GtkTreeModel *model;
+    GList *rows = gtk_tree_selection_get_selected_rows(
+        gtk_tree_view_get_selection(view_of(page)), &model);
+    if (rows)
+        *index = gtk_tree_path_get_indices(rows->data)[0];
+    g_list_free_full(rows, (GDestroyNotify)gtk_tree_path_free);
+    return page_id(page);
 }
 
 void kp_playlists_update_status(kp_app *app)
@@ -201,12 +280,26 @@ void kp_playlists_remove_selected(kp_app *app)
     GList *rows = gtk_tree_selection_get_selected_rows(sel, &model);
     if (!rows)
         return;
-    /* From the last to the first, so the indexes stay right. */
+    /* From the last to the first, so the indexes stay right. The playing
+     * entry keeps its place; if it goes, "next" continues from there. */
+    bool playing_here = page_id(page) == app->playing.playlist_id && app->playing.index >= 0;
+    long playing = app->playing.index;
+    bool gone = false;
     rows = g_list_reverse(rows);
-    for (GList *r = rows; r; r = r->next)
-        kp_playlist_remove(pl, (size_t)gtk_tree_path_get_indices(r->data)[0]);
+    for (GList *r = rows; r; r = r->next) {
+        long i = gtk_tree_path_get_indices(r->data)[0];
+        kp_playlist_remove(pl, (size_t)i);
+        if (playing_here && i <= playing) {
+            gone |= i == playing;
+            playing--; /* gone: "next" is the entry that took its place */
+        }
+    }
     g_list_free_full(rows, (GDestroyNotify)gtk_tree_path_free);
     refill(GTK_LIST_STORE(model), pl);
+    if (playing_here) {
+        app->playing.index = playing;
+        kp_playlists_mark_playing(app, app->playing.playlist_id, gone ? -1 : playing);
+    }
     schedule_save(app);
     kp_playlists_update_status(app);
 }
@@ -248,10 +341,21 @@ static GtkWidget *tab_label(kp_app *app, GtkWidget *page, const char *name)
     return box;
 }
 
+/* Double click or Enter on a row plays it. */
+static void on_row_activated(GtkTreeView *view, GtkTreePath *path, GtkTreeViewColumn *col,
+                             gpointer data)
+{
+    (void)col;
+    kp_app *app = data;
+    GtkWidget *page = gtk_widget_get_parent(GTK_WIDGET(view));
+    kp_player_play_at(app, page_id(page), gtk_tree_path_get_indices(path)[0]);
+}
+
 static GtkWidget *add_page(kp_app *app, size_t i)
 {
     kp_playlist *pl = kp_plset_get(app->playlists, i);
-    GtkListStore *store = gtk_list_store_new(N_COLS, G_TYPE_INT, G_TYPE_STRING, G_TYPE_STRING);
+    GtkListStore *store =
+        gtk_list_store_new(N_COLS, G_TYPE_INT, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT);
     refill(store, pl);
     GtkWidget *view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(store));
     g_object_unref(store);
@@ -263,22 +367,24 @@ static GtkWidget *add_page(kp_app *app, size_t i)
     GtkCellRenderer *r = gtk_cell_renderer_text_new();
     g_object_set(r, "xalign", 1.0, NULL);
     gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(view), -1, "#", r, "text", COL_NUM,
-                                                NULL);
+                                                "weight", COL_WEIGHT, NULL);
     r = gtk_cell_renderer_text_new();
     g_object_set(r, "ellipsize", PANGO_ELLIPSIZE_END, NULL);
     GtkTreeViewColumn *col =
-        gtk_tree_view_column_new_with_attributes(_("Title"), r, "text", COL_TITLE, NULL);
+        gtk_tree_view_column_new_with_attributes(_("Title"), r, "text", COL_TITLE, "weight",
+                                                 COL_WEIGHT, NULL);
     gtk_tree_view_column_set_expand(col, TRUE);
     gtk_tree_view_append_column(GTK_TREE_VIEW(view), col);
     r = gtk_cell_renderer_text_new();
     g_object_set(r, "xalign", 1.0, NULL);
     gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(view), -1, _("Length"), r, "text",
-                                                COL_LENGTH, NULL);
+                                                COL_LENGTH, "weight", COL_WEIGHT, NULL);
 
     static const GtkTargetEntry targets[] = {{(char *)"text/uri-list", 0, 0}};
     gtk_drag_dest_set(view, GTK_DEST_DEFAULT_ALL, targets, 1, GDK_ACTION_COPY);
     g_signal_connect(view, "drag-data-received", G_CALLBACK(on_drop), app);
     g_signal_connect(view, "key-press-event", G_CALLBACK(on_view_key), app);
+    g_signal_connect(view, "row-activated", G_CALLBACK(on_row_activated), app);
 
     GtkWidget *page = gtk_scrolled_window_new(NULL, NULL);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(page), GTK_POLICY_AUTOMATIC,
@@ -386,6 +492,7 @@ void kp_playlists_close(kp_app *app)
         if (r != GTK_RESPONSE_ACCEPT)
             return;
     }
+    kp_player_playlist_closed(app, page_id(page));
     long i = kp_plset_find(app->playlists, page_id(page));
     gtk_widget_destroy(page);
     if (i >= 0)

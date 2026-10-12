@@ -23,7 +23,8 @@ APP_SRC = src/main.c \
       ui/window.c \
       ui/layout.c \
       ui/playlists.c \
-      ui/controls.c
+      ui/controls.c \
+      ui/player.c
 APP_OBJ = $(patsubst %.c,$(BUILD)/%.o,$(APP_SRC))
 
 # Phase 0 prototypes (proto/*.c, one program each).

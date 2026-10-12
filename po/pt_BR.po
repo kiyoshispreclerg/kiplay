@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: kiplay\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-09 16:27-0300\n"
+"POT-Creation-Date: 2026-10-12 09:08-0300\n"
 "PO-Revision-Date: 2026-10-09 16:23-0300\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -55,7 +55,7 @@ msgstr "aviso: "
 msgid "error: "
 msgstr "erro: "
 
-#: ui/window.c:107
+#: ui/window.c:112
 msgid ""
 "Light audio and video player for KiDesktop, with YouTube's styled captions "
 "and recorded live chat."
@@ -63,84 +63,108 @@ msgstr ""
 "Reprodutor leve de áudio e vídeo para o KiDesktop, com as legendas "
 "estilizadas do YouTube e o chat de lives gravadas."
 
-#: ui/window.c:124
+#: ui/window.c:132
 #, c-format
 msgid "could not save the settings: %s"
 msgstr "não foi possível salvar a configuração: %s"
 
-#: ui/window.c:138
+#: ui/window.c:146
 msgid "_File"
 msgstr "_Arquivo"
 
-#: ui/window.c:139
+#: ui/window.c:147
 msgid "_Add files..."
 msgstr "_Adicionar arquivos..."
 
-#: ui/window.c:142
+#: ui/window.c:150
 msgid "_Quit"
 msgstr "_Sair"
 
-#: ui/window.c:144
+#: ui/window.c:152
 msgid "_Playlist"
 msgstr "_Playlist"
 
-#: ui/window.c:145
+#: ui/window.c:153
 msgid "_New"
 msgstr "_Nova"
 
-#: ui/window.c:146
+#: ui/window.c:154
 msgid "_Rename..."
 msgstr "_Renomear..."
 
-#: ui/window.c:147
+#: ui/window.c:155
 msgid "_Close"
 msgstr "_Fechar"
 
-#: ui/window.c:150
+#: ui/window.c:158
 msgid "Remove _selected"
 msgstr "Remover _selecionadas"
 
-#: ui/window.c:152
+#: ui/window.c:160
 msgid "_View"
 msgstr "_Exibir"
 
-#: ui/window.c:153
+#: ui/window.c:161
 msgid "_Video area"
 msgstr "Área de _vídeo"
 
-#: ui/window.c:159
+#: ui/window.c:167
 msgid "Video _above the playlists"
 msgstr "Vídeo _acima das playlists"
 
-#: ui/window.c:160
+#: ui/window.c:168
 msgid "Video on the _left"
 msgstr "Vídeo à _esquerda"
 
-#: ui/window.c:161
+#: ui/window.c:169
 msgid "Video on the _right"
 msgstr "Vídeo à _direita"
 
-#: ui/window.c:165
+#: ui/window.c:173
 msgid "Controls at the _bottom"
 msgstr "Controles no _rodapé"
 
-#: ui/window.c:166
+#: ui/window.c:174
 msgid "Controls at the _top"
 msgstr "Controles no _topo"
 
-#: ui/window.c:170
+#: ui/window.c:178
+msgid "Play_back"
+msgstr "_Reprodução"
+
+#: ui/window.c:179
+msgid "_Play / Pause"
+msgstr "_Tocar / Pausar"
+
+#: ui/window.c:180
+msgid "_Stop"
+msgstr "_Parar"
+
+#: ui/window.c:181
+msgid "P_revious"
+msgstr "_Anterior"
+
+#: ui/window.c:182
+msgid "_Next"
+msgstr "_Próxima"
+
+#: ui/window.c:184
+msgid "_Fullscreen"
+msgstr "Tela _cheia"
+
+#: ui/window.c:186
 msgid "_Help"
 msgstr "Aj_uda"
 
-#: ui/window.c:171
+#: ui/window.c:187
 msgid "_About"
 msgstr "_Sobre"
 
-#: ui/window.c:256
+#: ui/window.c:354
 msgid "out of memory"
 msgstr "memória insuficiente"
 
-#: ui/window.c:261
+#: ui/window.c:359
 msgid "cannot find the settings folder (is $HOME set?)"
 msgstr "não achei a pasta de configuração ($HOME está definido?)"
 
@@ -149,85 +173,111 @@ msgstr "não achei a pasta de configuração ($HOME está definido?)"
 msgid "could not save the playlists: %s"
 msgstr "não foi possível salvar as playlists: %s"
 
-#: ui/playlists.c:117
+#: ui/playlists.c:196
 msgid "Empty playlist"
 msgstr "Playlist vazia"
 
-#: ui/playlists.c:119
+#: ui/playlists.c:198
 #, c-format
 msgid "%zu track"
 msgid_plural "%zu tracks"
 msgstr[0] "%zu faixa"
 msgstr[1] "%zu faixas"
 
-#: ui/playlists.c:120
+#: ui/playlists.c:199
 #, c-format
 msgid "%zu track, %s"
 msgid_plural "%zu tracks, %s"
 msgstr[0] "%zu faixa, %s"
 msgstr[1] "%zu faixas, %s"
 
-#: ui/playlists.c:151
+#: ui/playlists.c:230
 msgid "Add files"
 msgstr "Adicionar arquivos"
 
-#: ui/playlists.c:270
+#: ui/playlists.c:374
 msgid "Title"
 msgstr "Título"
 
-#: ui/playlists.c:275
+#: ui/playlists.c:380
 msgid "Length"
 msgstr "Duração"
 
-#: ui/playlists.c:326
+#: ui/playlists.c:432
 #, c-format
 msgid "Playlist %zu"
 msgstr "Playlist %zu"
 
-#: ui/playlists.c:341
+#: ui/playlists.c:447
 msgid "Rename playlist"
 msgstr "Renomear playlist"
 
-#: ui/playlists.c:375
+#: ui/playlists.c:481
 #, c-format
 msgid "Close the playlist \"%s\"?"
 msgstr "Fechar a playlist \"%s\"?"
 
-#: ui/playlists.c:378
+#: ui/playlists.c:484
 #, c-format
 msgid "Its %zu track will be removed from the list (the file stays)."
 msgid_plural "Its %zu tracks will be removed from the list (the files stay)."
 msgstr[0] "A %zu faixa sai da lista (o arquivo continua no disco)."
 msgstr[1] "As %zu faixas saem da lista (os arquivos continuam no disco)."
 
-#: ui/playlists.c:405
+#: ui/playlists.c:512
 msgid "Playlist 1"
 msgstr "Playlist 1"
 
-#: ui/controls.c:56
+#: ui/controls.c:129
 msgid "Previous"
 msgstr "Anterior"
 
-#: ui/controls.c:56
+#: ui/controls.c:131
 msgid "Play"
 msgstr "Tocar"
 
-#: ui/controls.c:57
+#: ui/controls.c:132
 msgid "Pause"
 msgstr "Pausar"
 
-#: ui/controls.c:57
+#: ui/controls.c:136
 msgid "Stop"
 msgstr "Parar"
 
-#: ui/controls.c:58
+#: ui/controls.c:139
 msgid "Next"
 msgstr "Próxima"
 
-#: ui/controls.c:65
+#: ui/controls.c:141
 msgid "Repeat"
 msgstr "Repetir"
 
-#: ui/controls.c:68
+#: ui/controls.c:144
 msgid "Shuffle"
 msgstr "Aleatório"
+
+#: ui/player.c:177
+msgid "Cannot run the player program (mpv)"
+msgstr "Não foi possível rodar o programa que toca (mpv)"
+
+#: ui/player.c:179
+#, c-format
+msgid ""
+"%s\n"
+"\n"
+"Install mpv, or set its path in kiplay.ini ([mpv] program = ...)."
+msgstr "%s\n\nInstale o mpv ou informe o caminho dele no kiplay.ini ([mpv] program = ...)."
+
+#: ui/player.c:309
+#, c-format
+msgid "Could not play %s"
+msgstr "Não foi possível tocar %s"
+
+#: ui/player.c:338
+#, c-format
+msgid "the player program stopped (%s)"
+msgstr "o programa que toca parou (%s)"
+
+#: ui/player.c:341
+msgid "The player program keeps stopping; giving up for now."
+msgstr "O programa que toca continua parando; desisti por enquanto."

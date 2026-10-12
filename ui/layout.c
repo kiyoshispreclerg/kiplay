@@ -98,3 +98,30 @@ void kp_layout_apply(kp_app *app)
         kp_log_debug("layout: video XID %lu -> %lu", xid_before,
                      (unsigned long)GDK_WINDOW_XID(app->video->window));
 }
+
+void kp_layout_update_video(kp_app *app)
+{
+    bool want = app->video_forced || app->playing.has_video || app->fullscreen;
+    if (want == app->show_video)
+        return;
+    kp_layout_save(app);
+    app->show_video = want;
+    kp_layout_apply(app);
+}
+
+void kp_layout_set_fullscreen(kp_app *app, bool on)
+{
+    if (on == app->fullscreen)
+        return;
+    app->fullscreen = on;
+    kp_layout_update_video(app);
+    /* Everything but the video steps aside; the paned gives the video all
+     * the room when the other side is hidden. */
+    GtkWidget *others[] = {app->menubar, app->notebook, app->controls, app->status};
+    for (size_t i = 0; i < G_N_ELEMENTS(others); i++)
+        gtk_widget_set_visible(others[i], !on);
+    if (on)
+        gtk_window_fullscreen(GTK_WINDOW(app->window));
+    else
+        gtk_window_unfullscreen(GTK_WINDOW(app->window));
+}

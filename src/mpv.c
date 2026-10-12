@@ -2,6 +2,7 @@
 #include "backend.h"
 
 #include <gio/gio.h>
+#include <locale.h>
 #include <gio/gunixsocketaddress.h>
 #include <signal.h>
 #include <stdlib.h>
@@ -22,6 +23,7 @@ enum {
     OBS_PAUSE,
     OBS_TITLE,
     OBS_TRACKS,
+    OBS_METADATA,
 };
 #define REQ_TIME 100
 
@@ -57,6 +59,18 @@ static void emit(kp_backend *b, kp_event_type type, double value, bool flag, con
 
 /* ---- parsing ------------------------------------------------------------- */
 
+/* JSON numbers use a dot, but cJSON reads and writes them with strtod and
+ * sprintf, which follow LC_NUMERIC: under pt_BR "268.05" fails to parse
+ * and a seek would go out as "12,5". Every cJSON call here runs in the C
+ * locale, whatever the program's. */
+static locale_t c_locale(void)
+{
+    static locale_t loc;
+    if (!loc)
+        loc = newlocale(LC_ALL_MASK, "C", (locale_t)0);
+    return loc;
+}
+
 /* A track list has a real video track if one isn't just embedded cover art. */
 static bool has_real_video(const cJSON *tracks)
 {
@@ -70,13 +84,29 @@ static bool has_real_video(const cJSON *tracks)
     return false;
 }
 
+/* Tag names vary in case (ID3 "title", Vorbis "TITLE"). */
+static const char *tag(const cJSON *meta, const char *name)
+{
+    const cJSON *t;
+    cJSON_ArrayForEach(t, meta)
+    {
+        if (t->string && !g_ascii_strcasecmp(t->string, name) && cJSON_IsString(t) &&
+            *t->valuestring)
+            return t->valuestring;
+    }
+    return NULL;
+}
+
 void kp_mpv_parse_line(const char *line, kp_event_cb cb, void *ud)
 {
+    locale_t old = uselocale(c_locale());
     cJSON *j = cJSON_Parse(line);
+    uselocale(old);
     if (!j)
         return;
     kp_event ev = {0};
     bool send = false;
+    char *owned = NULL;
     const char *event = kp_json_str(j, "event");
     const cJSON *data = cJSON_GetObjectItem(j, "data");
     if (event && !strcmp(event, "property-change")) {
@@ -99,6 +129,15 @@ void kp_mpv_parse_line(const char *line, kp_event_cb cb, void *ud)
             ev = (kp_event){KP_EV_VIDEO, 0, has_real_video(data), NULL};
             send = true;
             break;
+        case OBS_METADATA: {
+            /* Audacious's "Artist - Title"; the title alone if no artist. */
+            const char *title = tag(data, "title"), *artist = tag(data, "artist");
+            if (title && artist)
+                owned = g_strdup_printf("%s - %s", artist, title);
+            ev = (kp_event){KP_EV_TAGS, 0, false, owned ? owned : title};
+            send = true;
+            break;
+        }
         default:
             break;
         }
@@ -123,6 +162,7 @@ void kp_mpv_parse_line(const char *line, kp_event_cb cb, void *ud)
     }
     if (send)
         cb(ud, &ev);
+    g_free(owned);
     cJSON_Delete(j);
 }
 
@@ -179,7 +219,9 @@ static void flush(kp_backend *b)
 /* Takes ownership of cmd ({"command": [...]}). */
 static void send_json(kp_backend *b, cJSON *cmd)
 {
+    locale_t old = uselocale(c_locale());
     char *text = cJSON_PrintUnformatted(cmd);
+    uselocale(old);
     cJSON_Delete(cmd);
     if (!text)
         return;
@@ -241,6 +283,8 @@ static void on_line(GObject *src, GAsyncResult *res, gpointer data)
         }
         return;
     }
+    if (!strstr(line, "\"request_id\":100"))
+        kp_log_debug("mpv< %.200s", line);
     kp_mpv_parse_line(line, on_parsed, b);
     g_free(line);
     read_next(b);
@@ -480,6 +524,7 @@ bool kp_backend_start(kp_backend *b, char **err)
     observe(b, OBS_PAUSE, "pause");
     observe(b, OBS_TITLE, "media-title");
     observe(b, OBS_TRACKS, "track-list");
+    observe(b, OBS_METADATA, "metadata");
     b->connect_elapsed = 0;
     b->connect_timer = g_timeout_add(CONNECT_RETRY_MS, try_connect, b);
     return true;
@@ -492,12 +537,8 @@ void kp_backend_load(kp_backend *b, const char *path, double start)
     cJSON_AddItemToArray(args_of(cmd), cJSON_CreateString(path));
     cJSON_AddItemToArray(args_of(cmd), cJSON_CreateString("replace"));
     if (start > 0) {
-        char opt[64];
-        g_snprintf(opt, sizeof opt, "start=%.3f", start);
-        /* mpv wants a dot whatever the locale. */
-        for (char *c = opt; *c; c++)
-            if (*c == ',')
-                *c = '.';
+        char opt[64], num[G_ASCII_DTOSTR_BUF_SIZE];
+        g_snprintf(opt, sizeof opt, "start=%s", g_ascii_formatd(num, sizeof num, "%.3f", start));
         cJSON_AddItemToArray(args_of(cmd), cJSON_CreateString(opt));
     }
     send_json(b, cmd);

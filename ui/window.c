@@ -55,9 +55,9 @@ static void on_show_video(GtkCheckMenuItem *it, gpointer data)
 {
     kp_app *app = data;
     kp_layout_save(app);
-    app->show_video = gtk_check_menu_item_get_active(it);
-    kp_prefs_set_bool(app->prefs, "layout", "show_video", app->show_video);
-    kp_layout_apply(app);
+    app->video_forced = gtk_check_menu_item_get_active(it);
+    kp_prefs_set_bool(app->prefs, "layout", "show_video", app->video_forced);
+    kp_layout_update_video(app);
 }
 
 static void on_video_pos(GtkCheckMenuItem *it, gpointer data)
@@ -99,6 +99,11 @@ static void radio_group(GtkWidget *menu, kp_app *app, const char *const labels[]
 
 /* ---- the rest ------------------------------------------------------------ */
 
+static void toggle_fullscreen(kp_app *app)
+{
+    kp_layout_set_fullscreen(app, !app->fullscreen);
+}
+
 static void on_about(kp_app *app)
 {
     const char *authors[] = {"Kiyoshi Spreclerg", NULL};
@@ -115,6 +120,9 @@ static void on_about(kp_app *app)
 static void close_window(kp_window *w)
 {
     kp_app *app = &w->app;
+    /* The divider and the size to keep are the windowed ones. */
+    kp_layout_set_fullscreen(app, false);
+    kp_player_free(app);
     kp_playlists_save(app);
     kp_layout_save(app);
     kp_prefs_set_int(app->prefs, "window", "width", w->width);
@@ -151,7 +159,7 @@ static GtkWidget *menu_bar(kp_app *app)
 
     m = submenu(bar, _("_View"), app);
     GtkWidget *show = gtk_check_menu_item_new_with_mnemonic(_("_Video area"));
-    gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(show), app->show_video);
+    gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(show), app->video_forced);
     g_signal_connect(show, "toggled", G_CALLBACK(on_show_video), app);
     accel(show, app, GDK_v, GDK_CONTROL_MASK | GDK_SHIFT_MASK);
     gtk_menu_shell_append(GTK_MENU_SHELL(m), show);
@@ -167,30 +175,120 @@ static GtkWidget *menu_bar(kp_app *app)
     radio_group(m, app, controls_labels, KP_CONTROLS_POS_COUNT, app->controls_pos,
                 G_CALLBACK(on_controls_pos));
 
+    m = submenu(bar, _("Play_back"), app);
+    item(m, _("_Play / Pause"), G_CALLBACK(kp_player_toggle_pause), app);
+    item(m, _("_Stop"), G_CALLBACK(kp_player_stop), app);
+    item(m, _("P_revious"), G_CALLBACK(kp_player_prev), app);
+    item(m, _("_Next"), G_CALLBACK(kp_player_next), app);
+    separator(m);
+    accel(item(m, _("_Fullscreen"), G_CALLBACK(toggle_fullscreen), app), app, GDK_F11, 0);
+
     m = submenu(bar, _("_Help"), app);
     item(m, _("_About"), G_CALLBACK(on_about), app);
     return bar;
 }
 
-/* Alt+1..9: go to that tab. */
+static void change_volume(kp_app *app, int delta)
+{
+    double v = gtk_scale_button_get_value(GTK_SCALE_BUTTON(app->volume)) + delta / 100.0;
+    /* The button tells the player through its value-changed signal. */
+    gtk_scale_button_set_value(GTK_SCALE_BUTTON(app->volume), CLAMP(v, 0.0, 1.0));
+}
+
+/* Player keys (SMPlayer/mpv habits), Alt+1..9 for the tabs, and the media
+ * keys while the window has the focus. */
 static gboolean on_key(GtkWidget *widget, GdkEventKey *ev, gpointer data)
 {
     (void)widget;
     kp_app *app = data;
-    if ((ev->state & gtk_accelerator_get_default_mod_mask()) != GDK_MOD1_MASK)
-        return FALSE;
-    if (ev->keyval >= GDK_1 && ev->keyval <= GDK_9) {
+    GdkModifierType mods = ev->state & gtk_accelerator_get_default_mod_mask();
+    if (mods == GDK_MOD1_MASK && ev->keyval >= GDK_1 && ev->keyval <= GDK_9) {
         gtk_notebook_set_current_page(GTK_NOTEBOOK(app->notebook), (int)(ev->keyval - GDK_1));
         return TRUE;
     }
-    return FALSE;
+    /* Typing in a text field (tree view search, dialogs) is not a command. */
+    if (GTK_IS_EDITABLE(gtk_window_get_focus(GTK_WINDOW(app->window))))
+        return FALSE;
+    bool shift = mods == GDK_SHIFT_MASK;
+    if (mods != 0 && !shift)
+        return FALSE;
+    switch (ev->keyval) {
+    case GDK_space:
+    case GDK_AudioPlay:
+    case GDK_AudioPause:
+        kp_player_toggle_pause(app);
+        return TRUE;
+    case GDK_AudioStop:
+        kp_player_stop(app);
+        return TRUE;
+    case GDK_AudioNext:
+        kp_player_next(app);
+        return TRUE;
+    case GDK_AudioPrev:
+        kp_player_prev(app);
+        return TRUE;
+    case GDK_Right:
+        kp_player_seek_relative(app, shift ? 60 : 5);
+        return TRUE;
+    case GDK_Left:
+        kp_player_seek_relative(app, shift ? -60 : -5);
+        return TRUE;
+    case GDK_plus:
+    case GDK_KP_Add:
+    case GDK_equal:
+        change_volume(app, 5);
+        return TRUE;
+    case GDK_minus:
+    case GDK_KP_Subtract:
+        change_volume(app, -5);
+        return TRUE;
+    case GDK_f:
+    case GDK_F:
+    case GDK_F11:
+        toggle_fullscreen(app);
+        return TRUE;
+    case GDK_Escape:
+        if (app->fullscreen) {
+            kp_layout_set_fullscreen(app, false);
+            return TRUE;
+        }
+        return FALSE;
+    case GDK_Up:
+    case GDK_Down:
+        /* In fullscreen there is no list to move in: volume. */
+        if (app->fullscreen) {
+            change_volume(app, ev->keyval == GDK_Up ? 5 : -5);
+            return TRUE;
+        }
+        return FALSE;
+    default:
+        return FALSE;
+    }
+}
+
+static gboolean on_video_click(GtkWidget *w, GdkEventButton *ev, gpointer data)
+{
+    (void)w;
+    kp_app *app = data;
+    if (ev->type == GDK_2BUTTON_PRESS && ev->button == 1)
+        toggle_fullscreen(app);
+    else if (ev->type == GDK_BUTTON_PRESS && ev->button == 2)
+        kp_player_toggle_pause(app);
+    return TRUE;
+}
+
+static gboolean on_video_scroll(GtkWidget *w, GdkEventScroll *ev, gpointer data)
+{
+    (void)w;
+    change_volume(data, ev->direction == GDK_SCROLL_UP ? 5 : -5);
+    return TRUE;
 }
 
 static gboolean on_configure(GtkWidget *widget, GdkEventConfigure *ev, gpointer data)
 {
     (void)widget;
     kp_window *w = data;
-    if (!w->maximized) {
+    if (!w->maximized && !w->app.fullscreen) {
         w->width = ev->width;
         w->height = ev->height;
     }
@@ -271,7 +369,8 @@ int kp_window_run(const kp_window_opts *opts)
                                          KP_VIDEO_ABOVE);
     app->controls_pos = kp_prefs_get_choice(app->prefs, "layout", "controls",
                                             kp_controls_pos_names, KP_CONTROLS_BOTTOM);
-    app->show_video = kp_prefs_get_bool(app->prefs, "layout", "show_video", false);
+    app->video_forced = kp_prefs_get_bool(app->prefs, "layout", "show_video", false);
+    app->show_video = app->video_forced;
 
     app->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(app->window), "Kiplay");
@@ -286,7 +385,8 @@ int kp_window_run(const kp_window_opts *opts)
 
     app->body = gtk_vbox_new(FALSE, 0);
     gtk_container_add(GTK_CONTAINER(app->window), app->body);
-    gtk_box_pack_start(GTK_BOX(app->body), menu_bar(app), FALSE, FALSE, 0);
+    app->menubar = menu_bar(app);
+    gtk_box_pack_start(GTK_BOX(app->body), app->menubar, FALSE, FALSE, 0);
 
     /* The video area: black, and later the backend's window (--wid). */
     app->video = gtk_drawing_area_new();
@@ -294,6 +394,9 @@ int kp_window_run(const kp_window_opts *opts)
     gtk_widget_modify_bg(app->video, GTK_STATE_NORMAL, &black);
     gtk_widget_set_size_request(app->video, 160, 90);
     g_object_ref_sink(app->video);
+    gtk_widget_add_events(app->video, GDK_BUTTON_PRESS_MASK | GDK_SCROLL_MASK);
+    g_signal_connect(app->video, "button-press-event", G_CALLBACK(on_video_click), app);
+    g_signal_connect(app->video, "scroll-event", G_CALLBACK(on_video_scroll), app);
 
     kp_playlists_init(app);
     app->controls = kp_controls_new(app);
@@ -305,6 +408,7 @@ int kp_window_run(const kp_window_opts *opts)
     gtk_widget_show_all(app->body);
     kp_layout_apply(app);
     kp_playlists_update_status(app);
+    kp_player_init(app);
 
     g_signal_connect(app->window, "key-press-event", G_CALLBACK(on_key), app);
     g_signal_connect(app->window, "configure-event", G_CALLBACK(on_configure), &w);
