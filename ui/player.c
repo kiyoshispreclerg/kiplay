@@ -438,6 +438,41 @@ static void advance(kp_app *app, bool failed)
     kp_player_play_at(app, app->playing.playlist_id, i);
 }
 
+/* Gapless: tells an engine that can do it what comes after the current
+ * file (if that one is for the same engine), so it starts without a gap. */
+void kp_player_requeue(kp_app *app)
+{
+    kp_playing *p = &app->playing;
+    if (!p->backend || !p->loaded || !(kp_backend_caps(p->backend) & KP_CAP_GAPLESS))
+        return;
+    long i = next_index(app, false);
+    kp_playlist *pl = playing_list(app);
+    const kp_entry *e = pl && i >= 0 ? kp_playlist_get(pl, (size_t)i) : NULL;
+    if (e && for_audio_engine(app, e->location)) {
+        p->queued = i;
+        kp_backend_queue(p->backend, e->location);
+    } else {
+        p->queued = -1;
+        kp_backend_queue(p->backend, NULL);
+    }
+}
+
+/* The engine moved on to the queued file by itself. */
+static void took_next(kp_app *app)
+{
+    kp_playing *p = &app->playing;
+    if (p->queued < 0)
+        return;
+    reset_state(app);
+    kp_playlists_mark_playing(app, p->playlist_id, -1);
+    p->index = p->queued;
+    p->queued = -1;
+    kp_playlists_mark_playing(app, p->playlist_id, p->index);
+    kp_prefs_set_int(app->prefs, "playback", "index", (int)p->index);
+    update_title(app);
+    kp_controls_update(app);
+}
+
 static void crashed(kp_app *app, const char *why)
 {
     gint64 now = g_get_monotonic_time();
@@ -473,6 +508,7 @@ static void on_event(void *ud, const kp_event *ev)
         kp_backend_set_ticking(p->backend, true);
         kp_layout_update_video(app);
         update_buttons(app);
+        kp_player_requeue(app);
         break;
     case KP_EV_DURATION:
         p->duration = ev->value;
@@ -513,8 +549,10 @@ static void on_event(void *ud, const kp_event *ev)
         p->loaded = false;
         advance(app, ev->flag);
         break;
+    case KP_EV_NEXT:
+        took_next(app);
+        break;
     case KP_EV_IDLE:
-    case KP_EV_NEXT: /* no gapless queue yet */
         break;
     case KP_EV_CRASHED:
         crashed(app, ev->text);

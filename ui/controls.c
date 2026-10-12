@@ -26,6 +26,7 @@ static void on_toggle(GtkToggleButton *b, gpointer data)
     kp_app *app = data;
     const char *key = g_object_get_data(G_OBJECT(b), "kp-key");
     kp_prefs_set_bool(app->prefs, "playback", key, gtk_toggle_button_get_active(b));
+    kp_player_requeue(app);
 }
 
 static GtkWidget *pref_toggle(kp_app *app, const char *stock, const char *tip, const char *key)

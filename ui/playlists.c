@@ -232,6 +232,8 @@ static long add_locations_full(kp_app *app, GtkWidget *page, kp_playlist *pl, ch
     }
     schedule_save(app);
     kp_playlists_update_status(app);
+    if (page_id(page) == app->playing.playlist_id)
+        kp_player_requeue(app); /* the current one may have been the last */
     return first;
 }
 
@@ -335,6 +337,7 @@ void kp_playlists_remove_selected(kp_app *app)
     if (playing_here) {
         app->playing.index = playing;
         kp_playlists_mark_playing(app, app->playing.playlist_id, gone ? -1 : playing);
+        kp_player_requeue(app);
     }
     schedule_save(app);
     kp_playlists_update_status(app);

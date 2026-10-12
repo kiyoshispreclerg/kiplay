@@ -138,6 +138,9 @@ void kp_player_seek_relative(kp_app *app, double seconds);
 void kp_player_set_volume(kp_app *app, int volume);
 /* Adds the files and, unless enqueue, plays the first; raises the window. */
 void kp_player_open(kp_app *app, char **locations, bool enqueue);
+/* The playlist or repeat/shuffle changed: hand the engine the right next
+ * file for gapless. */
+void kp_player_requeue(kp_app *app);
 /* A playlist was closed: stop if it was playing. */
 void kp_player_playlist_closed(kp_app *app, int id);
 
