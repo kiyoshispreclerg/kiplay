@@ -1,16 +1,15 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-#include "backend.h"
-
 #include <gio/gio.h>
-#include <locale.h>
 #include <gio/gunixsocketaddress.h>
-#include <signal.h>
-#include <stdlib.h>
+#include <locale.h>
 #include <string.h>
 #include <unistd.h>
 
+#include "backend_impl.h"
 #include "cJSON.h"
+#include "child.h"
 #include "json.h"
+#include "lineio.h"
 #include "log.h"
 
 /* mpv in --idle mode, driven over its JSON IPC socket
@@ -31,7 +30,8 @@ enum {
 #define CONNECT_GIVE_UP_MS 10000
 #define TICK_MS 250
 
-struct kp_backend {
+typedef struct {
+    kp_backend base;
     kp_backend_opts opts;
     char *program, *extra;
     char **test_args;
@@ -39,22 +39,18 @@ struct kp_backend {
     void *ud;
 
     char *sock_path;
-    GSubprocess *proc;
-    GCancellable *cancel; /* cancels the waits of the current process */
+    kp_child *child;
     GSocketConnection *conn;
-    GDataInputStream *in;
-    GPollableOutputStream *out;
-    GSource *out_source;
-    GString *pending; /* bytes not written yet (before connect or when full) */
+    kp_lineio *io; /* queues commands until the socket exists */
     guint connect_timer, tick_timer;
     int connect_elapsed;
-    bool ticking, loaded;
-};
+    bool loaded;
+} mpv;
 
-static void emit(kp_backend *b, kp_event_type type, double value, bool flag, const char *text)
+static void emit(mpv *m, kp_event_type type, double value, bool flag, const char *text)
 {
     kp_event ev = {type, value, flag, text};
-    b->cb(b->ud, &ev);
+    m->cb(m->ud, &ev);
 }
 
 /* ---- parsing ------------------------------------------------------------- */
@@ -168,56 +164,18 @@ void kp_mpv_parse_line(const char *line, kp_event_cb cb, void *ud)
 
 static void on_parsed(void *ud, const kp_event *ev)
 {
-    kp_backend *b = ud;
+    mpv *m = ud;
     if (ev->type == KP_EV_LOADED)
-        b->loaded = true;
+        m->loaded = true;
     else if (ev->type == KP_EV_ENDED || ev->type == KP_EV_IDLE)
-        b->loaded = false;
-    b->cb(b->ud, ev);
+        m->loaded = false;
+    m->cb(m->ud, ev);
 }
 
-/* ---- writing ------------------------------------------------------------- */
-
-static void flush(kp_backend *b);
-
-static gboolean on_writable(GObject *stream, gpointer data)
-{
-    (void)stream;
-    kp_backend *b = data;
-    g_source_destroy(b->out_source);
-    g_source_unref(b->out_source);
-    b->out_source = NULL;
-    flush(b);
-    return G_SOURCE_REMOVE;
-}
-
-/* Writes what it can; the rest waits for the socket to drain. */
-static void flush(kp_backend *b)
-{
-    if (!b->out || b->pending->len == 0 || b->out_source)
-        return;
-    GError *err = NULL;
-    gssize n = g_pollable_output_stream_write_nonblocking(b->out, b->pending->str,
-                                                          b->pending->len, NULL, &err);
-    if (n > 0)
-        g_string_erase(b->pending, 0, n);
-    if (err) {
-        bool again = g_error_matches(err, G_IO_ERROR, G_IO_ERROR_WOULD_BLOCK);
-        if (!again)
-            kp_log_debug("mpv: write: %s", err->message);
-        g_error_free(err);
-        if (!again)
-            return;
-    }
-    if (b->pending->len > 0) {
-        b->out_source = g_pollable_output_stream_create_source(b->out, NULL);
-        g_source_set_callback(b->out_source, (GSourceFunc)(void (*)(void))on_writable, b, NULL);
-        g_source_attach(b->out_source, NULL);
-    }
-}
+/* ---- commands ------------------------------------------------------------ */
 
 /* Takes ownership of cmd ({"command": [...]}). */
-static void send_json(kp_backend *b, cJSON *cmd)
+static void send_json(mpv *m, cJSON *cmd)
 {
     locale_t old = uselocale(c_locale());
     char *text = cJSON_PrintUnformatted(cmd);
@@ -225,14 +183,10 @@ static void send_json(kp_backend *b, cJSON *cmd)
     cJSON_Delete(cmd);
     if (!text)
         return;
-    g_string_append(b->pending, text);
-    g_string_append_c(b->pending, '\n');
+    kp_lineio_send(m->io, text);
     cJSON_free(text);
-    flush(b);
 }
 
-/* {"command": [args...]}; args are strings unless they look like the
- * markers below. */
 static cJSON *command(const char *name)
 {
     cJSON *cmd = cJSON_CreateObject();
@@ -246,227 +200,154 @@ static cJSON *args_of(cJSON *cmd)
     return cJSON_GetObjectItem(cmd, "command");
 }
 
-static void set_property(kp_backend *b, const char *name, cJSON *value)
+static void set_property(mpv *m, const char *name, cJSON *value)
 {
     cJSON *cmd = command("set_property");
     cJSON_AddItemToArray(args_of(cmd), cJSON_CreateString(name));
     cJSON_AddItemToArray(args_of(cmd), value);
-    send_json(b, cmd);
+    send_json(m, cmd);
 }
 
-static void observe(kp_backend *b, int id, const char *name)
+static void observe(mpv *m, int id, const char *name)
 {
     cJSON *cmd = command("observe_property");
     cJSON_AddItemToArray(args_of(cmd), cJSON_CreateNumber(id));
     cJSON_AddItemToArray(args_of(cmd), cJSON_CreateString(name));
-    send_json(b, cmd);
+    send_json(m, cmd);
 }
 
-/* ---- reading ------------------------------------------------------------- */
-
-static void read_next(kp_backend *b);
-
-static void on_line(GObject *src, GAsyncResult *res, gpointer data)
+static void on_line(void *ud, const char *line)
 {
-    GError *err = NULL;
-    char *line = g_data_input_stream_read_line_finish_utf8(G_DATA_INPUT_STREAM(src), res, NULL, &err);
-    if (g_error_matches(err, G_IO_ERROR, G_IO_ERROR_CANCELLED)) {
-        g_error_free(err);
-        return; /* b may be gone */
-    }
-    kp_backend *b = data;
-    if (!line) {
-        /* EOF or error: the process is going away; its exit reports it. */
-        if (err) {
-            kp_log_debug("mpv: read: %s", err->message);
-            g_error_free(err);
-        }
-        return;
-    }
+    mpv *m = ud;
+    if (!line)
+        return; /* the process is going away; its exit reports it */
     if (!strstr(line, "\"request_id\":100"))
         kp_log_debug("mpv< %.200s", line);
-    kp_mpv_parse_line(line, on_parsed, b);
-    g_free(line);
-    read_next(b);
-}
-
-static void read_next(kp_backend *b)
-{
-    g_data_input_stream_read_line_async(b->in, G_PRIORITY_DEFAULT, b->cancel, on_line, b);
+    kp_mpv_parse_line(line, on_parsed, m);
 }
 
 static gboolean on_tick(gpointer data)
 {
-    kp_backend *b = data;
-    if (b->conn && b->loaded) {
+    mpv *m = data;
+    if (m->conn && m->loaded) {
         cJSON *cmd = command("get_property");
         cJSON_AddItemToArray(args_of(cmd), cJSON_CreateString("time-pos"));
         cJSON_AddNumberToObject(cmd, "request_id", REQ_TIME);
-        send_json(b, cmd);
+        send_json(m, cmd);
     }
     return G_SOURCE_CONTINUE;
 }
 
-void kp_backend_set_ticking(kp_backend *b, bool on)
+static void set_ticking(kp_backend *b, bool on)
 {
-    b->ticking = on;
-    if (on && !b->tick_timer)
-        b->tick_timer = g_timeout_add(TICK_MS, on_tick, b);
-    else if (!on && b->tick_timer) {
-        g_source_remove(b->tick_timer);
-        b->tick_timer = 0;
+    mpv *m = (mpv *)b;
+    if (on && !m->tick_timer)
+        m->tick_timer = g_timeout_add(TICK_MS, on_tick, m);
+    else if (!on && m->tick_timer) {
+        g_source_remove(m->tick_timer);
+        m->tick_timer = 0;
     }
 }
 
 /* ---- the process --------------------------------------------------------- */
 
-static void drop_connection(kp_backend *b)
+static void drop_connection(mpv *m)
 {
-    if (b->connect_timer) {
-        g_source_remove(b->connect_timer);
-        b->connect_timer = 0;
+    if (m->connect_timer) {
+        g_source_remove(m->connect_timer);
+        m->connect_timer = 0;
     }
-    if (b->out_source) {
-        g_source_destroy(b->out_source);
-        g_source_unref(b->out_source);
-        b->out_source = NULL;
-    }
-    g_clear_object(&b->in);
-    b->out = NULL;
-    if (b->conn) {
-        g_io_stream_close(G_IO_STREAM(b->conn), NULL, NULL);
-        g_clear_object(&b->conn);
+    kp_lineio_detach(m->io);
+    if (m->conn) {
+        g_io_stream_close(G_IO_STREAM(m->conn), NULL, NULL);
+        g_clear_object(&m->conn);
     }
 }
 
 static gboolean try_connect(gpointer data)
 {
-    kp_backend *b = data;
+    mpv *m = data;
     GSocketClient *client = g_socket_client_new();
-    GSocketAddress *addr = g_unix_socket_address_new(b->sock_path);
+    GSocketAddress *addr = g_unix_socket_address_new(m->sock_path);
     /* A unix socket connects (or fails) at once: no waiting here. */
     GSocketConnection *conn = g_socket_client_connect(client, G_SOCKET_CONNECTABLE(addr), NULL, NULL);
     g_object_unref(addr);
     g_object_unref(client);
     if (!conn) {
-        b->connect_elapsed += CONNECT_RETRY_MS;
-        if (b->connect_elapsed < CONNECT_GIVE_UP_MS)
+        m->connect_elapsed += CONNECT_RETRY_MS;
+        if (m->connect_elapsed < CONNECT_GIVE_UP_MS)
             return G_SOURCE_CONTINUE;
-        b->connect_timer = 0;
+        m->connect_timer = 0;
         kp_log_warn("mpv: no IPC socket after %d s", CONNECT_GIVE_UP_MS / 1000);
-        if (b->proc)
-            g_subprocess_force_exit(b->proc);
+        if (m->child)
+            g_subprocess_force_exit(kp_child_proc(m->child));
         return G_SOURCE_REMOVE;
     }
-    b->connect_timer = 0;
-    b->conn = conn;
-    b->in = g_data_input_stream_new(g_io_stream_get_input_stream(G_IO_STREAM(conn)));
-    b->out = G_POLLABLE_OUTPUT_STREAM(g_io_stream_get_output_stream(G_IO_STREAM(conn)));
-    kp_log_debug("mpv: connected after %d ms", b->connect_elapsed);
-    read_next(b);
-    flush(b);
+    m->connect_timer = 0;
+    m->conn = conn;
+    kp_log_debug("mpv: connected after %d ms", m->connect_elapsed);
+    kp_lineio_attach(m->io, g_io_stream_get_input_stream(G_IO_STREAM(conn)),
+                     g_io_stream_get_output_stream(G_IO_STREAM(conn)));
     return G_SOURCE_REMOVE;
 }
 
-static void on_exit(GObject *src, GAsyncResult *res, gpointer data)
+static void on_exit(void *ud, const char *why)
 {
-    GError *err = NULL;
-    bool ok = g_subprocess_wait_finish(G_SUBPROCESS(src), res, &err);
-    if (!ok && g_error_matches(err, G_IO_ERROR, G_IO_ERROR_CANCELLED)) {
-        g_error_free(err);
-        return; /* we stopped it on purpose */
-    }
-    g_clear_error(&err);
-    kp_backend *b = data;
-    char *why;
-    GSubprocess *p = G_SUBPROCESS(src);
-    if (g_subprocess_get_if_signaled(p))
-        why = g_strdup_printf("signal %d", g_subprocess_get_term_sig(p));
-    else
-        why = g_strdup_printf("exit status %d", g_subprocess_get_exit_status(p));
+    mpv *m = ud;
     kp_log_debug("mpv: exited (%s)", why);
-    drop_connection(b);
-    g_cancellable_cancel(b->cancel);
-    g_clear_object(&b->cancel);
-    g_clear_object(&b->proc);
-    g_string_truncate(b->pending, 0);
-    b->loaded = false;
-    emit(b, KP_EV_CRASHED, 0, false, why);
-    g_free(why);
+    drop_connection(m);
+    kp_child_stop(m->child);
+    m->child = NULL;
+    m->loaded = false;
+    emit(m, KP_EV_CRASHED, 0, false, why);
 }
 
-kp_backend *kp_backend_new_mpv(const kp_backend_opts *opts, kp_event_cb cb, void *ud)
+static void shutdown_process(mpv *m)
 {
-    kp_backend *b = g_new0(kp_backend, 1);
-    b->opts = *opts;
-    b->program = g_strdup(opts->program ? opts->program : "mpv");
-    b->extra = g_strdup(opts->extra);
-    b->test_args = g_strdupv((char **)opts->test_args);
-    b->opts.program = b->program;
-    b->opts.extra = b->extra;
-    b->cb = cb;
-    b->ud = ud;
-    b->pending = g_string_new(NULL);
-    static int serial;
-    /* Short: unix socket paths are limited to 108 bytes. */
-    char name[64];
-    g_snprintf(name, sizeof name, "kiplay-%d-%d.sock", (int)getpid(), ++serial);
-    b->sock_path = g_build_filename(g_get_user_runtime_dir(), name, NULL);
-    return b;
-}
-
-static void shutdown_process(kp_backend *b)
-{
-    if (!b->proc)
+    if (!m->child)
         return;
-    if (b->conn) {
-        send_json(b, command("quit"));
-    }
-    if (b->cancel)
-        g_cancellable_cancel(b->cancel);
-    drop_connection(b);
-    /* mpv quits on SIGTERM too; nobody waits for it after this. */
-    g_subprocess_send_signal(b->proc, SIGTERM);
-    g_clear_object(&b->proc);
-    g_clear_object(&b->cancel);
-    g_string_truncate(b->pending, 0);
-    b->loaded = false;
-    unlink(b->sock_path);
+    if (m->conn)
+        send_json(m, command("quit"));
+    drop_connection(m);
+    /* mpv quits on SIGTERM too. */
+    kp_child_stop(m->child);
+    m->child = NULL;
+    m->loaded = false;
+    unlink(m->sock_path);
 }
 
-void kp_backend_free(kp_backend *b)
+static void mpv_free(kp_backend *b)
 {
-    if (!b)
-        return;
-    kp_backend_set_ticking(b, false);
-    shutdown_process(b);
-    g_string_free(b->pending, TRUE);
-    g_free(b->sock_path);
-    g_free(b->program);
-    g_free(b->extra);
-    g_strfreev(b->test_args);
-    g_free(b);
+    mpv *m = (mpv *)b;
+    set_ticking(b, false);
+    shutdown_process(m);
+    kp_lineio_free(m->io);
+    g_free(m->sock_path);
+    g_free(m->program);
+    g_free(m->extra);
+    g_strfreev(m->test_args);
+    g_free(m);
 }
 
-bool kp_backend_running(const kp_backend *b)
+static bool running(const kp_backend *b)
 {
-    return b->proc != NULL;
+    return ((const mpv *)b)->child != NULL;
 }
 
-int kp_backend_pid(const kp_backend *b)
+static int pid(const kp_backend *b)
 {
-    const char *id = b->proc ? g_subprocess_get_identifier(b->proc) : NULL;
-    return id ? atoi(id) : 0;
+    return kp_child_pid(((const mpv *)b)->child);
 }
 
-bool kp_backend_start(kp_backend *b, char **err)
+static bool start(kp_backend *b, char **err)
 {
-    if (b->proc)
+    mpv *m = (mpv *)b;
+    if (m->child)
         return true;
-    unlink(b->sock_path);
+    unlink(m->sock_path);
     GPtrArray *argv = g_ptr_array_new_with_free_func(g_free);
-    g_ptr_array_add(argv, g_strdup(b->program));
-    if (!b->opts.use_config)
+    g_ptr_array_add(argv, g_strdup(m->program));
+    if (!m->opts.use_config)
         g_ptr_array_add(argv, g_strdup("--no-config"));
     /* Keys, mouse and the on-screen controller are Kiplay's; mpv only
      * decodes and draws. */
@@ -482,17 +363,17 @@ bool kp_backend_start(kp_backend *b, char **err)
                            NULL};
     for (int i = 0; fixed[i]; i++)
         g_ptr_array_add(argv, g_strdup(fixed[i]));
-    g_ptr_array_add(argv, g_strdup_printf("--input-ipc-server=%s", b->sock_path));
-    g_ptr_array_add(argv, g_strdup_printf("--volume=%d", b->opts.volume));
-    if (b->opts.wid)
-        g_ptr_array_add(argv, g_strdup_printf("--wid=%lu", b->opts.wid));
-    for (char **t = b->test_args; t && *t; t++)
+    g_ptr_array_add(argv, g_strdup_printf("--input-ipc-server=%s", m->sock_path));
+    g_ptr_array_add(argv, g_strdup_printf("--volume=%d", m->opts.volume));
+    if (m->opts.wid)
+        g_ptr_array_add(argv, g_strdup_printf("--wid=%lu", m->opts.wid));
+    for (char **t = m->test_args; t && *t; t++)
         g_ptr_array_add(argv, g_strdup(*t));
-    if (b->extra && *b->extra) {
+    if (m->extra && *m->extra) {
         int n;
         char **extra;
         GError *gerr = NULL;
-        if (g_shell_parse_argv(b->extra, &n, &extra, &gerr)) {
+        if (g_shell_parse_argv(m->extra, &n, &extra, &gerr)) {
             for (int i = 0; i < n; i++)
                 g_ptr_array_add(argv, extra[i]);
             g_free(extra); /* the strings moved into argv */
@@ -502,79 +383,97 @@ bool kp_backend_start(kp_backend *b, char **err)
         }
     }
     g_ptr_array_add(argv, NULL);
-
-    GError *gerr = NULL;
-    b->proc = g_subprocess_newv((const char *const *)argv->pdata, G_SUBPROCESS_FLAGS_NONE, &gerr);
-    if (kp_log_debug_enabled()) {
-        char *line = g_strjoinv(" ", (char **)argv->pdata);
-        kp_log_debug("mpv: %s", line);
-        g_free(line);
-    }
+    m->child = kp_child_spawn((const char *const *)argv->pdata, G_SUBPROCESS_FLAGS_NONE, on_exit,
+                              m, err);
     g_ptr_array_free(argv, TRUE);
-    if (!b->proc) {
-        if (err)
-            *err = g_strdup(gerr->message);
-        g_error_free(gerr);
+    if (!m->child)
         return false;
-    }
-    b->cancel = g_cancellable_new();
-    g_subprocess_wait_async(b->proc, b->cancel, on_exit, b);
 
-    observe(b, OBS_DURATION, "duration");
-    observe(b, OBS_PAUSE, "pause");
-    observe(b, OBS_TITLE, "media-title");
-    observe(b, OBS_TRACKS, "track-list");
-    observe(b, OBS_METADATA, "metadata");
-    b->connect_elapsed = 0;
-    b->connect_timer = g_timeout_add(CONNECT_RETRY_MS, try_connect, b);
+    observe(m, OBS_DURATION, "duration");
+    observe(m, OBS_PAUSE, "pause");
+    observe(m, OBS_TITLE, "media-title");
+    observe(m, OBS_TRACKS, "track-list");
+    observe(m, OBS_METADATA, "metadata");
+    m->connect_elapsed = 0;
+    m->connect_timer = g_timeout_add(CONNECT_RETRY_MS, try_connect, m);
     return true;
 }
 
-void kp_backend_load(kp_backend *b, const char *path, double start)
+static void load(kp_backend *b, const char *path, double start_at)
 {
-    set_property(b, "pause", cJSON_CreateFalse());
+    mpv *m = (mpv *)b;
+    set_property(m, "pause", cJSON_CreateFalse());
     cJSON *cmd = command("loadfile");
     cJSON_AddItemToArray(args_of(cmd), cJSON_CreateString(path));
     cJSON_AddItemToArray(args_of(cmd), cJSON_CreateString("replace"));
-    if (start > 0) {
+    if (start_at > 0) {
         char opt[64], num[G_ASCII_DTOSTR_BUF_SIZE];
-        g_snprintf(opt, sizeof opt, "start=%s", g_ascii_formatd(num, sizeof num, "%.3f", start));
+        g_snprintf(opt, sizeof opt, "start=%s", g_ascii_formatd(num, sizeof num, "%.3f", start_at));
         cJSON_AddItemToArray(args_of(cmd), cJSON_CreateString(opt));
     }
-    send_json(b, cmd);
+    send_json(m, cmd);
 }
 
-void kp_backend_stop(kp_backend *b)
+static void stop(kp_backend *b)
 {
-    send_json(b, command("stop"));
-    b->loaded = false;
+    mpv *m = (mpv *)b;
+    send_json(m, command("stop"));
+    m->loaded = false;
 }
 
-void kp_backend_set_pause(kp_backend *b, bool paused)
+static void set_pause(kp_backend *b, bool paused)
 {
-    set_property(b, "pause", cJSON_CreateBool(paused));
+    set_property((mpv *)b, "pause", cJSON_CreateBool(paused));
 }
 
-static void seek(kp_backend *b, double seconds, const char *how)
+static void seek(kp_backend *b, double seconds, bool relative)
 {
     cJSON *cmd = command("seek");
     cJSON_AddItemToArray(args_of(cmd), cJSON_CreateNumber(seconds));
-    cJSON_AddItemToArray(args_of(cmd), cJSON_CreateString(how));
-    send_json(b, cmd);
+    cJSON_AddItemToArray(args_of(cmd), cJSON_CreateString(relative ? "relative" : "absolute"));
+    send_json((mpv *)b, cmd);
 }
 
-void kp_backend_seek(kp_backend *b, double seconds)
+static void set_volume(kp_backend *b, int volume)
 {
-    seek(b, seconds, "absolute");
+    mpv *m = (mpv *)b;
+    m->opts.volume = volume;
+    set_property(m, "volume", cJSON_CreateNumber(volume));
 }
 
-void kp_backend_seek_relative(kp_backend *b, double seconds)
-{
-    seek(b, seconds, "relative");
-}
+static const kp_backend_ops mpv_ops = {
+    .name = "mpv",
+    .caps = KP_CAP_VIDEO,
+    .start = start,
+    .running = running,
+    .pid = pid,
+    .load = load,
+    .stop = stop,
+    .set_pause = set_pause,
+    .seek = seek,
+    .set_volume = set_volume,
+    .set_ticking = set_ticking,
+    .free = mpv_free,
+};
 
-void kp_backend_set_volume(kp_backend *b, int volume)
+kp_backend *kp_backend_new_mpv(const kp_backend_opts *opts, kp_event_cb cb, void *ud)
 {
-    b->opts.volume = volume;
-    set_property(b, "volume", cJSON_CreateNumber(volume));
+    mpv *m = g_new0(mpv, 1);
+    m->base.ops = &mpv_ops;
+    m->opts = *opts;
+    m->program = g_strdup(opts->program ? opts->program : "mpv");
+    m->extra = g_strdup(opts->extra);
+    m->test_args = g_strdupv((char **)opts->test_args);
+    m->opts.program = m->program;
+    m->opts.extra = m->extra;
+    m->opts.device = NULL;
+    m->cb = cb;
+    m->ud = ud;
+    m->io = kp_lineio_new("mpv", on_line, m);
+    static int serial;
+    /* Short: unix socket paths are limited to 108 bytes. */
+    char name[64];
+    g_snprintf(name, sizeof name, "kiplay-%d-%d.sock", (int)getpid(), ++serial);
+    m->sock_path = g_build_filename(g_get_user_runtime_dir(), name, NULL);
+    return &m->base;
 }

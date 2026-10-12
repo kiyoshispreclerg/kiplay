@@ -5,8 +5,8 @@
 #include <stdbool.h>
 
 /* The external player that decodes and draws: one process kept alive
- * between files (mpv --idle now; MPlayer and kiplay-audio later behind the
- * same calls). Everything runs on the GLib main loop and never blocks: the
+ * between files, behind the same calls whatever it is: mpv --idle (audio
+ * and video) or kiplay-audio (Kiplay's own small music engine). Everything runs on the GLib main loop and never blocks: the
  * process is spawned asynchronously, commands are queued until it listens
  * and written without blocking, and what it says comes back as events.
  *
@@ -25,6 +25,7 @@ typedef enum {
     KP_EV_TITLE,    /* text = what to call it now (tags, stream title, file name) */
     KP_EV_TAGS,     /* text = "Artist - Title" from the file's tags (NULL: none) */
     KP_EV_ENDED,    /* the file ended by itself (flag = with an error) */
+    KP_EV_NEXT,     /* gapless: the queued file took over (LOADED etc. follow) */
     KP_EV_IDLE,     /* nothing loaded */
     KP_EV_CRASHED,  /* the process went away; text = why */
 } kp_event_type;
@@ -38,8 +39,14 @@ typedef struct {
 
 typedef void (*kp_event_cb)(void *ud, const kp_event *ev);
 
+/* What a backend can do beyond the basics. */
+enum {
+    KP_CAP_VIDEO = 1 << 0,   /* draws video into opts.wid */
+    KP_CAP_GAPLESS = 1 << 1, /* kp_backend_queue: the next file starts without a gap */
+};
+
 typedef struct {
-    /* Program to run ("mpv", or a full path). */
+    /* Program to run ("mpv", "kiplay-audio", or a full path). */
     const char *program;
     /* X window to draw into (--wid); 0 = none (tests, audio only). */
     unsigned long wid;
@@ -47,6 +54,8 @@ typedef struct {
     bool use_config;
     /* Initial volume, 0..100. */
     int volume;
+    /* kiplay-audio: ALSA device ("default", "hw:1"...); NULL = default. */
+    const char *device;
     /* Extra arguments as typed by the user (shell quoting), may be NULL. */
     const char *extra;
     /* Arguments for tests (e.g. {"--ao=null", "--vo=null", NULL}), may be NULL. */
@@ -57,6 +66,9 @@ typedef struct kp_backend kp_backend;
 
 /* Nothing starts until kp_backend_start. opts is copied. */
 kp_backend *kp_backend_new_mpv(const kp_backend_opts *opts, kp_event_cb cb, void *ud);
+kp_backend *kp_backend_new_audio(const kp_backend_opts *opts, kp_event_cb cb, void *ud);
+const char *kp_backend_name(const kp_backend *b);
+unsigned kp_backend_caps(const kp_backend *b);
 /* Stops the process (asks it to quit, kills it if it lingers). */
 void kp_backend_free(kp_backend *b);
 
@@ -68,6 +80,9 @@ int kp_backend_pid(const kp_backend *b);
 
 /* Plays path (a file or URL) from start seconds (0 = beginning). */
 void kp_backend_load(kp_backend *b, const char *path, double start);
+/* What to play when the current file ends, without a gap (KP_CAP_GAPLESS;
+ * NULL clears it). KP_EV_NEXT tells when it took over. */
+void kp_backend_queue(kp_backend *b, const char *path);
 void kp_backend_stop(kp_backend *b);
 void kp_backend_set_pause(kp_backend *b, bool paused);
 void kp_backend_seek(kp_backend *b, double seconds);          /* absolute */

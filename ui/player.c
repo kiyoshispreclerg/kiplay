@@ -416,6 +416,7 @@ static void on_event(void *ud, const kp_event *ev)
         advance(app, ev->flag);
         break;
     case KP_EV_IDLE:
+    case KP_EV_NEXT: /* no gapless queue yet */
         break;
     case KP_EV_CRASHED:
         crashed(app, ev->text);

@@ -12,6 +12,9 @@ LIB_SRC = src/log.c \
       src/plset.c \
       src/instance.c \
       src/json.c \
+      src/lineio.c \
+      src/child.c \
+      src/backend.c \
       src/mpv.c \
       src/ytsub.c \
       src/srv3.c \
