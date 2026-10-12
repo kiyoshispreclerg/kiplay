@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: kiplay\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-12 09:12-0300\n"
+"POT-Creation-Date: 2026-10-12 09:43-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -249,28 +249,34 @@ msgstr ""
 msgid "Shuffle"
 msgstr ""
 
-#: ui/player.c:177
+#: ui/player.c:264
+msgid "Cannot run the music engine (kiplay-audio)"
+msgstr ""
+
+#: ui/player.c:265
 msgid "Cannot run the player program (mpv)"
 msgstr ""
 
-#: ui/player.c:179
-#, c-format
+#: ui/player.c:268
 msgid ""
-"%s\n"
-"\n"
-"Install mpv, or set its path in kiplay.ini ([mpv] program = ...)."
+"Reinstall Kiplay, or play music through mpv with [playback] engine = mpv in "
+"kiplay.ini."
 msgstr ""
 
-#: ui/player.c:318
+#: ui/player.c:270
+msgid "Install mpv, or set its path in kiplay.ini ([mpv] program = ...)."
+msgstr ""
+
+#: ui/player.c:421
 #, c-format
 msgid "Could not play %s"
 msgstr ""
 
-#: ui/player.c:347
+#: ui/player.c:450
 #, c-format
 msgid "the player program stopped (%s)"
 msgstr ""
 
-#: ui/player.c:350
+#: ui/player.c:453
 msgid "The player program keeps stopping; giving up for now."
 msgstr ""

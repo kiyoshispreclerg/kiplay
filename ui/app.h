@@ -34,7 +34,12 @@ extern const char *const kp_controls_pos_names[];
 /* What is playing. The playlist is named by id (it survives reordering
  * and other tabs closing); index -1 = nothing. */
 typedef struct {
-    kp_backend *backend; /* NULL until something first plays */
+    /* Two engines, each started the first time it is needed: mpv for
+     * video (and everything else), kiplay-audio for music. backend is the
+     * one playing now. */
+    kp_backend *backend, *mpv, *audio;
+    guint mpv_idle_timer; /* lets an unused mpv go (it holds ~20 MB) */
+    long queued;          /* index handed to the engine for gapless, -1 none */
     int playlist_id;
     long index;
     bool loaded, paused, has_video;

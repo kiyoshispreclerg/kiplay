@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: kiplay\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-12 09:12-0300\n"
+"POT-Creation-Date: 2026-10-12 09:43-0300\n"
 "PO-Revision-Date: 2026-10-09 16:23-0300\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -31,7 +31,18 @@ msgid ""
 "  -v, --verbose        print what is going on\n"
 "  -V, --version        print the version and exit\n"
 "  -h, --help           print this help and exit\n"
-msgstr "Uso: kiplay [OPÇÃO]... [ARQUIVO]...\nReprodutor de áudio e vídeo com playlists em abas.\nOs arquivos entram na playlist que está na tela e o primeiro toca; se o\nKiplay já estiver aberto, vão para aquela janela.\n\n  -e, --enqueue        adiciona os arquivos sem tocar\n  -c, --config ARQ     arquivo de configuração (padrão ~/.config/kiplay/kiplay.ini)\n  -v, --verbose        mostra o que está acontecendo\n  -V, --version        mostra a versão e sai\n  -h, --help           mostra esta ajuda e sai\n"
+msgstr ""
+"Uso: kiplay [OPÇÃO]... [ARQUIVO]...\n"
+"Reprodutor de áudio e vídeo com playlists em abas.\n"
+"Os arquivos entram na playlist que está na tela e o primeiro toca; se o\n"
+"Kiplay já estiver aberto, vão para aquela janela.\n"
+"\n"
+"  -e, --enqueue        adiciona os arquivos sem tocar\n"
+"  -c, --config ARQ     arquivo de configuração (padrão ~/.config/kiplay/"
+"kiplay.ini)\n"
+"  -v, --verbose        mostra o que está acontecendo\n"
+"  -V, --version        mostra a versão e sai\n"
+"  -h, --help           mostra esta ajuda e sai\n"
 
 #: src/main.c:113
 msgid "cannot open the display"
@@ -251,31 +262,37 @@ msgstr "Repetir"
 msgid "Shuffle"
 msgstr "Aleatório"
 
-#: ui/player.c:177
+#: ui/player.c:264
+msgid "Cannot run the music engine (kiplay-audio)"
+msgstr "Não foi possível rodar o motor de música (kiplay-audio)"
+
+#: ui/player.c:265
 msgid "Cannot run the player program (mpv)"
 msgstr "Não foi possível rodar o programa que toca (mpv)"
 
-#: ui/player.c:179
-#, c-format
+#: ui/player.c:268
 msgid ""
-"%s\n"
-"\n"
-"Install mpv, or set its path in kiplay.ini ([mpv] program = ...)."
+"Reinstall Kiplay, or play music through mpv with [playback] engine = mpv in "
+"kiplay.ini."
 msgstr ""
-"%s\n"
-"\n"
+"Reinstale o Kiplay, ou toque as músicas pelo mpv com [playback] engine = mpv "
+"no kiplay.ini."
+
+#: ui/player.c:270
+msgid "Install mpv, or set its path in kiplay.ini ([mpv] program = ...)."
+msgstr ""
 "Instale o mpv ou informe o caminho dele no kiplay.ini ([mpv] program = ...)."
 
-#: ui/player.c:318
+#: ui/player.c:421
 #, c-format
 msgid "Could not play %s"
 msgstr "Não foi possível tocar %s"
 
-#: ui/player.c:347
+#: ui/player.c:450
 #, c-format
 msgid "the player program stopped (%s)"
 msgstr "o programa que toca parou (%s)"
 
-#: ui/player.c:350
+#: ui/player.c:453
 msgid "The player program keeps stopping; giving up for now."
 msgstr "O programa que toca continua parando; desisti por enquanto."
