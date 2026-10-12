@@ -20,7 +20,7 @@ OPTFLAGS ?= -O2 -g
 
 # libkp (src/) is what the unit tests link: no GTK in it.
 # Library headers go in as -isystem so -Wpedantic/-Werror only judge our code.
-PKGS       = glib-2.0
+PKGS       = glib-2.0 gio-2.0 gio-unix-2.0
 PKG_CFLAGS = $(if $(PKGS),$(shell $(PKG_CONFIG) --cflags $(PKGS) | sed 's/-I/-isystem /g'))
 PKG_LIBS   = $(if $(PKGS),$(shell $(PKG_CONFIG) --libs $(PKGS)))
 
@@ -29,8 +29,11 @@ GTK_PKGS   = gtk+-2.0 gio-unix-2.0
 GTK_CFLAGS = $(shell $(PKG_CONFIG) --cflags $(GTK_PKGS) | sed 's/-I/-isystem /g')
 GTK_LIBS   = $(shell $(PKG_CONFIG) --libs $(GTK_PKGS))
 
-CPPFLAGS += -Isrc -DKP_VERSION='"$(VERSION)"'
+CPPFLAGS += -Isrc -Ivendor/cjson -DKP_VERSION='"$(VERSION)"'
 LDLIBS   += $(PKG_LIBS) -lm
+
+# Third-party code: our pedantic flags don't judge it.
+VENDOR_WARNFLAGS = -Wall -Wextra -Werror
 
 # `make asan` sets SANITIZE=1.
 SANITIZE ?= 0

@@ -11,6 +11,8 @@ void kp_log_error(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
 
 /* Only with -v (kp_log_set_verbose). Not translated: for developers. */
 void kp_log_set_verbose(bool on);
+/* For debug output that costs something to build. */
+bool kp_log_debug_enabled(void);
 void kp_log_debug(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
 
 #endif

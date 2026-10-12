@@ -45,6 +45,11 @@ void kp_log_set_verbose(bool on)
     verbose = on;
 }
 
+bool kp_log_debug_enabled(void)
+{
+    return verbose;
+}
+
 void kp_log_debug(const char *fmt, ...)
 {
     if (!verbose)

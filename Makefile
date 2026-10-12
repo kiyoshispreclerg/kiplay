@@ -10,9 +10,12 @@ LIB_SRC = src/log.c \
       src/prefs.c \
       src/playlist.c \
       src/plset.c \
+      src/json.c \
+      src/mpv.c \
       src/ytsub.c \
       src/srv3.c \
       src/ytsub_ass.c
+VENDOR_SRC = vendor/cjson/cJSON.c
 LIBKP = $(BUILD)/libkp.a
 
 # The window: needs GTK.
@@ -63,8 +66,12 @@ $(APP_OBJ): $(BUILD)/%.o: %.c
 	@mkdir -p $(@D)
 	$(CC) $(CPPFLAGS) -Iui -DLOCALEDIR='"$(LOCALEDIR)"' $(ALL_CFLAGS) $(GTK_CFLAGS) $(WARNFLAGS) -MMD -MP -c -o $@ $<
 
-$(LIBKP): $(patsubst %.c,$(BUILD)/%.o,$(LIB_SRC))
+$(LIBKP): $(patsubst %.c,$(BUILD)/%.o,$(LIB_SRC) $(VENDOR_SRC))
 	$(AR) rcs $@ $^
+
+$(BUILD)/vendor/%.o: vendor/%.c
+	@mkdir -p $(@D)
+	$(CC) $(CPPFLAGS) $(ALL_CFLAGS) $(VENDOR_WARNFLAGS) -MMD -MP -c -o $@ $<
 
 $(BUILD)/src/%.o: src/%.c
 	@mkdir -p $(@D)
@@ -132,7 +139,7 @@ lint:
 		echo "*** banned function used"; exit 1; fi
 	@command -v cppcheck >/dev/null || { echo "*** cppcheck not installed"; exit 1; }
 	cppcheck --std=c11 --enable=warning,performance,portability \
-		--error-exitcode=1 --inline-suppr --quiet -Isrc --suppress='*:vendor/*' \
+		--error-exitcode=1 --inline-suppr --quiet -Isrc -Ivendor/cjson --suppress='*:vendor/*' \
 		-D_XOPEN_SOURCE=700 -DKP_VERSION='"lint"' -DKP_FIXTURES_DIR='"."' src ui proto tests/unit
 
 clean:
