@@ -5,6 +5,7 @@
 #include "app.h"
 #include "i18n.h"
 #include "log.h"
+#include "media.h"
 
 /* The playback controller: which entry plays, on which engine, what
  * happens when it ends, and the engines' events turned into what the
@@ -17,12 +18,6 @@
 #define MAX_CRASHES 3
 #define STATUS_MESSAGE_S 6
 #define MPV_IDLE_S 60
-
-/* Plain audio formats, and game music (libgme), go to kiplay-audio. */
-static const char *const audio_exts[] = {
-    "mp3", "mp2", "mp1", "ogg", "oga", "opus", "flac", "wav", "m4a", "aac", "wma", "ape",
-    "wv",  "mpc", "spx", "aif", "aiff", "tta", "ac3", "dts", "mka", "au",  "snd", "w64",
-    "nsf", "nsfe", "spc", "gbs", "vgm", "vgz", "gym", "hes", "kss", "ay",  "sap", NULL};
 
 static guint status_timer;
 
@@ -77,20 +72,11 @@ static bool for_audio_engine(kp_app *app, const char *location)
 {
     if (!strcmp(kp_prefs_get_str(app->prefs, "playback", "engine", "auto"), "mpv"))
         return false;
-    char *path = g_ascii_strdown(location, -1);
-    char *q = strrchr(path, '?');
-    if (q && q[1] && q[1 + strspn(q + 1, "0123456789")] == '\0')
-        *q = '\0'; /* "game.nsf?3" */
-    const char *dot = strrchr(path, '.');
-    bool yes = false;
-    for (int i = 0; dot && !strchr(dot, '/') && audio_exts[i] && !yes; i++)
-        yes = !strcmp(dot + 1, audio_exts[i]);
-    g_free(path);
-    return yes;
+    return kp_media_kind_of(location) == KP_MEDIA_AUDIO;
 }
 
 /* Next to the kiplay binary (a build tree), else wherever PATH says. */
-static char *audio_engine_path(void)
+char *kp_engine_path(void)
 {
     char *self = g_file_read_link("/proc/self/exe", NULL);
     char *dir = self ? g_path_get_dirname(self) : NULL;
@@ -136,40 +122,136 @@ static void update_buttons(kp_app *app)
     gtk_widget_set_visible(app->pause_btn, playing);
 }
 
-/* The playlist entry learns its length and, for local files with tags, its
- * title. Stream titles change with every song, so they aren't kept. */
+/* The playlist entry learns its length and, if the tag reader found no
+ * title, the player's "Artist - Title". Stream titles change with every
+ * song, so they aren't kept. */
 static void store_info(kp_app *app, const char *title, double duration)
 {
     kp_playlist *pl = playing_list(app);
     const kp_entry *e = playing_entry(app);
     if (!pl || !e || !is_local(e->location))
         return;
-    if (kp_playlist_set_info(pl, (size_t)app->playing.index, title,
-                             duration > 0 ? (int64_t)(duration * 1000) : -1)) {
+    kp_tags t = {e->title ? NULL : title, NULL, NULL,
+                 duration > 0 ? (int64_t)(duration * 1000) : -1};
+    if (kp_playlist_set_tags(pl, (size_t)app->playing.index, &t)) {
         kp_playlists_refresh_row(app, app->playing.playlist_id, app->playing.index);
         kp_playlists_changed(app);
     }
 }
 
-/* Next entry to play after the current one, -1 at the end. */
-static long next_index(kp_app *app, bool wrap)
+/* ---- what comes next ----------------------------------------------------- */
+
+#define HISTORY_MAX 500
+
+/* Where a followed entry is now; -1 if it's gone. */
+static long ref_index(kp_app *app, kp_entry_ref *r)
 {
+    kp_playlist *pl = kp_playlists_get(app, r->id);
+    long i = pl ? kp_playlist_find_entry(pl, r->location, r->hint) : -1;
+    if (i >= 0)
+        r->hint = i;
+    return i;
+}
+
+static void forget_heard(kp_playing *p)
+{
+    if (p->heard)
+        g_hash_table_remove_all(p->heard);
+}
+
+/* Shuffle: a random entry not heard yet this round (the playing one is
+ * heard). When all were, a new round if wrap; -1 otherwise. */
+static long shuffle_pick(kp_app *app, kp_playlist *pl, bool wrap)
+{
+    kp_playing *p = &app->playing;
+    if (p->heard_id != p->playlist_id) {
+        forget_heard(p);
+        p->heard_id = p->playlist_id;
+    }
+    long n = (long)kp_playlist_count(pl);
+    for (int round = 0; round < 2; round++) {
+        long left = 0;
+        for (long i = 0; i < n; i++)
+            left += !g_hash_table_contains(p->heard, kp_playlist_get(pl, (size_t)i)->location);
+        if (left > 0) {
+            long k = g_random_int_range(0, (gint32)left);
+            for (long i = 0; i < n; i++)
+                if (!g_hash_table_contains(p->heard, kp_playlist_get(pl, (size_t)i)->location) &&
+                    k-- == 0)
+                    return i;
+        }
+        if (!wrap || n < 2)
+            return -1;
+        /* A new round, but not the same song twice in a row. */
+        forget_heard(p);
+        if (p->location)
+            g_hash_table_add(p->heard, (gpointer)p->location);
+    }
+    return -1;
+}
+
+/* What plays after the current entry: the queue first, then the playlist
+ * (shuffled or in order). false at the end. wrap: "next" pressed, which
+ * goes around even without repeat. */
+static bool pick_next(kp_app *app, bool wrap, int *id, long *index)
+{
+    while (app->queue->len) {
+        kp_entry_ref *r = &g_array_index(app->queue, kp_entry_ref, 0);
+        long i = ref_index(app, r);
+        if (i >= 0) {
+            *id = r->id;
+            *index = i;
+            return true;
+        }
+        g_array_remove_index(app->queue, 0); /* it went away */
+    }
     kp_playlist *pl = playing_list(app);
     long n = pl ? (long)kp_playlist_count(pl) : 0;
     if (n == 0)
-        return -1;
+        return false;
     bool repeat = kp_prefs_get_bool(app->prefs, "playback", "repeat", false);
+    *id = app->playing.playlist_id;
     if (kp_prefs_get_bool(app->prefs, "playback", "shuffle", false) && n > 1) {
-        long i;
-        do
-            i = g_random_int_range(0, (gint32)n);
-        while (i == app->playing.index);
-        return i;
+        *index = shuffle_pick(app, pl, repeat || wrap);
+        return *index >= 0;
     }
     long i = app->playing.index + 1;
-    if (i >= n)
-        return repeat || wrap ? 0 : -1;
-    return i;
+    if (i >= n) {
+        if (!repeat && !wrap)
+            return false;
+        i = 0;
+    }
+    *index = i;
+    return true;
+}
+
+/* An entry starts: out of the queue, into what was heard. */
+static void now_playing(kp_app *app, const kp_entry *e)
+{
+    kp_playing *p = &app->playing;
+    p->location = e->location;
+    for (guint i = 0; i < app->queue->len; i++)
+        if (g_array_index(app->queue, kp_entry_ref, i).location == e->location) {
+            g_array_remove_index(app->queue, i);
+            kp_playlists_queue_changed(app);
+            break;
+        }
+    if (p->heard_id != p->playlist_id) {
+        forget_heard(p);
+        p->heard_id = p->playlist_id;
+    }
+    g_hash_table_add(p->heard, (gpointer)e->location);
+}
+
+static void remember(kp_app *app)
+{
+    kp_playing *p = &app->playing;
+    if (!p->location)
+        return;
+    kp_entry_ref r = {p->playlist_id, p->location, p->index};
+    if (p->history->len >= HISTORY_MAX)
+        g_array_remove_index(p->history, 0);
+    g_array_append_val(p->history, r);
 }
 
 static void reset_state(kp_app *app)
@@ -222,7 +304,7 @@ static kp_backend *create(kp_app *app, bool audio)
         .volume = kp_prefs_get_int(app->prefs, "playback", "volume", 100, 0, 100),
     };
     if (audio) {
-        char *program = audio_engine_path();
+        char *program = kp_engine_path();
         o.program = program;
         o.device = kp_prefs_get_str(app->prefs, "playback", "device", "default");
         kp_backend *b = kp_backend_new_audio(&o, on_audio_event, app);
@@ -288,18 +370,22 @@ static bool start_playing(kp_app *app, const char *location, double at)
     return true;
 }
 
-void kp_player_play_at(kp_app *app, int id, long index)
+/* Plays entry index of playlist id; with remember_it, the entry that was
+ * playing goes into the history first ("previous" comes back to it). */
+static void play_entry(kp_app *app, int id, long index, bool remember_it)
 {
-    long pi = kp_plset_find(app->playlists, id);
-    kp_playlist *pl = pi >= 0 ? kp_plset_get(app->playlists, (size_t)pi) : NULL;
+    kp_playlist *pl = kp_playlists_get(app, id);
     const kp_entry *e = pl && index >= 0 ? kp_playlist_get(pl, (size_t)index) : NULL;
     if (!e)
         return;
+    if (remember_it)
+        remember(app);
     reset_state(app);
     app->playing.queued = -1;
     kp_playlists_mark_playing(app, app->playing.playlist_id, -1);
     app->playing.playlist_id = id;
     app->playing.index = index;
+    now_playing(app, e);
     kp_playlists_mark_playing(app, id, index);
     kp_prefs_set_int(app->prefs, "playback", "playlist", id);
     kp_prefs_set_int(app->prefs, "playback", "index", (int)index);
@@ -307,6 +393,11 @@ void kp_player_play_at(kp_app *app, int id, long index)
         return;
     update_title(app);
     kp_controls_update(app);
+}
+
+void kp_player_play_at(kp_app *app, int id, long index)
+{
+    play_entry(app, id, index, true);
 }
 
 void kp_player_play(kp_app *app)
@@ -350,9 +441,10 @@ void kp_player_stop(kp_app *app)
 
 void kp_player_next(kp_app *app)
 {
-    long i = next_index(app, true);
-    if (i >= 0)
-        kp_player_play_at(app, app->playing.playlist_id, i);
+    int id;
+    long i;
+    if (pick_next(app, true, &id, &i))
+        kp_player_play_at(app, id, i);
 }
 
 void kp_player_prev(kp_app *app)
@@ -362,6 +454,19 @@ void kp_player_prev(kp_app *app)
         kp_player_seek(app, 0);
         return;
     }
+    /* Shuffled, "previous" is what played before, not the row above. */
+    GArray *h = app->playing.history;
+    if (kp_prefs_get_bool(app->prefs, "playback", "shuffle", false)) {
+        while (h->len) {
+            kp_entry_ref r = g_array_index(h, kp_entry_ref, h->len - 1);
+            g_array_remove_index(h, h->len - 1);
+            long i = ref_index(app, &r);
+            if (i >= 0) {
+                play_entry(app, r.id, i, false);
+                return;
+            }
+        }
+    }
     kp_playlist *pl = playing_list(app);
     long n = pl ? (long)kp_playlist_count(pl) : 0;
     if (n == 0)
@@ -369,7 +474,7 @@ void kp_player_prev(kp_app *app)
     long i = app->playing.index - 1;
     if (i < 0)
         i = n - 1;
-    kp_player_play_at(app, app->playing.playlist_id, i);
+    play_entry(app, app->playing.playlist_id, i, false);
 }
 
 void kp_player_seek(kp_app *app, double seconds)
@@ -395,19 +500,90 @@ void kp_player_set_volume(kp_app *app, int volume)
 
 void kp_player_open(kp_app *app, char **locations, bool enqueue)
 {
-    long first;
-    int id = kp_playlists_open(app, locations, &first);
-    if (first >= 0 && !enqueue)
-        kp_player_play_at(app, id, first);
+    kp_playlists_open(app, locations, !enqueue);
     gtk_window_present(GTK_WINDOW(app->window));
+}
+
+/* Drops the followed entries of playlist id from a list (all of them, or
+ * only the ones gone from it). */
+static void drop_refs(kp_app *app, GArray *refs, int id, bool all)
+{
+    for (guint i = refs->len; i-- > 0;) {
+        kp_entry_ref *r = &g_array_index(refs, kp_entry_ref, i);
+        if (r->id == id && (all || ref_index(app, r) < 0))
+            g_array_remove_index(refs, i);
+    }
 }
 
 void kp_player_playlist_closed(kp_app *app, int id)
 {
-    if (id == app->playing.playlist_id) {
+    kp_playing *p = &app->playing;
+    if (id == p->playlist_id) {
         kp_player_stop(app);
-        app->playing.index = -1;
+        p->index = -1;
+        p->location = NULL;
+        forget_heard(p);
     }
+    drop_refs(app, app->queue, id, true);
+    drop_refs(app, p->history, id, true);
+}
+
+void kp_player_playlist_changed(kp_app *app, int id)
+{
+    kp_playing *p = &app->playing;
+    kp_playlist *pl = kp_playlists_get(app, id);
+    if (!pl)
+        return;
+    if (id == p->playlist_id && p->location) {
+        long i = kp_playlist_find_entry(pl, p->location, p->index);
+        if (i >= 0 && i != p->index) {
+            p->index = i;
+            kp_playlists_mark_playing(app, id, i);
+            kp_prefs_set_int(app->prefs, "playback", "index", (int)i);
+        }
+    }
+    guint before = app->queue->len;
+    drop_refs(app, app->queue, id, false);
+    if (app->queue->len != before)
+        kp_playlists_queue_changed(app);
+    kp_player_requeue(app);
+}
+
+void kp_player_queue_toggle(kp_app *app, int id, long index)
+{
+    kp_playlist *pl = kp_playlists_get(app, id);
+    const kp_entry *e = pl ? kp_playlist_get(pl, (size_t)index) : NULL;
+    if (!e)
+        return;
+    for (guint i = 0; i < app->queue->len; i++)
+        if (g_array_index(app->queue, kp_entry_ref, i).location == e->location) {
+            g_array_remove_index(app->queue, i);
+            kp_player_requeue(app);
+            return;
+        }
+    kp_entry_ref r = {id, e->location, index};
+    g_array_append_val(app->queue, r);
+    kp_player_requeue(app);
+}
+
+int kp_player_queue_pos(kp_app *app, int id, const kp_entry *e)
+{
+    (void)id; /* the location string names the entry by itself */
+    for (guint i = 0; app->queue && i < app->queue->len; i++)
+        if (g_array_index(app->queue, kp_entry_ref, i).location == e->location)
+            return (int)i + 1;
+    return 0;
+}
+
+void kp_player_set_stop_after(kp_app *app, bool on)
+{
+    app->playing.stop_after = on;
+    kp_player_requeue(app);
+}
+
+void kp_player_info_changed(kp_app *app)
+{
+    update_title(app);
 }
 
 /* The file ran out (or wouldn't play): on to the next one. */
@@ -430,12 +606,20 @@ static void advance(kp_app *app, bool failed)
             return;
         }
     }
-    long i = next_index(app, false);
-    if (i < 0) {
+    if (app->playing.stop_after) {
+        kp_player_set_stop_after(app, false);
+        if (app->stop_after_item)
+            gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(app->stop_after_item), FALSE);
         stopped(app);
         return;
     }
-    kp_player_play_at(app, app->playing.playlist_id, i);
+    int id;
+    long i;
+    if (!pick_next(app, false, &id, &i)) {
+        stopped(app);
+        return;
+    }
+    kp_player_play_at(app, id, i);
 }
 
 /* Gapless: tells an engine that can do it what comes after the current
@@ -445,10 +629,14 @@ void kp_player_requeue(kp_app *app)
     kp_playing *p = &app->playing;
     if (!p->backend || !p->loaded || !(kp_backend_caps(p->backend) & KP_CAP_GAPLESS))
         return;
-    long i = next_index(app, false);
-    kp_playlist *pl = playing_list(app);
-    const kp_entry *e = pl && i >= 0 ? kp_playlist_get(pl, (size_t)i) : NULL;
+    int id;
+    long i;
+    kp_playlist *pl = NULL;
+    if (!p->stop_after && pick_next(app, false, &id, &i))
+        pl = kp_playlists_get(app, id);
+    const kp_entry *e = pl ? kp_playlist_get(pl, (size_t)i) : NULL;
     if (e && for_audio_engine(app, e->location)) {
+        p->queued_id = id;
         p->queued = i;
         kp_backend_queue(p->backend, e->location);
     } else {
@@ -461,13 +649,19 @@ void kp_player_requeue(kp_app *app)
 static void took_next(kp_app *app)
 {
     kp_playing *p = &app->playing;
-    if (p->queued < 0)
+    kp_playlist *pl = p->queued >= 0 ? kp_playlists_get(app, p->queued_id) : NULL;
+    const kp_entry *e = pl ? kp_playlist_get(pl, (size_t)p->queued) : NULL;
+    if (!e)
         return;
+    remember(app);
     reset_state(app);
     kp_playlists_mark_playing(app, p->playlist_id, -1);
+    p->playlist_id = p->queued_id;
     p->index = p->queued;
     p->queued = -1;
+    now_playing(app, e);
     kp_playlists_mark_playing(app, p->playlist_id, p->index);
+    kp_prefs_set_int(app->prefs, "playback", "playlist", p->playlist_id);
     kp_prefs_set_int(app->prefs, "playback", "index", (int)p->index);
     update_title(app);
     kp_controls_update(app);
@@ -587,9 +781,16 @@ static void on_audio_event(void *ud, const kp_event *ev)
 
 void kp_player_init(kp_app *app)
 {
-    app->playing.queued = -1;
-    app->playing.playlist_id = kp_prefs_get_int(app->prefs, "playback", "playlist", -1, -1, 1000000);
-    app->playing.index = kp_prefs_get_int(app->prefs, "playback", "index", -1, -1, 100000000);
+    kp_playing *p = &app->playing;
+    p->queued = -1;
+    p->history = g_array_new(FALSE, FALSE, sizeof(kp_entry_ref));
+    p->heard = g_hash_table_new(g_direct_hash, g_direct_equal);
+    p->heard_id = -1;
+    p->playlist_id = kp_prefs_get_int(app->prefs, "playback", "playlist", -1, -1, 1000000);
+    p->index = kp_prefs_get_int(app->prefs, "playback", "index", -1, -1, 100000000);
+    /* Where it stopped last time, followed if the playlist changes. */
+    const kp_entry *e = playing_entry(app);
+    p->location = e ? e->location : NULL;
     update_buttons(app);
     kp_controls_update(app);
 }
@@ -608,4 +809,8 @@ void kp_player_free(kp_app *app)
     kp_backend_free(app->playing.audio);
     app->playing.backend = app->playing.mpv = app->playing.audio = NULL;
     g_clear_pointer(&app->playing.title, g_free);
+    if (app->playing.history)
+        g_array_free(app->playing.history, TRUE);
+    app->playing.history = NULL;
+    g_clear_pointer(&app->playing.heard, g_hash_table_destroy);
 }

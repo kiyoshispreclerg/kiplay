@@ -16,6 +16,9 @@ LIB_SRC = src/log.c \
       src/child.c \
       src/backend.c \
       src/audioback.c \
+      src/tagreader.c \
+      src/media.c \
+      src/search.c \
       src/mpv.c \
       src/ytsub.c \
       src/srv3.c \
@@ -28,13 +31,15 @@ APP_SRC = src/main.c \
       ui/window.c \
       ui/layout.c \
       ui/playlists.c \
+      ui/plmodel.c \
+      ui/jump.c \
       ui/controls.c \
       ui/player.c
 APP_OBJ = $(patsubst %.c,$(BUILD)/%.o,$(APP_SRC))
 
 # kiplay-audio: the music engine, its own process. No GLib in it: libav,
 # ALSA and pthreads only, to stay small.
-AUDIO_SRC = audio/main.c audio/cmd.c audio/dec.c audio/out.c
+AUDIO_SRC = audio/main.c audio/cmd.c audio/dec.c audio/out.c audio/tags.c
 AUDIO_OBJ = $(patsubst %.c,$(BUILD)/%.o,$(AUDIO_SRC))
 ENGINE_PKGS = alsa libavformat libavcodec libavutil libswresample
 ENGINE_CFLAGS = $(shell $(PKG_CONFIG) --cflags $(ENGINE_PKGS) | sed 's/-I/-isystem /g')
@@ -119,9 +124,9 @@ TEST_CPPFLAGS = -DKP_FIXTURES_DIR='"$(CURDIR)/tests/fixtures"' \
                 -DKP_AUDIO_BIN='"$(CURDIR)/$(BUILD)/kiplay-audio"'
 
 # test_audio also links the engine's own parts (they aren't in libkp).
-$(BUILD)/tests/test_audio: TEST_EXTRA = $(BUILD)/audio/cmd.o $(BUILD)/audio/dec.o $(ENGINE_LIBS)
+$(BUILD)/tests/test_audio: TEST_EXTRA = $(BUILD)/audio/cmd.o $(BUILD)/audio/dec.o $(BUILD)/audio/tags.o $(ENGINE_LIBS)
 $(BUILD)/tests/test_audio: TEST_EXTRA_CFLAGS = -Iaudio $(ENGINE_CFLAGS)
-$(BUILD)/tests/test_audio: $(BUILD)/audio/cmd.o $(BUILD)/audio/dec.o $(BUILD)/kiplay-audio
+$(BUILD)/tests/test_audio: $(BUILD)/audio/cmd.o $(BUILD)/audio/dec.o $(BUILD)/audio/tags.o $(BUILD)/kiplay-audio
 
 $(BUILD)/tests/%: tests/unit/%.c tests/harness.h $(LIBKP)
 	@mkdir -p $(@D)

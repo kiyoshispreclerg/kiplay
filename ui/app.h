@@ -8,6 +8,7 @@
 #include "backend.h"
 #include "plset.h"
 #include "prefs.h"
+#include "tagreader.h"
 
 /* What the parts of the window share. One per process, owned by window.c;
  * the widgets belong to the window, the prefs and the playlists to the
@@ -31,6 +32,28 @@ typedef enum {
 extern const char *const kp_video_pos_names[];
 extern const char *const kp_controls_pos_names[];
 
+/* Optional playlist columns (the title is always there). Kept in
+ * kiplay.ini by name (kp_column_names, in bit order): append only. */
+enum {
+    KP_COLUMN_NUM = 1 << 0,
+    KP_COLUMN_ARTIST = 1 << 1,
+    KP_COLUMN_ALBUM = 1 << 2,
+    KP_COLUMN_LENGTH = 1 << 3,
+    KP_COLUMN_PATH = 1 << 4,
+    KP_COLUMN_COUNT = 5,
+};
+#define KP_COLUMNS_DEFAULT (KP_COLUMN_NUM | KP_COLUMN_LENGTH)
+extern const char *const kp_column_names[];
+
+/* An entry followed while its playlist changes: the playlist's id and the
+ * entry's own location string (kp_playlist_find_entry), plus where it was
+ * last seen, to find it fast. */
+typedef struct {
+    int id;
+    const char *location;
+    long hint;
+} kp_entry_ref;
+
 /* What is playing. The playlist is named by id (it survives reordering
  * and other tabs closing); index -1 = nothing. */
 typedef struct {
@@ -39,15 +62,23 @@ typedef struct {
      * one playing now. */
     kp_backend *backend, *mpv, *audio;
     guint mpv_idle_timer; /* lets an unused mpv go (it holds ~20 MB) */
-    long queued;          /* index handed to the engine for gapless, -1 none */
+    int queued_id;        /* the entry handed to the engine for gapless: */
+    long queued;          /* playlist id and index; -1 none */
     int playlist_id;
     long index;
+    const char *location; /* the entry's own string (kp_entry_ref), NULL none */
     bool loaded, paused, has_video;
     double position, duration; /* seconds; duration <= 0 = unknown */
     char *title;               /* from the player, may be NULL */
     int failures;              /* files in a row that wouldn't play */
     int crashes;               /* backend restarts in the last minute */
     gint64 first_crash_us;
+    bool stop_after;           /* stop when the current file ends */
+    /* Played by "next" (for "previous"), and, with shuffle, the entries of
+     * the playing playlist already heard this round. */
+    GArray *history;           /* kp_entry_ref, oldest first */
+    GHashTable *heard;         /* location strings */
+    int heard_id;              /* the playlist heard is about */
 } kp_playing;
 
 typedef struct {
@@ -67,7 +98,13 @@ typedef struct {
 
     /* Transport bar widgets the player updates. */
     GtkWidget *seek, *time_label, *volume, *play_btn, *pause_btn;
+    GtkWidget *stop_after_item; /* Playback > Stop after this track */
     bool seek_dragging; /* the user holds the seek bar: don't move it */
+
+    /* Played before anything else, in order (Q). */
+    GArray *queue; /* kp_entry_ref */
+    unsigned columns; /* KP_COLUMN_* bits */
+    kp_tagreader *tags;
 
     kp_video_pos video_pos;
     kp_controls_pos controls_pos;
@@ -94,10 +131,25 @@ void kp_layout_set_fullscreen(kp_app *app, bool on);
 
 /* playlists.c */
 void kp_playlists_init(kp_app *app);
+void kp_playlists_free(kp_app *app);
 void kp_playlists_new(kp_app *app);
 void kp_playlists_rename(kp_app *app);
 void kp_playlists_close(kp_app *app);
 void kp_playlists_add_files(kp_app *app);
+void kp_playlists_add_folder(kp_app *app);
+/* A .m3u/.m3u8/.pls file as a new tab; the visible tab to one. */
+void kp_playlists_import(kp_app *app);
+void kp_playlists_export(kp_app *app);
+/* Q: the selected rows into the queue, or out if all are already in. */
+void kp_playlists_toggle_queue(kp_app *app);
+/* Shows these columns (KP_COLUMN_* bits) in every tab. */
+void kp_playlists_set_columns(kp_app *app, unsigned columns);
+/* The visible playlist and its id (NULL if none). */
+kp_playlist *kp_playlists_visible(kp_app *app, int *id);
+/* Shows the tab with that id and selects the row, scrolled into view. */
+void kp_playlists_select(kp_app *app, int id, long index);
+/* The queue changed: redraw the numbers. */
+void kp_playlists_queue_changed(kp_app *app);
 void kp_playlists_remove_selected(kp_app *app);
 /* Saves changed playlists and the tab order. */
 void kp_playlists_save(kp_app *app);
@@ -109,10 +161,12 @@ int kp_playlists_selection(kp_app *app, long *index);
 void kp_playlists_mark_playing(kp_app *app, int id, long index);
 /* Redraws one row after its entry changed (title, length). */
 void kp_playlists_refresh_row(kp_app *app, int id, long index);
+/* The kp_playlist with that id, or NULL. */
+kp_playlist *kp_playlists_get(kp_app *app, int id);
 /* Files from the command line or another kiplay: added to the visible
- * playlist (ones already there are found, not repeated). Returns its id;
- * *first = the index of the first file, -1 if none. */
-int kp_playlists_open(kp_app *app, char **locations, long *first);
+ * playlist (ones already there are found, not repeated; folders are
+ * walked, in the background) and, with play, the first one played. */
+void kp_playlists_open(kp_app *app, char **locations, bool play);
 /* Something changed in a playlist: write it soon. */
 void kp_playlists_changed(kp_app *app);
 
@@ -122,6 +176,8 @@ GtkWidget *kp_controls_new(kp_app *app);
 void kp_controls_update(kp_app *app);
 
 /* player.c: plays the playlists through the backend. */
+/* kiplay-audio next to the kiplay binary (a build tree), else in PATH. */
+char *kp_engine_path(void);
 void kp_player_init(kp_app *app);
 void kp_player_free(kp_app *app);
 /* Plays entry index of the playlist with that id. */
@@ -143,5 +199,18 @@ void kp_player_open(kp_app *app, char **locations, bool enqueue);
 void kp_player_requeue(kp_app *app);
 /* A playlist was closed: stop if it was playing. */
 void kp_player_playlist_closed(kp_app *app, int id);
+/* Entries of playlist id moved or went away: the playing index follows
+ * its entry (or "next" goes on from where it was). */
+void kp_player_playlist_changed(kp_app *app, int id);
+/* Q on an entry: into the queue, or out. */
+void kp_player_queue_toggle(kp_app *app, int id, long index);
+/* Its place in the queue (1...), 0 if not queued. */
+int kp_player_queue_pos(kp_app *app, int id, const kp_entry *e);
+void kp_player_set_stop_after(kp_app *app, bool on);
+/* The playing entry's tags arrived: the window title follows. */
+void kp_player_info_changed(kp_app *app);
+
+/* jump.c: Ctrl+J, find a file in the visible playlist and play or queue it. */
+void kp_jump_dialog(kp_app *app);
 
 #endif

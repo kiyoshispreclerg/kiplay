@@ -17,6 +17,10 @@
 
 typedef struct ka_dec ka_dec;
 
+/* Game music that doesn't say how long it is ends after this (with a
+ * fade), as in Audacious; the tag reader reports the same length. */
+#define KA_GAME_LENGTH_S 180
+
 /* NULL with a message in err. */
 ka_dec *ka_dec_open(const char *location, char *err, int errsize);
 void ka_dec_close(ka_dec *d);

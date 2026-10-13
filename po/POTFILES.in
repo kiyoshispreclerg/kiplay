@@ -6,3 +6,5 @@ ui/playlists.c
 ui/controls.c
 ui/layout.c
 ui/player.c
+ui/jump.c
+src/tagreader.c

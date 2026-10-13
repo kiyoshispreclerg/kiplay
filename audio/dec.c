@@ -49,7 +49,6 @@ struct ka_dec {
     long long played;
 };
 
-#define GAME_LENGTH_S 180
 #define GAME_FADE_S 8
 
 /* "%C3%BA" -> bytes, for file:// URIs. */
@@ -219,7 +218,7 @@ ka_dec *ka_dec_open(const char *location, char *err, int errsize)
     else if (st->duration > 0)
         d->duration = (double)st->duration * av_q2d(st->time_base);
     if (d->duration <= 0 && d->emulated) {
-        d->duration = GAME_LENGTH_S;
+        d->duration = KA_GAME_LENGTH_S;
         d->synthetic_end = true;
     }
     read_tags(d);
@@ -330,7 +329,7 @@ static bool feed(ka_dec *d)
 /* The default ending of game music: a linear fade, then the end. */
 static long fade_out(ka_dec *d, int16_t *out, long n)
 {
-    long long end = (long long)GAME_LENGTH_S * KA_RATE, fade = (long long)GAME_FADE_S * KA_RATE;
+    long long end = (long long)KA_GAME_LENGTH_S * KA_RATE, fade = (long long)GAME_FADE_S * KA_RATE;
     if (d->played >= end)
         return 0;
     if (d->played + n > end)

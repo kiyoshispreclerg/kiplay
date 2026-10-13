@@ -11,6 +11,8 @@
 #include "backend.h"
 #include "cmd.h"
 #include "dec.h"
+#include "tagreader.h"
+#include "tags.h"
 
 TEST(parses_commands)
 {
@@ -160,6 +162,145 @@ static void write_wav(const char *path, double secs)
     fclose(f);
 }
 
+/* A short WAV with RIFF INFO tags (title, artist, album). */
+static void write_tagged_wav(const char *path)
+{
+    write_wav(path, 0.5);
+    char *data;
+    gsize len;
+    g_file_get_contents(path, &data, &len, NULL);
+    static const char info[] = "LIST\x2e\0\0\0INFO"
+                               "INAM\x06\0\0\0Cancao"
+                               "IART\x06\0\0\0Banda\0"
+                               "IPRD\x06\0\0\0Disco\0";
+    GByteArray *out = g_byte_array_new();
+    g_byte_array_append(out, (const guint8 *)data, 36); /* RIFF + fmt */
+    g_byte_array_append(out, (const guint8 *)info, sizeof info - 1);
+    g_byte_array_append(out, (const guint8 *)data + 36, (guint)len - 36);
+    unsigned riff = out->len - 8;
+    memcpy(out->data + 4, &riff, 4);
+    g_file_set_contents(path, (const char *)out->data, out->len, NULL);
+    g_byte_array_free(out, TRUE);
+    g_free(data);
+}
+
+TEST(reads_tags)
+{
+    char *dir = g_dir_make_tmp("kp-test-XXXXXX", NULL);
+    char *a = g_build_filename(dir, "a.wav", NULL);
+    write_tagged_wav(a);
+    ka_tags t;
+    char err[128];
+    CHECK(ka_tags_read(a, &t, err, sizeof err));
+    CHECK_STR_EQ(t.title, "Cancao");
+    CHECK_STR_EQ(t.artist, "Banda");
+    CHECK_STR_EQ(t.album, "Disco");
+    CHECK(fabs(t.duration - 0.5) < 0.01);
+    ka_tags_clear(&t);
+    char *missing = g_build_filename(dir, "none.mp3", NULL);
+    CHECK(!ka_tags_read(missing, &t, err, sizeof err));
+    CHECK(t.title == NULL);
+    g_remove(a);
+    g_rmdir(dir);
+    g_free(a);
+    g_free(missing);
+    g_free(dir);
+}
+
+typedef struct {
+    GMainLoop *loop;
+    int n, wanted;
+    long index[8];
+    char *title[8];
+    int64_t length[8];
+    bool failed[8];
+} tag_answers;
+
+static void on_tags(void *ud, int list_id, long index, const char *location, const kp_tags *t)
+{
+    (void)location;
+    tag_answers *a = ud;
+    if (list_id != 7 || a->n >= 8)
+        return;
+    a->index[a->n] = index;
+    a->failed[a->n] = t == NULL;
+    a->title[a->n] = t && t->title ? g_strdup(t->title) : NULL;
+    a->length[a->n] = t ? t->length_ms : -1;
+    if (++a->n == a->wanted)
+        g_main_loop_quit(a->loop);
+}
+
+static gboolean give_up(gpointer data)
+{
+    g_main_loop_quit(data);
+    return G_SOURCE_REMOVE;
+}
+
+static bool wait_answers(tag_answers *a, int wanted)
+{
+    a->wanted = wanted;
+    guint t = g_timeout_add(10000, give_up, a->loop);
+    if (a->n < wanted)
+        g_main_loop_run(a->loop);
+    g_source_remove(t);
+    return a->n == wanted;
+}
+
+TEST(tag_reader_in_background)
+{
+    char *dir = g_dir_make_tmp("kp-test-XXXXXX", NULL);
+    char *a = g_build_filename(dir, "a.wav", NULL);
+    char *b = g_build_filename(dir, "b\nnova linha.wav", NULL);
+    char *bad = g_build_filename(dir, "bad.mp3", NULL);
+    char *missing = g_build_filename(dir, "none.ogg", NULL);
+    write_tagged_wav(a);
+    write_wav(b, 0.25);
+    g_file_set_contents(bad, "not audio at all", -1, NULL);
+
+    tag_answers ans = {.loop = g_main_loop_new(NULL, FALSE)};
+    kp_tagreader *tr = kp_tagreader_new(KP_AUDIO_BIN, on_tags, &ans);
+    kp_tagreader_add(tr, 7, 0, a);
+    kp_tagreader_add(tr, 7, 1, b);
+    kp_tagreader_add(tr, 7, 2, bad);
+    kp_tagreader_add(tr, 7, 3, missing);
+    kp_tagreader_add(tr, 9, 0, a); /* forgotten before it is sent? maybe not */
+    kp_tagreader_forget(tr, 9);
+    CHECK(wait_answers(&ans, 4));
+    CHECK(ans.index[0] == 0 && ans.index[3] == 3);
+    CHECK_STR_EQ(ans.title[0], "Cancao");
+    CHECK_INT_EQ(ans.length[0], 500);
+    /* No tags, but a length; a name with a newline goes as a URI. */
+    CHECK(!ans.failed[1] && ans.title[1] == NULL);
+    CHECK_INT_EQ(ans.length[1], 250);
+    CHECK(ans.failed[2] && ans.failed[3]);
+
+    /* A reader that dies costs the file it was on; the rest goes on. */
+    int pid = kp_tagreader_pid(tr);
+    CHECK(pid > 0);
+    CHECK(kill(pid, SIGKILL) == 0);
+    kp_tagreader_add(tr, 7, 4, a);
+    CHECK(wait_answers(&ans, 5));
+    /* Either answered before the kill landed, or failed and retried. */
+    kp_tagreader_add(tr, 7, 5, a);
+    CHECK(wait_answers(&ans, 6));
+    CHECK_STR_EQ(ans.title[5], "Cancao");
+    CHECK_INT_EQ(kp_tagreader_pending(tr), 0);
+
+    kp_tagreader_free(tr);
+    for (int i = 0; i < ans.n; i++)
+        g_free(ans.title[i]);
+    g_main_loop_unref(ans.loop);
+    g_remove(a);
+    g_remove(b);
+    g_remove(bad);
+    g_rmdir(dir);
+    g_free(a);
+    g_free(b);
+    g_free(bad);
+    g_free(missing);
+    g_free(dir);
+}
+
 TEST(plays_through_the_engine)
 {
     char *dir = g_dir_make_tmp("kp-test-XXXXXX", NULL);
@@ -236,6 +377,8 @@ int main(void)
 {
     RUN(parses_commands);
     RUN(splits_subtunes);
+    RUN(reads_tags);
+    RUN(tag_reader_in_background);
     RUN(plays_through_the_engine);
     return harness_report();
 }

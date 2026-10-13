@@ -9,7 +9,8 @@
  * the other through `shared` under its mutex; events go to stdout, one
  * line each (cmd.h has the protocol).
  *
- *   kiplay-audio [-d ALSA_DEVICE] */
+ *   kiplay-audio [-d ALSA_DEVICE]
+ *   kiplay-audio --tags     reads tags instead (tags.h), for the playlist */
 #include <libavformat/avformat.h>
 #include <math.h>
 #include <pthread.h>
@@ -24,6 +25,7 @@
 #include "cmd.h"
 #include "dec.h"
 #include "out.h"
+#include "tags.h"
 
 /* ~21 ms per write: commands are seen at least this often while playing. */
 #define CHUNK 1024
@@ -375,8 +377,12 @@ int main(int argc, char **argv)
     for (int i = 1; i < argc; i++) {
         if (!strcmp(argv[i], "-d") && i + 1 < argc)
             device = argv[++i];
-        else {
-            fprintf(stderr, "usage: kiplay-audio [-d ALSA_DEVICE]\n");
+        else if (!strcmp(argv[i], "--tags")) {
+            signal(SIGPIPE, SIG_DFL);
+            av_log_set_level(AV_LOG_QUIET);
+            return ka_tags_serve();
+        } else {
+            fprintf(stderr, "usage: kiplay-audio [-d ALSA_DEVICE] | --tags\n");
             return 2;
         }
     }
