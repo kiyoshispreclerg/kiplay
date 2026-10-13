@@ -25,7 +25,7 @@ PKG_CFLAGS = $(if $(PKGS),$(shell $(PKG_CONFIG) --cflags $(PKGS) | sed 's/-I/-is
 PKG_LIBS   = $(if $(PKGS),$(shell $(PKG_CONFIG) --libs $(PKGS)))
 
 # Phase 0 prototypes that need GTK.
-GTK_PKGS   = gtk+-2.0 gio-unix-2.0
+GTK_PKGS   = gtk+-2.0 gio-unix-2.0 x11
 GTK_CFLAGS = $(shell $(PKG_CONFIG) --cflags $(GTK_PKGS) | sed 's/-I/-isystem /g')
 GTK_LIBS   = $(shell $(PKG_CONFIG) --libs $(GTK_PKGS))
 

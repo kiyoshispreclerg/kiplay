@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
+#include <X11/Xlib.h>
 #include <gdk/gdkx.h>
 
 #include "app.h"
@@ -25,6 +26,35 @@ void kp_layout_save(kp_app *app)
     if (app->paned)
         kp_prefs_set_int(app->prefs, "layout", paned_key(app),
                          gtk_paned_get_position(GTK_PANED(app->paned)));
+}
+
+/* mpv 0.34 watches the --wid window and takes any MapNotify it sees there
+ * as its own window being mapped. Moving the video area unmaps and maps
+ * that window: if mpv had just created its window, it never maps it and
+ * the video stays black. The area's children are the backend's windows,
+ * and a backend always wants them shown, so they are mapped here. */
+static void map_backend_windows(GtkWidget *video)
+{
+    if (!gtk_widget_get_realized(video))
+        return;
+    Display *dpy = GDK_WINDOW_XDISPLAY(video->window);
+    Window root, parent, *children = NULL;
+    unsigned n = 0;
+    gdk_error_trap_push();
+    if (XQueryTree(dpy, GDK_WINDOW_XID(video->window), &root, &parent, &children, &n)) {
+        for (unsigned i = 0; i < n; i++)
+            XMapWindow(dpy, children[i]);
+        if (children)
+            XFree(children);
+    }
+    gdk_flush();
+    gdk_error_trap_pop();
+}
+
+static gboolean map_backend_windows_later(gpointer data)
+{
+    map_backend_windows(data);
+    return G_SOURCE_REMOVE;
 }
 
 void kp_layout_apply(kp_app *app)
@@ -81,6 +111,10 @@ void kp_layout_apply(kp_app *app)
             gtk_container_child_set(GTK_CONTAINER(slot), app->video, "resize", TRUE,
                                     "shrink", FALSE, NULL);
         gtk_widget_show(app->video);
+        /* Now, and once more for a window mpv was creating meanwhile. */
+        map_backend_windows(app->video);
+        g_timeout_add_full(G_PRIORITY_DEFAULT, 250, map_backend_windows_later,
+                           g_object_ref(app->video), g_object_unref);
     } else {
         gtk_box_pack_start(GTK_BOX(app->body), center, TRUE, TRUE, 0);
         gtk_widget_show(center);
