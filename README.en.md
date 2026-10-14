@@ -1,5 +1,7 @@
 # Kiplay
 
+[Português](README.md) · **English**
+
 A lightweight audio and video player for KiDesktop, in C + GTK2. It
 combines Audacious's tabbed playlists with SMPlayer's configurability,
 plays video through an external program (mpv or MPlayer) and music through
