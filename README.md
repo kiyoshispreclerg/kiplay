@@ -13,14 +13,14 @@ possível do original:
   a tela (danmaku);
 - as legendas comuns (srt, ass, vtt...).
 
-**Estado:** em desenvolvimento, fase 5: já é um player de uso diário
+**Estado:** em desenvolvimento, fase 6: já é um player de uso diário
 (vídeo pelo mpv, música pelo motor próprio `kiplay-audio` com gapless e
 música de console NSF/SPC/GBS/VGM; playlists em abas com tags, fila,
 busca, arrastar para reordenar, importar e exportar m3u/pls; layout
 configurável; preferências em abas, atalhos editáveis, continuar de onde
 parou, faixas de áudio e legenda, MPRIS, bandeja, modo compacto; legendas
-do YouTube com estilo e posição, como no site). O chat gravado ainda não
-está ligado ao programa. Veja o [plano](PLANO.md) e a [comparação com o
+do YouTube com estilo e posição, como no site; chat de live gravado em
+painel ao lado do vídeo). O chat em danmaku ainda não existe. Veja o [plano](PLANO.md) e a [comparação com o
 Audacious](docs/BENCH.md).
 
 ## Uso
@@ -131,6 +131,15 @@ Para converter à mão, para usar em outro player:
 ```sh
 kiplay --convert "Título [ID].ko.srv3" > ko.ass
 ```
+
+O chat gravado (`Título [ID].live_chat.json`, que o yt-dlp salva com
+`--sub-langs live_chat`) aparece num painel ao lado do vídeo, seguindo o
+tempo do vídeo e refazendo-se a cada pulo: mensagens com os emojis do
+canal e os avatares (baixados uma vez com o `curl` para
+`~/.cache/kiplay/chat`), Super Chats e novos membros em cartões coloridos,
+nome em dourado/azul/verde para o canal, moderadores e membros. Menu Exibir
+→ Chat (tecla `c`); em Preferências → Chat: largura e filtro ("só Super
+Chats e membros").
 
 Em [subtitles], `youtube_edge = strong` troca o contorno fino do YouTube por
 um grosso e borrado, mais fácil de ler; `auto = no` desliga a busca.

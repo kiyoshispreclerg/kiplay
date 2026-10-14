@@ -505,6 +505,9 @@ static bool start_playing(kp_app *app, const char *location, double at)
     char *path = audio ? g_strdup(location) : backend_path(location);
     kp_log_debug("play on %s: %s", kp_backend_name(app->playing.backend), path);
     kp_load_opts lo = load_opts(app, at);
+    char *local = audio || !is_local(location) ? NULL : backend_path(location);
+    kp_chat_file_changed(app, local);
+    g_free(local);
     kp_sub_file *subs = audio ? NULL : sidecar_subs(app, location, &lo.n_sub_files);
     lo.sub_files = subs;
     kp_backend_load(app->playing.backend, path, &lo);
@@ -910,6 +913,7 @@ static void on_event(void *ud, const kp_event *ev)
         break;
     case KP_EV_TIME:
         p->position = ev->value;
+        kp_chat_set_time(app, ev->value);
         kp_controls_update(app);
         break;
     case KP_EV_PAUSED:

@@ -105,6 +105,10 @@ typedef struct {
     GtkWidget *controls; /* the transport bar */
     GtkWidget *paned;    /* holds video + notebook while the video shows */
     GtkWidget *status;   /* label at the bottom */
+    GtkWidget *chat;     /* the chat panel (chatpanel.c); beside the video when wanted */
+    GtkWidget *chat_item; /* View > Chat */
+    bool chat_available; /* the playing video has a chat file, indexed */
+    bool chat_shown;     /* what View > Chat says */
 
     /* Transport bar widgets the player updates. */
     GtkWidget *seek, *time_label, *volume, *play_btn, *pause_btn;
@@ -144,6 +148,8 @@ void kp_layout_save(kp_app *app);
 /* Shows or hides the video area from video_forced and playing.has_video;
  * does nothing if that doesn't change. */
 void kp_layout_update_video(kp_app *app);
+/* The chat panel appeared or went away (kp_chat_wanted changed). */
+void kp_layout_update_chat(kp_app *app);
 /* Only the video (and nothing else) on the whole screen, or back. */
 void kp_layout_set_fullscreen(kp_app *app, bool on);
 /* Only the video and the controls (no menus, playlists, status), or back;
@@ -268,6 +274,26 @@ void kp_shortcuts_attach(GtkWidget *item, const char *action);
 GtkWidget *kp_shortcuts_editor_new(kp_app *app);
 /* Saves what the editor holds and uses it. */
 void kp_shortcuts_editor_apply(kp_app *app, GtkWidget *editor);
+
+/* imgcache.c: pictures of the chat (emoji, avatars) by URL, downloaded in
+ * the background and kept on disk. */
+typedef void (*kp_img_cb)(void *ud);
+/* changed runs (main loop) whenever a picture arrived or failed. */
+void kp_img_init(kp_img_cb changed, void *ud);
+/* The picture, or NULL while it loads (or if it can't): ask again after
+ * the change callback. Owned by the cache; valid until the next call. */
+GdkPixbuf *kp_img_get(const char *url);
+void kp_img_reset(void);
+
+/* chatpanel.c: the recorded live chat beside the video. */
+void kp_chat_init(kp_app *app);
+/* The video that starts (NULL: nothing, or music): looks for its chat file. */
+void kp_chat_file_changed(kp_app *app, const char *path);
+void kp_chat_set_time(kp_app *app, double seconds);
+void kp_chat_prefs_changed(kp_app *app);
+void kp_chat_toggle(kp_app *app);
+/* A chat is loaded and shown: layout.c gives it room beside the video. */
+bool kp_chat_wanted(const kp_app *app);
 
 /* prefsdlg.c: Options > Preferences. */
 void kp_prefs_dialog(kp_app *app);

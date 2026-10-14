@@ -638,7 +638,39 @@ identificadores em inglês; interface pelo gettext com msgids em inglês.
    - Falta: mexer na posição com o mouse; ASR (`<s t=...>`) e ruby/vertical
      como já estavam; conferir lado a lado com o YouTube de novo depois do
      json3.
-6. **Chat lateral**: índice, painel, seek, emotes.
+6. **Chat lateral** *(feita)*: índice, painel, seek, emotes.
+   - `src/chatlog.c`: mapeia o `live_chat.json` e indexa numa passada, numa
+     thread (`GTask`), só as linhas com mensagem (texto, Super Chat,
+     membro): tempo + posição, 16 bytes cada, ordenado se preciso. Uma
+     linha só é decodificada (cJSON) quando chega a hora. O parser dos
+     renderers e o corte do emote (`=w48-h48`) vêm do `youtube.c` do
+     kikarinhas, reescritos sobre `kp_json`. Os 1406 itens do chat da
+     Akirose viram 1401 mensagens (1391 texto + 10 Super Chats).
+   - O yt-dlp grava o JSON com espaço depois dos dois-pontos
+     (`"videoOffsetTimeMsec": "0"`): o leitor aceita com e sem.
+   - `ui/chatpanel.c`: uma `GtkDrawingArea` desenhada à mão (Pango/Cairo),
+     mensagem mais nova embaixo; emoji do canal inline pelo
+     `pango_cairo_context_set_shape_renderer` (o texto leva um U+FFFC no
+     lugar do `:nome:`); emoji Unicode pela fonte; avatar redondo; Super
+     Chat dourado e membro verde em cartões. Segue o `KP_EV_TIME` (4×/s);
+     voltar no tempo ou pular mais de 15 s recomeça pelo índice com as 120
+     últimas linhas antes do ponto; guarda no máximo 300 mensagens.
+   - `ui/imgcache.c`: imagens por URL, `curl` em subprocesso (4 por vez),
+     disco em `~/.cache/kiplay/chat/<sha1>`, memória até 400 (depois
+     esvazia). Não reaproveitei o `emotes.c`/`http.c` do kikarinhas: eles
+     têm libcurl e TLS próprios, e aqui um `curl` filho basta e não
+     bloqueia.
+   - O layout põe o painel numa caixa ao lado do vídeo só quando há chat,
+     está ligado e o vídeo aparece (`kp_layout_update_chat`); o vídeo
+     muda de pai com `gtk_widget_reparent`, como antes. Menu Exibir → Chat
+     (`c`), `[chat] show/width/filter`, aba Chat nas preferências.
+   - Conferido no Xvfb com o 3DMV da Akirose: avatares, nomes por selo, Super
+     Chat, emoji Unicode e emoji do canal no meio do texto, seeks.
+     Memória própria com vídeo e chat: ~14,5 MB (Private_Dirty, Xvfb, fontes
+     CJK).
+   - Falta: rolar o histórico com o mouse; selos como ícone; Super
+     Stickers como imagem; só vale com vídeo (mpv); os pulos com o vídeo
+     pausado só atualizam o chat quando o mpv manda o tempo.
 7. **Danmaku**.
 8. **Backend MPlayer**, provando que a interface é mesmo plugável.
 9. **Direto das plataformas**: link → yt-dlp → mpv, legendas e chat no

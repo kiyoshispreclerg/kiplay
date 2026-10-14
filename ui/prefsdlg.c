@@ -302,6 +302,23 @@ static void subtitles_tab(dialog *d, GtkWidget *nb)
                "the video's file name matches. Takes effect on the next file."));
 }
 
+static void chat_tab(dialog *d, GtkWidget *nb)
+{
+    GtkWidget *p = page(nb, _("Chat"));
+    GtkWidget *t = section(p, _("Recorded live chat"));
+    static const char *const filters[] = {"all", "paid", "members", NULL};
+    static const char *const filter_labels[] = {N_("All messages"),
+                                                N_("Super Chats and new members only"),
+                                                N_("Super Chats, members, moderators and the "
+                                                   "channel")};
+    check(d, t, _("Show the chat beside the video"), "chat", "show", true);
+    spin(d, t, _("Panel _width:"), "chat", "width", 320, 160, 1000);
+    choice(d, t, _("_Show:"), "chat", "filter", filters, filter_labels, "all");
+    note(t, _("The chat comes from the file next to the video (Title [ID].live_chat.json, "
+              "saved by yt-dlp with --sub-langs live_chat). Channel emoji and avatars are "
+              "downloaded once with curl and kept in ~/.cache/kiplay/chat."));
+}
+
 static void shortcuts_tab(dialog *d, GtkWidget *nb)
 {
     d->shortcuts = kp_shortcuts_editor_new(d->app);
@@ -384,6 +401,7 @@ static void apply(dialog *d)
     kp_shortcuts_editor_apply(app, d->shortcuts);
     kp_player_prefs_changed(app);
     kp_desktop_prefs_changed(app);
+    kp_chat_prefs_changed(app);
     if (kp_prefs_save(app->prefs) < 0)
         kp_log_warn(_("could not save the settings: %s"), g_strerror(errno));
 }
@@ -408,6 +426,7 @@ void kp_prefs_dialog(kp_app *app)
     video_tab(&d, nb);
     audio_tab(&d, nb);
     subtitles_tab(&d, nb);
+    chat_tab(&d, nb);
     shortcuts_tab(&d, nb);
     advanced_tab(&d, nb);
     gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dlg))), nb, TRUE, TRUE, 0);

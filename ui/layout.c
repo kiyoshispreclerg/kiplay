@@ -8,6 +8,9 @@
 const char *const kp_video_pos_names[] = {"above", "left", "right", NULL};
 const char *const kp_controls_pos_names[] = {"bottom", "top", NULL};
 
+/* Whether the chat panel is in the layout now. */
+static bool chat_in_layout;
+
 /* Takes w out of its parent, keeping it alive. */
 static void detach(GtkWidget *w)
 {
@@ -79,6 +82,8 @@ void kp_layout_apply(kp_app *app)
 
     detach(app->notebook);
     detach(app->controls);
+    if (app->chat)
+        detach(app->chat);
     if (app->paned) {
         gtk_widget_destroy(app->paned);
         app->paned = NULL;
@@ -88,7 +93,9 @@ void kp_layout_apply(kp_app *app)
     if (app->show_video) {
         app->paned = app->video_pos == KP_VIDEO_ABOVE ? gtk_vpaned_new() : gtk_hpaned_new();
         bool video_first = app->video_pos != KP_VIDEO_RIGHT;
-        GtkWidget *placeholder = gtk_event_box_new();
+        /* With a chat the video's slot is a box: video, then the panel. */
+        bool with_chat = kp_chat_wanted(app);
+        GtkWidget *placeholder = with_chat ? gtk_hbox_new(FALSE, 0) : gtk_event_box_new();
         if (video_first) {
             gtk_paned_pack1(GTK_PANED(app->paned), placeholder, TRUE, FALSE);
             gtk_paned_pack2(GTK_PANED(app->paned), app->notebook, FALSE, FALSE);
@@ -105,10 +112,19 @@ void kp_layout_apply(kp_app *app)
         gtk_box_pack_start(GTK_BOX(app->body), center, TRUE, TRUE, 0);
         gtk_widget_show_all(center);
         GtkWidget *slot = gtk_widget_get_parent(placeholder);
-        gtk_container_remove(GTK_CONTAINER(slot), placeholder);
-        gtk_widget_reparent(app->video, slot);
+        GtkWidget *occupant = app->video;
+        if (with_chat) {
+            gtk_widget_reparent(app->video, placeholder);
+            gtk_box_pack_end(GTK_BOX(placeholder), app->chat, FALSE, FALSE, 0);
+            gtk_widget_show(app->chat);
+            occupant = placeholder;
+        } else {
+            gtk_container_remove(GTK_CONTAINER(slot), placeholder);
+            gtk_widget_reparent(app->video, slot);
+        }
+        chat_in_layout = with_chat;
         if (video_first)
-            gtk_container_child_set(GTK_CONTAINER(slot), app->video, "resize", TRUE,
+            gtk_container_child_set(GTK_CONTAINER(slot), occupant, "resize", TRUE,
                                     "shrink", FALSE, NULL);
         gtk_widget_show(app->video);
         /* Now, and once more for a window mpv was creating meanwhile. */
@@ -116,6 +132,7 @@ void kp_layout_apply(kp_app *app)
         g_timeout_add_full(G_PRIORITY_DEFAULT, 250, map_backend_windows_later,
                            g_object_ref(app->video), g_object_unref);
     } else {
+        chat_in_layout = false;
         gtk_box_pack_start(GTK_BOX(app->body), center, TRUE, TRUE, 0);
         gtk_widget_show(center);
     }
@@ -135,11 +152,21 @@ void kp_layout_apply(kp_app *app)
                      (unsigned long)GDK_WINDOW_XID(app->video->window));
 }
 
+void kp_layout_update_chat(kp_app *app)
+{
+    if (!app->show_video || kp_chat_wanted(app) == chat_in_layout)
+        return;
+    kp_layout_save(app);
+    kp_layout_apply(app);
+}
+
 void kp_layout_update_video(kp_app *app)
 {
     bool want = app->video_forced || app->playing.has_video || app->fullscreen;
-    if (want == app->show_video)
+    if (want == app->show_video) {
+        kp_layout_update_chat(app);
         return;
+    }
     kp_layout_save(app);
     app->show_video = want;
     kp_layout_apply(app);

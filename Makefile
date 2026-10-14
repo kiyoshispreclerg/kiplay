@@ -27,6 +27,7 @@ LIB_SRC = src/log.c \
       src/srv3.c \
       src/json3.c \
       src/sidecar.c \
+      src/chatlog.c \
       src/ytsub_ass.c
 VENDOR_SRC = vendor/cjson/cJSON.c
 LIBKP = $(BUILD)/libkp.a
@@ -43,7 +44,9 @@ APP_SRC = src/main.c \
       ui/shortcuts.c \
       ui/tracks.c \
       ui/prefsdlg.c \
-      ui/desktop.c
+      ui/desktop.c \
+      ui/imgcache.c \
+      ui/chatpanel.c
 APP_OBJ = $(patsubst %.c,$(BUILD)/%.o,$(APP_SRC))
 
 # kiplay-audio: the music engine, its own process. No GLib in it: libav,

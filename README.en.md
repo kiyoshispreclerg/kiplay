@@ -14,14 +14,14 @@ close to the original as possible:
   it (danmaku);
 - ordinary subtitles (srt, ass, vtt...).
 
-**Status:** in development, phase 5: already an everyday player (video
+**Status:** in development, phase 6: already an everyday player (video
 through mpv, music through its own `kiplay-audio` engine with gapless and
 NSF/SPC/GBS/VGM game music; tabbed playlists with tags, a play queue,
 search, drag to reorder, m3u/pls import and export; configurable layout;
 tabbed preferences, editable shortcuts, resume where it stopped, audio
 and subtitle tracks, MPRIS, tray icon, compact mode; YouTube captions with
-their style and position, as on the site). The saved chat isn't wired into
-the program yet. See
+their style and position, as on the site; recorded live chat in a panel
+beside the video). Chat as danmaku doesn't exist yet. See
 the [plan](PLANO.md) and the [comparison with Audacious](docs/BENCH.md)
 (both in Portuguese).
 
@@ -132,6 +132,14 @@ convert by hand, for another player:
 ```sh
 kiplay --convert "Title [ID].ko.srv3" > ko.ass
 ```
+
+The recorded chat (`Title [ID].live_chat.json`, which yt-dlp saves with
+`--sub-langs live_chat`) shows in a panel beside the video, following the
+video's time and starting over at every seek: messages with the channel's
+emoji and avatars (downloaded once with `curl` into `~/.cache/kiplay/chat`),
+Super Chats and new members as colored cards, names in gold/blue/green for
+the channel, moderators and members. View → Chat (key `c`); Preferences →
+Chat: width and a filter ("Super Chats and members only").
 
 In `[subtitles]`, `youtube_edge = strong` swaps YouTube's thin outline for a
 thick, blurred one that is easier to read; `auto = no` turns the search off.

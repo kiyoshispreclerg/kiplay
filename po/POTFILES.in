@@ -12,3 +12,4 @@ ui/shortcuts.c
 ui/tracks.c
 ui/prefsdlg.c
 ui/desktop.c
+ui/chatpanel.c

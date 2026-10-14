@@ -8,8 +8,8 @@ e chat de live gravado (lateral e danmaku). Leia o `PLANO.md` antes de
 começar uma fase (arquitetura, estado, medições) e o `docs/FORMATOS.md`
 antes de mexer num leitor.
 
-Fase atual: 5 feita (sidecars e legendas do YouTube: srv3/json3 → ASS,
-menu Legendas, `--convert`). Próxima: 6 (chat lateral).
+Fase atual: 6 feita (chat lateral: `live_chat.json` indexado, painel ao
+lado do vídeo com emojis e avatares). Próxima: 7 (danmaku).
 
 O usuário escreve em português (pt-BR) e quer as respostas em português.
 Comentários e identificadores no código, em inglês. A interface é
@@ -138,6 +138,8 @@ PULSE_SINK=kpbench tools/bench-compare.sh -k DIR -a CÓPIA[:nome] CENÁRIOS.tsv 
 | `ui/desktop.c` | MPRIS ligado ao player; ícone na bandeja |
 | `src/ytsub.c` | modelo neutro das legendas do YouTube (pens, posições, estilos, eventos) e os padrões |
 | `src/srv3.c`, `src/json3.c` | leitores de srv3 (GMarkup) e json3 (cJSON) |
+| `src/chatlog.c` | `live_chat.json`: índice por tempo (mmap, thread) e decodificação sob demanda das mensagens |
+| `ui/chatpanel.c`, `ui/imgcache.c` | painel do chat ao lado do vídeo (Pango/Cairo); imagens por URL via `curl` filho, cache em `~/.cache/kiplay/chat` |
 | `src/sidecar.c` | arquivos ao lado do vídeo (legendas, chat), conversão para ASS em `~/.cache/kiplay/subs` |
 | `src/ytsub_ass.c` | kp_ytsub → ASS: `\an`+`\pos`, cores, bordas; caixa (layer 0) e texto (layer 1) |
 | `proto/subconv.c` | srv3 → ASS na linha de comando |

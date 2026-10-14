@@ -65,6 +65,14 @@ static void on_show_video(GtkCheckMenuItem *it, gpointer data)
     kp_layout_update_video(app);
 }
 
+static void on_chat(GtkCheckMenuItem *it, gpointer data)
+{
+    kp_app *app = data;
+    app->chat_shown = gtk_check_menu_item_get_active(it);
+    kp_prefs_set_bool(app->prefs, "chat", "show", app->chat_shown);
+    kp_layout_update_chat(app);
+}
+
 static void on_video_pos(GtkCheckMenuItem *it, gpointer data)
 {
     kp_app *app = data;
@@ -230,6 +238,12 @@ static GtkWidget *menu_bar(kp_app *app)
     g_signal_connect(app->compact_item, "toggled", G_CALLBACK(on_compact), app);
     kp_shortcuts_attach(app->compact_item, "compact");
     gtk_menu_shell_append(GTK_MENU_SHELL(m), app->compact_item);
+    app->chat_item = gtk_check_menu_item_new_with_mnemonic(_("_Chat"));
+    gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(app->chat_item), app->chat_shown);
+    gtk_widget_set_sensitive(app->chat_item, app->chat_available);
+    g_signal_connect(app->chat_item, "toggled", G_CALLBACK(on_chat), app);
+    kp_shortcuts_attach(app->chat_item, "chat");
+    gtk_menu_shell_append(GTK_MENU_SHELL(m), app->chat_item);
     separator(m);
     static const char *const video_labels[] = {N_("Video _above the playlists"),
                                                N_("Video on the _left"),
@@ -474,6 +488,7 @@ int kp_window_run(const kp_window_opts *opts)
     /* Before the menus: they show the columns it reads, and the keys. */
     kp_playlists_init(app);
     kp_shortcuts_load(app);
+    kp_chat_init(app);
     app->menubar = menu_bar(app);
     gtk_box_pack_start(GTK_BOX(app->body), app->menubar, FALSE, FALSE, 0);
 
