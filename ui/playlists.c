@@ -447,10 +447,9 @@ static void add_thread(GTask *task, gpointer src, gpointer data, GCancellable *c
     for (char **u = job->uris; *u; u++) {
         if (!**u)
             continue;
-        /* Local files are kept as plain paths; anything else as the URI. */
-        char *path = g_str_has_prefix(*u, "file://") ? g_filename_from_uri(*u, NULL, NULL)
-                     : (*u)[0] == '/'                ? g_strdup(*u)
-                                                     : NULL;
+        /* Local files as plain paths, subtunes and the rest as URIs. */
+        char *loc = kp_media_location(*u);
+        char *path = loc[0] == '/' ? loc : NULL;
         if (path && g_file_test(path, G_FILE_TEST_IS_DIR))
             walk(path, job->out, 0);
         else if (path && kp_media_is_playlist(path)) {
@@ -462,8 +461,8 @@ static void add_thread(GTask *task, gpointer src, gpointer data, GCancellable *c
             }
             kp_playlist_free(pl);
         } else
-            push(job->out, path ? path : *u, NULL);
-        g_free(path);
+            push(job->out, loc, NULL);
+        g_free(loc);
     }
     g_task_return_boolean(task, TRUE);
 }

@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 #include <glib.h>
+#include <glib/gstdio.h>
 
 #include "../harness.h"
 #include "media.h"
@@ -49,9 +50,50 @@ TEST(search_words_anywhere)
     g_free(hay);
 }
 
+TEST(subtunes_become_uris)
+{
+    char *dir = g_dir_make_tmp("kp-test-XXXXXX", NULL);
+    char *game = g_build_filename(dir, "Jogo X.nsf", NULL);
+    char *odd = g_build_filename(dir, "x?3", NULL);
+    g_file_set_contents(game, "", 0, NULL);
+    g_file_set_contents(odd, "", 0, NULL);
+    char *uri = g_filename_to_uri(game, NULL, NULL);
+    char *want = g_strdup_printf("%s?55", uri);
+    /* From a URI (what file managers and kiplay ARG send) and a path. */
+    char *in = g_strdup_printf("%s?55", uri);
+    char *got = kp_media_location(in);
+    CHECK_STR_EQ(got, want);
+    g_free(got);
+    g_free(in);
+    in = g_strdup_printf("%s?55", game);
+    got = kp_media_location(in);
+    CHECK_STR_EQ(got, want);
+    g_free(got);
+    g_free(in);
+    /* Plain files stay paths; a file really named "x?3" too. */
+    got = kp_media_location(uri);
+    CHECK_STR_EQ(got, game);
+    g_free(got);
+    got = kp_media_location(odd);
+    CHECK_STR_EQ(got, odd);
+    g_free(got);
+    got = kp_media_location("http://radio/x?1");
+    CHECK_STR_EQ(got, "http://radio/x?1");
+    g_free(got);
+    g_unlink(game);
+    g_unlink(odd);
+    g_rmdir(dir);
+    g_free(want);
+    g_free(uri);
+    g_free(game);
+    g_free(odd);
+    g_free(dir);
+}
+
 int main(void)
 {
     RUN(kinds_by_extension);
     RUN(search_words_anywhere);
+    RUN(subtunes_become_uris);
     return harness_report();
 }

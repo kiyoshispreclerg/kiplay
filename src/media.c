@@ -58,3 +58,28 @@ bool kp_media_is_playlist(const char *location)
     g_free(ext);
     return yes;
 }
+
+char *kp_media_location(const char *location)
+{
+    char *path = g_str_has_prefix(location, "file://") ? g_filename_from_uri(location, NULL, NULL)
+                 : location[0] == '/'                    ? g_strdup(location)
+                                                         : NULL;
+    if (!path)
+        return g_strdup(location);
+    char *q = strrchr(path, '?');
+    if (q && q[1] && q[1 + strspn(q + 1, "0123456789")] == '\0' &&
+        !g_file_test(path, G_FILE_TEST_EXISTS)) {
+        *q = '\0';
+        if (g_file_test(path, G_FILE_TEST_EXISTS)) {
+            char *uri = g_filename_to_uri(path, NULL, NULL);
+            char *with = uri ? g_strdup_printf("%s?%s", uri, q + 1) : NULL;
+            g_free(uri);
+            if (with) {
+                g_free(path);
+                return with;
+            }
+        }
+        *q = '?';
+    }
+    return path;
+}

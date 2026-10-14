@@ -15,6 +15,12 @@ typedef enum {
 } kp_media_kind;
 
 kp_media_kind kp_media_kind_of(const char *location);
+/* How a playlist keeps a location it is given (a path or a URI): local
+ * files as plain paths, but a subtune ("game.nsf?3", from a file:// URI or
+ * a path, where "game.nsf" exists and "game.nsf?3" doesn't) as a file://
+ * URI with the "?N", as Audacious writes it; anything else unchanged.
+ * Returns a new string. */
+char *kp_media_location(const char *location);
 /* Playlists that can be opened as tabs (m3u, m3u8, pls). */
 bool kp_media_is_playlist(const char *location);
 
