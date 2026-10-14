@@ -11,6 +11,7 @@
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 #include <libavutil/channel_layout.h>
+#include "../audio/avcompat.h"
 #include <libavutil/opt.h>
 #include <libswresample/swresample.h>
 #include <stdbool.h>
@@ -94,7 +95,7 @@ static int play_av(const char *path)
         fprintf(stderr, "não abriu %s\n", path);
         return 1;
     }
-    AVCodec *codec = NULL; /* ffmpeg 4.4: not const yet */
+    ka_av_codec *codec = NULL;
     int si = av_find_best_stream(fmt, AVMEDIA_TYPE_AUDIO, -1, -1, &codec, 0);
     if (si < 0) {
         fprintf(stderr, "sem áudio\n");
@@ -107,12 +108,9 @@ static int play_av(const char *path)
     avcodec_parameters_to_context(dec, fmt->streams[si]->codecpar);
     if (avcodec_open2(dec, codec, NULL) < 0)
         return 1;
-    fprintf(stderr, "%s, %d Hz, %d canais\n", codec->name, dec->sample_rate, dec->channels);
+    fprintf(stderr, "%s, %d Hz, %d canais\n", codec->name, dec->sample_rate, ka_av_channels(dec));
 
-    int64_t in_layout = dec->channel_layout ? (int64_t)dec->channel_layout
-                                            : av_get_default_channel_layout(dec->channels);
-    SwrContext *swr = swr_alloc_set_opts(NULL, AV_CH_LAYOUT_STEREO, AV_SAMPLE_FMT_S16, RATE,
-                                         in_layout, dec->sample_fmt, dec->sample_rate, 0, NULL);
+    SwrContext *swr = ka_av_swr_alloc(dec, RATE);
     swr_init(swr);
     AVPacket *pkt = av_packet_alloc();
     AVFrame *frame = av_frame_alloc();

@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 #include "dec.h"
+#include "avcompat.h"
 
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
@@ -164,7 +165,7 @@ static int open_av(ka_dec *d)
     r = avformat_find_stream_info(d->fmt, NULL);
     if (r < 0)
         return r;
-    AVCodec *codec = NULL; /* ffmpeg 4: not const yet */
+    ka_av_codec *codec = NULL;
     d->stream = av_find_best_stream(d->fmt, AVMEDIA_TYPE_AUDIO, -1, -1, &codec, 0);
     if (d->stream < 0)
         return d->stream;
@@ -179,10 +180,7 @@ static int open_av(ka_dec *d)
     r = avcodec_open2(d->codec, codec, NULL);
     if (r < 0)
         return r;
-    int64_t in_layout = d->codec->channel_layout ? (int64_t)d->codec->channel_layout
-                                                 : av_get_default_channel_layout(d->codec->channels);
-    d->swr = swr_alloc_set_opts(NULL, AV_CH_LAYOUT_STEREO, AV_SAMPLE_FMT_S16, KA_RATE, in_layout,
-                                d->codec->sample_fmt, d->codec->sample_rate, 0, NULL);
+    d->swr = ka_av_swr_alloc(d->codec, KA_RATE);
     if (!d->swr)
         return AVERROR(ENOMEM);
     d->emulated = !strcmp(d->fmt->iformat->name, "libgme");
