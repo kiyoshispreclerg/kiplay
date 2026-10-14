@@ -15,6 +15,14 @@ possível do original:
   a tela (danmaku);
 - as legendas comuns (srt, ass, vtt...).
 
+<p align="center">
+  <img src="docs/img/bassline.png" width="49%" alt="Legendas do YouTube com estilo, animadas sobre o vídeo">
+  <img src="docs/img/akirose-chat.png" width="49%" alt="Chat de live gravado ao lado do vídeo">
+</p>
+<p align="center">
+  <img src="docs/img/playlists.png" width="80%" alt="Playlists em abas">
+</p>
+
 **Estado:** em desenvolvimento, fase 6: já é um player de uso diário
 (vídeo pelo mpv, música pelo motor próprio `kiplay-audio` com gapless e
 música de console NSF/SPC/GBS/VGM; playlists em abas com tags, fila,

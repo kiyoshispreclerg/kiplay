@@ -16,6 +16,14 @@ close to the original as possible:
   it (danmaku);
 - ordinary subtitles (srt, ass, vtt...).
 
+<p align="center">
+  <img src="docs/img/bassline.png" width="49%" alt="Styled, animated YouTube captions over the video">
+  <img src="docs/img/akirose-chat.png" width="49%" alt="Recorded live chat beside the video">
+</p>
+<p align="center">
+  <img src="docs/img/playlists.png" width="80%" alt="Tabbed playlists">
+</p>
+
 **Status:** in development, phase 6: already an everyday player (video
 through mpv, music through its own `kiplay-audio` engine with gapless and
 NSF/SPC/GBS/VGM game music; tabbed playlists with tags, a play queue,
