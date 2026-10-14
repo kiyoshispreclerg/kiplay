@@ -921,15 +921,43 @@ void kp_playlists_set_columns(kp_app *app, unsigned cols)
 
 /* ---- tabs ---------------------------------------------------------------- */
 
+static void tab_menu_item(GtkWidget *menu, const char *label, void (*cb)(kp_app *), kp_app *app)
+{
+    GtkWidget *it = gtk_menu_item_new_with_mnemonic(label);
+    g_signal_connect_swapped(it, "activate", G_CALLBACK(cb), app);
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), it);
+    gtk_widget_show(it);
+}
+
+/* Right click on a tab: the playlist of that tab, not the one on screen. */
+static void tab_menu(kp_app *app, GdkEventButton *ev)
+{
+    GtkWidget *m = gtk_menu_new();
+    tab_menu_item(m, _("_Rename..."), kp_playlists_rename, app);
+    tab_menu_item(m, _("_Export playlist..."), kp_playlists_export, app);
+    GtkWidget *sep = gtk_separator_menu_item_new();
+    gtk_menu_shell_append(GTK_MENU_SHELL(m), sep);
+    gtk_widget_show(sep);
+    tab_menu_item(m, _("Re_move"), kp_playlists_close, app);
+    g_signal_connect(m, "selection-done", G_CALLBACK(gtk_widget_destroy), NULL);
+    gtk_menu_popup(GTK_MENU(m), NULL, NULL, NULL, NULL, ev->button, ev->time);
+}
+
 static gboolean on_tab_click(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
     kp_app *app = data;
-    if (ev->type != GDK_2BUTTON_PRESS || ev->button != 1)
+    if (ev->type != GDK_2BUTTON_PRESS && ev->type != GDK_BUTTON_PRESS)
+        return FALSE;
+    if ((ev->type == GDK_2BUTTON_PRESS && ev->button != 1) ||
+        (ev->type == GDK_BUTTON_PRESS && ev->button != 3))
         return FALSE;
     page_t *pg = g_object_get_data(G_OBJECT(w), "kp-page");
     gtk_notebook_set_current_page(GTK_NOTEBOOK(app->notebook),
                                   gtk_notebook_page_num(GTK_NOTEBOOK(app->notebook), pg->scroll));
-    kp_playlists_rename(app);
+    if (ev->button == 3)
+        tab_menu(app, ev);
+    else
+        kp_playlists_rename(app);
     return TRUE;
 }
 
@@ -980,10 +1008,21 @@ static page_t *add_page(kp_app *app, size_t i)
     return pg;
 }
 
+/* The "+" tab: always last, never a playlist. Switching to it makes one. */
+static GtkWidget *ghost;
+
 static void on_reordered(GtkNotebook *nb, GtkWidget *child, guint to, gpointer data)
 {
-    (void)nb;
     kp_app *app = data;
+    if (child == ghost)
+        return;
+    /* A tab dropped after the "+": the "+" goes back to the end. */
+    int last = gtk_notebook_get_n_pages(nb) - 1;
+    if (ghost && gtk_notebook_page_num(nb, ghost) != last) {
+        gtk_notebook_reorder_child(nb, ghost, -1);
+        if (to > (guint)last - 1)
+            to = (guint)last - 1;
+    }
     long from = kp_plset_find(app->playlists, page_of(child)->id);
     if (from >= 0)
         kp_plset_move(app->playlists, (size_t)from, to);
@@ -996,6 +1035,26 @@ static gboolean status_idle(gpointer data)
     return G_SOURCE_REMOVE;
 }
 
+static void new_page(kp_app *app, const char *name);
+
+/* The "+" was selected (switch-page can't change pages itself): add the
+ * playlist at the end, unless something else already took over (closing
+ * the last playlist lands here too). */
+static gboolean ghost_idle(gpointer data)
+{
+    kp_app *app = data;
+    GtkNotebook *nb = GTK_NOTEBOOK(app->notebook);
+    if (!ghost || gtk_notebook_get_nth_page(nb, gtk_notebook_get_current_page(nb)) != ghost)
+        return G_SOURCE_REMOVE;
+    size_t n = kp_plset_count(app->playlists);
+    if (n > 0)
+        gtk_notebook_set_current_page(nb, (int)n - 1);
+    char *name = g_strdup_printf(_("Playlist %zu"), n + 1);
+    new_page(app, name);
+    g_free(name);
+    return G_SOURCE_REMOVE;
+}
+
 static void on_switch(GtkNotebook *nb, gpointer page, guint num, gpointer data)
 {
     (void)page;
@@ -1005,15 +1064,25 @@ static void on_switch(GtkNotebook *nb, gpointer page, guint num, gpointer data)
     page_t *pg = page_of(gtk_notebook_get_nth_page(nb, (int)num));
     if (pg)
         ensure_view(app, pg);
+    else if (ghost && gtk_notebook_get_nth_page(nb, (int)num) == ghost)
+        g_idle_add(ghost_idle, app);
     g_idle_add(status_idle, app);
     schedule_save(app);
+}
+
+/* Where a new tab goes: after the current one (never after the "+"). */
+static size_t new_position(kp_app *app)
+{
+    int cur = gtk_notebook_get_current_page(GTK_NOTEBOOK(app->notebook));
+    size_t at = (size_t)(cur < 0 ? 0 : cur + 1);
+    size_t n = kp_plset_count(app->playlists);
+    return at > n ? n : at;
 }
 
 /* A new tab after the current one, selected. */
 static void new_page(kp_app *app, const char *name)
 {
-    int cur = gtk_notebook_get_current_page(GTK_NOTEBOOK(app->notebook));
-    size_t at = kp_plset_insert(app->playlists, (size_t)(cur + 1), name);
+    size_t at = kp_plset_insert(app->playlists, new_position(app), name);
     add_page(app, at);
     gtk_notebook_set_current_page(GTK_NOTEBOOK(app->notebook), (int)at);
     schedule_save(app);
@@ -1084,6 +1153,11 @@ void kp_playlists_close(kp_app *app)
     if (app->tags)
         kp_tagreader_forget(app->tags, id);
     long i = kp_plset_find(app->playlists, id);
+    /* GTK would pick the "+" after the last tab: pick the one before. */
+    GtkNotebook *nb = GTK_NOTEBOOK(app->notebook);
+    int cur = gtk_notebook_get_current_page(nb);
+    if (cur > 0 && cur + 2 == gtk_notebook_get_n_pages(nb))
+        gtk_notebook_set_current_page(nb, cur - 1);
     /* The page (and its model) goes before the playlist it shows. */
     gtk_widget_destroy(pg->scroll);
     if (i >= 0)
@@ -1134,8 +1208,7 @@ void kp_playlists_import(kp_app *app)
         gtk_dialog_run(GTK_DIALOG(e));
         gtk_widget_destroy(e);
     } else {
-        int cur = gtk_notebook_get_current_page(GTK_NOTEBOOK(app->notebook));
-        size_t at = kp_plset_insert(app->playlists, (size_t)(cur + 1),
+        size_t at = kp_plset_insert(app->playlists, new_position(app),
                                     *kp_playlist_name(in) ? kp_playlist_name(in) : name);
         kp_playlist *pl = kp_plset_get(app->playlists, at);
         for (size_t i = 0; i < kp_playlist_count(in); i++) {
@@ -1229,6 +1302,12 @@ void kp_playlists_init(kp_app *app)
     }
     for (size_t i = 0; i < kp_plset_count(app->playlists); i++)
         add_page(app, i);
+    ghost = gtk_vbox_new(FALSE, 0);
+    GtkWidget *plus = gtk_label_new("+");
+    gtk_widget_set_tooltip_text(plus, _("New playlist"));
+    gtk_widget_show(plus);
+    gtk_widget_show(ghost);
+    gtk_notebook_append_page(GTK_NOTEBOOK(app->notebook), ghost, plus);
     long active = kp_plset_find(app->playlists,
                                 kp_prefs_get_int(app->prefs, "playlists", "active", 0, 0, 1000000));
     g_signal_connect(app->notebook, "switch-page", G_CALLBACK(on_switch), app);

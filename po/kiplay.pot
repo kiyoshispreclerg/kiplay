@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: kiplay\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-14 12:39-0300\n"
+"POT-Creation-Date: 2026-10-14 12:52-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -106,7 +106,7 @@ msgstr ""
 msgid "_Import playlist..."
 msgstr ""
 
-#: ui/window.c:206
+#: ui/window.c:206 ui/playlists.c:937
 msgid "_Export playlist..."
 msgstr ""
 
@@ -122,7 +122,7 @@ msgstr ""
 msgid "_New"
 msgstr ""
 
-#: ui/window.c:212
+#: ui/window.c:212 ui/playlists.c:936
 msgid "_Rename..."
 msgstr ""
 
@@ -300,51 +300,59 @@ msgstr ""
 msgid "Add files"
 msgstr ""
 
-#: ui/playlists.c:1024
+#: ui/playlists.c:941
+msgid "Re_move"
+msgstr ""
+
+#: ui/playlists.c:1052 ui/playlists.c:1093
 #, c-format
 msgid "Playlist %zu"
 msgstr ""
 
-#: ui/playlists.c:1035 ui/shortcuts.c:104
+#: ui/playlists.c:1104 ui/shortcuts.c:104
 msgid "Rename playlist"
 msgstr ""
 
-#: ui/playlists.c:1068
+#: ui/playlists.c:1137
 #, c-format
 msgid "Close the playlist \"%s\"?"
 msgstr ""
 
-#: ui/playlists.c:1071
+#: ui/playlists.c:1140
 #, c-format
 msgid "Its %zu track will be removed from the list (the file stays)."
 msgid_plural "Its %zu tracks will be removed from the list (the files stay)."
 msgstr[0] ""
 msgstr[1] ""
 
-#: ui/playlists.c:1102
+#: ui/playlists.c:1176
 msgid "Playlists (m3u, m3u8, pls)"
 msgstr ""
 
-#: ui/playlists.c:1112
+#: ui/playlists.c:1186
 msgid "Import playlist"
 msgstr ""
 
-#: ui/playlists.c:1133
+#: ui/playlists.c:1207
 #, c-format
 msgid "Cannot read %s"
 msgstr ""
 
-#: ui/playlists.c:1163
+#: ui/playlists.c:1236
 msgid "Export playlist"
 msgstr ""
 
-#: ui/playlists.c:1176
+#: ui/playlists.c:1249
 #, c-format
 msgid "Cannot write %s"
 msgstr ""
 
-#: ui/playlists.c:1227
+#: ui/playlists.c:1300
 msgid "Playlist 1"
+msgstr ""
+
+#: ui/playlists.c:1307 ui/shortcuts.c:103
+msgid "New playlist"
 msgstr ""
 
 #: ui/controls.c:143 ui/shortcuts.c:75
@@ -527,10 +535,6 @@ msgstr ""
 
 #: ui/shortcuts.c:100 ui/prefsdlg.c:307
 msgid "Chat"
-msgstr ""
-
-#: ui/shortcuts.c:103
-msgid "New playlist"
 msgstr ""
 
 #: ui/shortcuts.c:105
