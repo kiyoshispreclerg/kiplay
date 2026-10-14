@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: kiplay\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-14 18:54-0300\n"
+"POT-Creation-Date: 2026-10-14 18:58-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -85,7 +85,7 @@ msgid ""
 "and recorded live chat."
 msgstr ""
 
-#: ui/window.c:197 ui/prefsdlg.c:408
+#: ui/window.c:197 ui/prefsdlg.c:435
 #, c-format
 msgid "could not save the settings: %s"
 msgstr ""
@@ -553,7 +553,7 @@ msgstr ""
 msgid "Playlists"
 msgstr ""
 
-#: ui/shortcuts.c:102 ui/prefsdlg.c:309
+#: ui/shortcuts.c:102 ui/prefsdlg.c:325
 msgid "Chat"
 msgstr ""
 
@@ -577,7 +577,7 @@ msgstr ""
 msgid "Move selection down"
 msgstr ""
 
-#: ui/shortcuts.c:113 ui/prefsdlg.c:418
+#: ui/shortcuts.c:113 ui/prefsdlg.c:445
 msgid "Preferences"
 msgstr ""
 
@@ -999,69 +999,82 @@ msgid ""
 msgstr ""
 
 #: ui/prefsdlg.c:310
+#, c-format
+msgid "Picture cache: %s"
+msgstr ""
+
+#: ui/prefsdlg.c:326
 msgid "Recorded live chat"
 msgstr ""
 
-#: ui/prefsdlg.c:312
+#: ui/prefsdlg.c:328
 msgid "All messages"
 msgstr ""
 
-#: ui/prefsdlg.c:313
+#: ui/prefsdlg.c:329
 msgid "Super Chats and new members only"
 msgstr ""
 
-#: ui/prefsdlg.c:314
+#: ui/prefsdlg.c:330
 msgid "Super Chats, members, moderators and the channel"
 msgstr ""
 
-#: ui/prefsdlg.c:316
+#: ui/prefsdlg.c:332
 msgid "Show the chat beside the video"
 msgstr ""
 
-#: ui/prefsdlg.c:317
+#: ui/prefsdlg.c:333
 msgid "Panel _width:"
 msgstr ""
 
-#: ui/prefsdlg.c:318
+#: ui/prefsdlg.c:334
 msgid "_Show:"
 msgstr ""
 
-#: ui/prefsdlg.c:319
+#: ui/prefsdlg.c:335
 msgid ""
 "The chat comes from the file next to the video (Title [ID].live_chat.json, "
 "saved by yt-dlp with --sub-langs live_chat). Channel emoji and avatars are "
 "downloaded once with curl and kept in ~/.cache/kiplay/chat."
 msgstr ""
 
-#: ui/prefsdlg.c:327
+#: ui/prefsdlg.c:339
+msgid "Pictures"
+msgstr ""
+
+#: ui/prefsdlg.c:344
+msgid "C_lear the picture cache"
+msgstr ""
+
+#: ui/prefsdlg.c:354
 msgid "Shortcuts"
 msgstr ""
 
-#: ui/prefsdlg.c:332
+#: ui/prefsdlg.c:359
 msgid "Advanced"
 msgstr ""
 
-#: ui/prefsdlg.c:333
+#: ui/prefsdlg.c:360
 msgid "mpv"
 msgstr ""
 
-#: ui/prefsdlg.c:334
+#: ui/prefsdlg.c:361
 msgid "_Program:"
 msgstr ""
 
-#: ui/prefsdlg.c:335
+#: ui/prefsdlg.c:362
 msgid "Also read my mpv _configuration (~/.config/mpv/mpv.conf)"
 msgstr ""
 
-#: ui/prefsdlg.c:337
+#: ui/prefsdlg.c:364
 msgid "_Extra options:"
 msgstr ""
 
-#: ui/prefsdlg.c:339
+#: ui/prefsdlg.c:366
 msgid "Passed to mpv as typed, e.g. --deband --scale=ewa_lanczos"
 msgstr ""
 
-#: ui/prefsdlg.c:340
+#: ui/prefsdlg.c:367
 msgid ""
 "Kiplay controls mpv's window, keys and on-screen controls; options that "
 "change those can break it."

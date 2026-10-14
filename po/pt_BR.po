@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: kiplay\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-14 18:54-0300\n"
+"POT-Creation-Date: 2026-10-14 18:58-0300\n"
 "PO-Revision-Date: 2026-10-09 16:23-0300\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -104,7 +104,7 @@ msgstr ""
 "Reprodutor leve de áudio e vídeo para o KiDesktop, com as legendas "
 "estilizadas do YouTube e o chat de lives gravadas."
 
-#: ui/window.c:197 ui/prefsdlg.c:408
+#: ui/window.c:197 ui/prefsdlg.c:435
 #, c-format
 msgid "could not save the settings: %s"
 msgstr "não foi possível salvar a configuração: %s"
@@ -575,7 +575,7 @@ msgstr "Área de vídeo"
 msgid "Playlists"
 msgstr "Playlists"
 
-#: ui/shortcuts.c:102 ui/prefsdlg.c:309
+#: ui/shortcuts.c:102 ui/prefsdlg.c:325
 msgid "Chat"
 msgstr "Chat"
 
@@ -599,7 +599,7 @@ msgstr "Subir as selecionadas"
 msgid "Move selection down"
 msgstr "Descer as selecionadas"
 
-#: ui/shortcuts.c:113 ui/prefsdlg.c:418
+#: ui/shortcuts.c:113 ui/prefsdlg.c:445
 msgid "Preferences"
 msgstr "Preferências"
 
@@ -1031,34 +1031,39 @@ msgstr ""
 "arquivo."
 
 #: ui/prefsdlg.c:310
+#, c-format
+msgid "Picture cache: %s"
+msgstr "Cache de imagens: %s"
+
+#: ui/prefsdlg.c:326
 msgid "Recorded live chat"
 msgstr "Chat de live gravado"
 
-#: ui/prefsdlg.c:312
+#: ui/prefsdlg.c:328
 msgid "All messages"
 msgstr "Todas as mensagens"
 
-#: ui/prefsdlg.c:313
+#: ui/prefsdlg.c:329
 msgid "Super Chats and new members only"
 msgstr "Só Super Chats e novos membros"
 
-#: ui/prefsdlg.c:314
+#: ui/prefsdlg.c:330
 msgid "Super Chats, members, moderators and the channel"
 msgstr "Super Chats, membros, moderadores e o canal"
 
-#: ui/prefsdlg.c:316
+#: ui/prefsdlg.c:332
 msgid "Show the chat beside the video"
 msgstr "Mostrar o chat ao lado do vídeo"
 
-#: ui/prefsdlg.c:317
+#: ui/prefsdlg.c:333
 msgid "Panel _width:"
 msgstr "_Largura do painel:"
 
-#: ui/prefsdlg.c:318
+#: ui/prefsdlg.c:334
 msgid "_Show:"
 msgstr "_Mostrar:"
 
-#: ui/prefsdlg.c:319
+#: ui/prefsdlg.c:335
 msgid ""
 "The chat comes from the file next to the video (Title [ID].live_chat.json, "
 "saved by yt-dlp with --sub-langs live_chat). Channel emoji and avatars are "
@@ -1068,35 +1073,43 @@ msgstr ""
 "pelo yt-dlp com --sub-langs live_chat). Os emojis do canal e os avatares são "
 "baixados uma vez com o curl e ficam em ~/.cache/kiplay/chat."
 
-#: ui/prefsdlg.c:327
+#: ui/prefsdlg.c:339
+msgid "Pictures"
+msgstr "Imagens"
+
+#: ui/prefsdlg.c:344
+msgid "C_lear the picture cache"
+msgstr "_Limpar o cache de imagens"
+
+#: ui/prefsdlg.c:354
 msgid "Shortcuts"
 msgstr "Atalhos"
 
-#: ui/prefsdlg.c:332
+#: ui/prefsdlg.c:359
 msgid "Advanced"
 msgstr "Avançado"
 
-#: ui/prefsdlg.c:333
+#: ui/prefsdlg.c:360
 msgid "mpv"
 msgstr "mpv"
 
-#: ui/prefsdlg.c:334
+#: ui/prefsdlg.c:361
 msgid "_Program:"
 msgstr "_Programa:"
 
-#: ui/prefsdlg.c:335
+#: ui/prefsdlg.c:362
 msgid "Also read my mpv _configuration (~/.config/mpv/mpv.conf)"
 msgstr "Ler também a minha _configuração do mpv (~/.config/mpv/mpv.conf)"
 
-#: ui/prefsdlg.c:337
+#: ui/prefsdlg.c:364
 msgid "_Extra options:"
 msgstr "Opções _extras:"
 
-#: ui/prefsdlg.c:339
+#: ui/prefsdlg.c:366
 msgid "Passed to mpv as typed, e.g. --deband --scale=ewa_lanczos"
 msgstr "Passadas ao mpv como digitadas, ex.: --deband --scale=ewa_lanczos"
 
-#: ui/prefsdlg.c:340
+#: ui/prefsdlg.c:367
 msgid ""
 "Kiplay controls mpv's window, keys and on-screen controls; options that "
 "change those can break it."

@@ -143,7 +143,7 @@ kiplay --convert "Title [ID].ko.srv3" > ko.ass
 The recorded chat (`Title [ID].live_chat.json`, which yt-dlp saves with
 `--sub-langs live_chat`) shows in a panel beside the video, following the
 video's time and starting over at every seek: messages with the channel's
-emoji and avatars (downloaded once with `curl` into `~/.cache/kiplay/chat`),
+emoji and avatars (downloaded once with `curl` into `~/.cache/kiplay/chat`, with a clear-cache button in Preferences → Chat),
 Super Chats and new members as colored cards, names in gold/blue/green for
 the channel, moderators and members. View → Chat (key `c`); Preferences →
 Chat: width and a filter ("Super Chats and members only").

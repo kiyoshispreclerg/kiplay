@@ -299,6 +299,10 @@ void kp_img_init(kp_img_cb changed, void *ud);
  * the change callback. Owned by the cache; valid until the next call. */
 GdkPixbuf *kp_img_get(const char *url);
 void kp_img_reset(void);
+/* The cache folder's size in bytes; clearing it returns what it freed. The
+ * panel downloads again what it still shows. */
+gint64 kp_img_cache_size(void);
+gint64 kp_img_cache_clear(void);
 
 /* chatpanel.c: the recorded live chat beside the video. */
 void kp_chat_init(kp_app *app);

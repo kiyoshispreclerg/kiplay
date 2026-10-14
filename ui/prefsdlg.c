@@ -304,6 +304,22 @@ static void subtitles_tab(dialog *d, GtkWidget *nb)
                "the video's file name matches. Takes effect on the next file."));
 }
 
+static void set_cache_label(GtkWidget *label)
+{
+    char *size = g_format_size(kp_img_cache_size());
+    char *text = g_strdup_printf(_("Picture cache: %s"), size);
+    gtk_label_set_text(GTK_LABEL(label), text);
+    g_free(text);
+    g_free(size);
+}
+
+static void on_clear_cache(GtkButton *b, gpointer label)
+{
+    (void)b;
+    kp_img_cache_clear();
+    set_cache_label(label);
+}
+
 static void chat_tab(dialog *d, GtkWidget *nb)
 {
     GtkWidget *p = page(nb, _("Chat"));
@@ -319,6 +335,17 @@ static void chat_tab(dialog *d, GtkWidget *nb)
     note(t, _("The chat comes from the file next to the video (Title [ID].live_chat.json, "
               "saved by yt-dlp with --sub-langs live_chat). Channel emoji and avatars are "
               "downloaded once with curl and kept in ~/.cache/kiplay/chat."));
+
+    t = section(p, _("Pictures"));
+    GtkWidget *size = gtk_label_new("");
+    gtk_misc_set_alignment(GTK_MISC(size), 0, 0.5);
+    set_cache_label(size);
+    row(t, NULL, size);
+    GtkWidget *clear = gtk_button_new_with_mnemonic(_("C_lear the picture cache"));
+    g_signal_connect(clear, "clicked", G_CALLBACK(on_clear_cache), size);
+    GtkWidget *box = gtk_hbox_new(FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(box), clear, FALSE, FALSE, 0);
+    row(t, NULL, box);
 }
 
 static void shortcuts_tab(dialog *d, GtkWidget *nb)

@@ -142,7 +142,7 @@ O chat gravado (`Título [ID].live_chat.json`, que o yt-dlp salva com
 `--sub-langs live_chat`) aparece num painel ao lado do vídeo, seguindo o
 tempo do vídeo e refazendo-se a cada pulo: mensagens com os emojis do
 canal e os avatares (baixados uma vez com o `curl` para
-`~/.cache/kiplay/chat`), Super Chats e novos membros em cartões coloridos,
+`~/.cache/kiplay/chat`, com botão para limpar o cache em Preferências → Chat), Super Chats e novos membros em cartões coloridos,
 nome em dourado/azul/verde para o canal, moderadores e membros. Menu Exibir
 → Chat (tecla `c`); em Preferências → Chat: largura e filtro ("só Super
 Chats e membros").
