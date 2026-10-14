@@ -165,6 +165,14 @@ asan-run:
 	ASAN_OPTIONS=fast_unwind_on_malloc=0 LSAN_OPTIONS=suppressions=$(CURDIR)/tools/lsan.supp \
 		$(BUILD)/asan/kiplay $(ARGS)
 
+# GTK and Qt trust icon-theme.cache over the folder: without this a new icon
+# is invisible until someone rebuilds it. Same for the .desktop MIME cache
+# ("Open with"). Skipped when staging into a DESTDIR.
+define refresh-caches
+	$(if $(DESTDIR),,-gtk-update-icon-cache -f -t $(DATADIR)/icons/hicolor
+	-update-desktop-database $(DATADIR)/applications)
+endef
+
 install: $(BUILD)/kiplay $(BUILD)/kiplay-audio $(MO_FILES)
 	install -Dm755 $< $(DESTDIR)$(BINDIR)/kiplay
 	install -Dm755 $(BUILD)/kiplay-audio $(DESTDIR)$(BINDIR)/kiplay-audio
@@ -173,6 +181,7 @@ install: $(BUILD)/kiplay $(BUILD)/kiplay-audio $(MO_FILES)
 	install -Dm644 data/kiplay.svg $(DESTDIR)$(DATADIR)/icons/hicolor/scalable/apps/kiplay.svg
 	$(foreach l,$(if $(MO_FILES),$(LINGUAS)),install -Dm644 $(BUILD)/locale/$(l)/LC_MESSAGES/kiplay.mo \
 		$(DESTDIR)$(LOCALEDIR)/$(l)/LC_MESSAGES/kiplay.mo;)
+	$(call refresh-caches)
 
 uninstall:
 	rm -f $(DESTDIR)$(BINDIR)/kiplay $(DESTDIR)$(BINDIR)/kiplay-audio
@@ -181,6 +190,7 @@ uninstall:
 	      $(DESTDIR)$(DATADIR)/applications/kiplay-enqueue.desktop \
 	      $(DESTDIR)$(DATADIR)/applications/kiplay-newlist.desktop \
 	      $(DESTDIR)$(DATADIR)/icons/hicolor/scalable/apps/kiplay.svg
+	$(call refresh-caches)
 
 lint:
 	@if grep -nE '\b(strcpy|strcat|sprintf|vsprintf|gets)[[:space:]]*\(' src/*.c src/*.h ui/*.c ui/*.h audio/*.c audio/*.h proto/*.c tests/unit/*.c; then \
