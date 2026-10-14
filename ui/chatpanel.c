@@ -23,6 +23,11 @@
 #define JUMP_MS 15000     /* a clock jump this big is a seek */
 #define AVATAR_PX 24
 #define PAD 6
+/* New messages and pictures are drawn at most this often, on a steady
+ * beat: a redraw per message lands at random times next to the video's
+ * frames, and a compositor that has to blend the two (the panel and mpv's
+ * window share the screen) shows the video's frames out of time. */
+#define REDRAW_MS 250
 
 typedef struct {
     kp_app *app;
@@ -36,10 +41,32 @@ typedef struct {
     bool have_time;
     int filter;          /* kp_chat_item_shown */
     int width;
-    guint redraw_idle;
+    guint redraw_timer;
+    gint64 last_redraw_us; /* when the last paced redraw was asked */
 } panel;
 
 static panel *the_panel;
+
+/* ---- redrawing ------------------------------------------------------------ */
+
+static gboolean redraw_now(gpointer data)
+{
+    panel *p = data;
+    p->redraw_timer = 0;
+    p->last_redraw_us = g_get_monotonic_time();
+    gtk_widget_queue_draw(p->area);
+    return G_SOURCE_REMOVE;
+}
+
+/* Something changed: drawn on the next beat (REDRAW_MS after the last
+ * one), however many changes come before it. */
+static void want_redraw(panel *p)
+{
+    if (p->redraw_timer)
+        return;
+    gint64 wait = p->last_redraw_us + REDRAW_MS * 1000 - g_get_monotonic_time();
+    p->redraw_timer = g_timeout_add(wait > 0 ? (guint)(wait / 1000) : 0, redraw_now, p);
+}
 
 /* ---- the timeline --------------------------------------------------------- */
 
@@ -93,7 +120,7 @@ static void advance(panel *p, int64_t ms)
     p->have_time = true;
     p->last_ms = ms;
     trim(p);
-    gtk_widget_queue_draw(p->area);
+    want_redraw(p);
 }
 
 void kp_chat_set_time(kp_app *app, double seconds)
@@ -305,20 +332,9 @@ static gboolean on_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
     return TRUE;
 }
 
-/* A picture arrived: draw again, once however many came together. */
-static gboolean redraw_now(gpointer data)
-{
-    panel *p = data;
-    p->redraw_idle = 0;
-    gtk_widget_queue_draw(p->area);
-    return G_SOURCE_REMOVE;
-}
-
 static void on_picture(void *ud)
 {
-    panel *p = ud;
-    if (!p->redraw_idle)
-        p->redraw_idle = g_idle_add(redraw_now, p);
+    want_redraw(ud);
 }
 
 /* ---- the file ------------------------------------------------------------- */
