@@ -121,10 +121,85 @@ TEST(cover_art_is_not_video)
                       "{\"type\":\"video\",\"id\":1,\"albumart\":false},"
                       "{\"type\":\"audio\",\"id\":1}]}",
                       record, &r);
-    CHECK_INT_EQ(r.n, 2);
+    /* Each list: whether there is a picture, then the tracks. */
+    CHECK_INT_EQ(r.n, 4);
     CHECK_INT_EQ(r.ev[0].type, KP_EV_VIDEO);
     CHECK(!r.ev[0].flag);
-    CHECK(r.ev[1].flag);
+    CHECK_INT_EQ(r.ev[1].type, KP_EV_TRACKS);
+    CHECK_INT_EQ(r.ev[2].type, KP_EV_VIDEO);
+    CHECK(r.ev[2].flag);
+}
+
+/* The tracks the menus show, from a list as mpv 0.34 sends it. */
+typedef struct {
+    int n;
+    kp_track t[8];
+    char text[8][3][64];
+} track_rec;
+
+static void record_tracks(void *ud, const kp_event *ev)
+{
+    track_rec *r = ud;
+    if (ev->type != KP_EV_TRACKS)
+        return;
+    r->n = ev->n_tracks < 8 ? ev->n_tracks : 8;
+    for (int i = 0; i < r->n; i++) {
+        r->t[i] = ev->tracks[i];
+        const char *src[3] = {ev->tracks[i].title, ev->tracks[i].lang, ev->tracks[i].codec};
+        const char **dst[3] = {&r->t[i].title, &r->t[i].lang, &r->t[i].codec};
+        for (int k = 0; k < 3; k++) {
+            if (src[k]) {
+                g_strlcpy(r->text[i][k], src[k], sizeof r->text[i][k]);
+                *dst[k] = r->text[i][k];
+            }
+        }
+    }
+}
+
+TEST(tracks_for_the_menus)
+{
+    track_rec r = {0};
+    kp_mpv_parse_line(
+        "{\"event\":\"property-change\",\"id\":4,\"name\":\"track-list\",\"data\":["
+        "{\"id\":1,\"type\":\"video\",\"albumart\":false,\"selected\":true,\"codec\":\"vp9\"},"
+        "{\"id\":1,\"type\":\"audio\",\"selected\":true,\"codec\":\"aac\",\"lang\":\"jpn\"},"
+        "{\"id\":2,\"type\":\"audio\",\"selected\":false,\"title\":\"Comentário\"},"
+        "{\"id\":1,\"type\":\"sub\",\"title\":\"x.en.vtt\",\"lang\":\"en\","
+        "\"external\":true,\"selected\":false},"
+        "{\"id\":3,\"type\":\"data\"},"
+        "{\"type\":\"sub\"}]}",
+        record_tracks, &r);
+    /* The data track and the one without an id are left out. */
+    CHECK_INT_EQ(r.n, 4);
+    CHECK_INT_EQ(r.t[0].type, KP_TRACK_VIDEO);
+    CHECK(r.t[0].selected);
+    CHECK_STR_EQ(r.t[0].codec, "vp9");
+    CHECK_INT_EQ(r.t[1].type, KP_TRACK_AUDIO);
+    CHECK_STR_EQ(r.t[1].lang, "jpn");
+    CHECK(r.t[2].title && !strcmp(r.t[2].title, "Comentário"));
+    CHECK(!r.t[2].selected);
+    CHECK_INT_EQ(r.t[3].type, KP_TRACK_SUB);
+    CHECK(r.t[3].external);
+    CHECK_INT_EQ(r.t[3].id, 1);
+}
+
+TEST(per_file_options)
+{
+    kp_load_opts none = KP_LOAD_OPTS_INIT;
+    char *o = kp_mpv_file_options(&none);
+    CHECK_STR_EQ(o, "");
+    g_free(o);
+    kp_load_opts lo = {.start = 12.5, .aid = 2, .sid = 0, .audio_delay = -0.1, .sub_delay = 0.25,
+                       .aspect = "16:9"};
+    o = kp_mpv_file_options(&lo);
+    CHECK_STR_EQ(o, ",start=12.500,aid=2,sid=no,audio-delay=-0.100,sub-delay=0.250,"
+                    "video-aspect-override=%4%16:9");
+    g_free(o);
+    /* Defaults leave mpv to choose. */
+    kp_load_opts some = {.start = 0, .aid = -1, .sid = 3};
+    o = kp_mpv_file_options(&some);
+    CHECK_STR_EQ(o, ",sid=3");
+    g_free(o);
 }
 
 /* ---- a real mpv ------------------------------------------------------------ */
@@ -220,7 +295,7 @@ TEST(plays_with_real_mpv)
     kp_backend_set_ticking(b, true);
 
     /* Commands queued before mpv listens still arrive. */
-    kp_backend_load(b, wav, 0);
+    kp_backend_load(b, wav, NULL);
     CHECK(wait_event(&s, KP_EV_LOADED, 10000));
     CHECK(wait_event(&s, KP_EV_ENDED, 10000));
     const kp_event *e = find(&s.r, KP_EV_ENDED);
@@ -236,7 +311,7 @@ TEST(plays_with_real_mpv)
     /* A missing file ends with an error. */
     s.r.n = 0;
     char *missing = g_build_filename(dir, "nope.mp3", NULL);
-    kp_backend_load(b, missing, 0);
+    kp_backend_load(b, missing, NULL);
     CHECK(wait_event(&s, KP_EV_ENDED, 10000));
     CHECK(find(&s.r, KP_EV_ENDED)->flag);
     g_free(missing);
@@ -248,9 +323,15 @@ TEST(plays_with_real_mpv)
     CHECK(wait_event(&s, KP_EV_CRASHED, 5000));
     CHECK(!kp_backend_running(b));
     CHECK(kp_backend_start(b, &err));
-    kp_backend_load(b, wav, 1.0);
+    kp_backend_load(b, wav, &(kp_load_opts){.start = 1.0, .aid = -1, .sid = -1});
     CHECK(wait_event(&s, KP_EV_LOADED, 10000));
     CHECK(wait_event(&s, KP_EV_ENDED, 10000));
+    /* It started at 1 s (loadfile's per-file options went through). */
+    for (int i = 0; i < s.r.n; i++)
+        if (s.r.ev[i].type == KP_EV_TIME)
+            CHECK_MSG(s.r.ev[i].value >= 0.9, "time %.2f", s.r.ev[i].value);
+    /* The tracks came, with the WAV's audio one selected. */
+    CHECK(find(&s.r, KP_EV_TRACKS) != NULL);
 
     kp_backend_free(b);
     g_main_loop_unref(s.loop);
@@ -266,6 +347,8 @@ int main(void)
     RUN(numbers_ignore_the_locale);
     RUN(tags_make_artist_dash_title);
     RUN(cover_art_is_not_video);
+    RUN(tracks_for_the_menus);
+    RUN(per_file_options);
     RUN(plays_with_real_mpv);
     return harness_report();
 }

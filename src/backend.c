@@ -34,9 +34,10 @@ int kp_backend_pid(const kp_backend *b)
     return b->ops->pid(b);
 }
 
-void kp_backend_load(kp_backend *b, const char *path, double start)
+void kp_backend_load(kp_backend *b, const char *path, const kp_load_opts *lo)
 {
-    b->ops->load(b, path, start);
+    static const kp_load_opts plain = KP_LOAD_OPTS_INIT;
+    b->ops->load(b, path, lo ? lo : &plain);
 }
 
 void kp_backend_queue(kp_backend *b, const char *path)
@@ -73,4 +74,28 @@ void kp_backend_set_volume(kp_backend *b, int volume)
 void kp_backend_set_ticking(kp_backend *b, bool on)
 {
     b->ops->set_ticking(b, on);
+}
+
+void kp_backend_set_track(kp_backend *b, kp_track_type type, int id)
+{
+    if (b->ops->set_track)
+        b->ops->set_track(b, type, id);
+}
+
+void kp_backend_set_delay(kp_backend *b, kp_track_type type, double seconds)
+{
+    if (b->ops->set_delay)
+        b->ops->set_delay(b, type, seconds);
+}
+
+void kp_backend_set_aspect(kp_backend *b, const char *aspect)
+{
+    if (b->ops->set_aspect)
+        b->ops->set_aspect(b, aspect);
+}
+
+void kp_backend_show_text(kp_backend *b, const char *text)
+{
+    if (b->ops->show_text)
+        b->ops->show_text(b, text);
 }

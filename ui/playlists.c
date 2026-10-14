@@ -801,32 +801,19 @@ static void on_row_activated(GtkTreeView *view, GtkTreePath *path, GtkTreeViewCo
     kp_player_play_at(app, pg->id, gtk_tree_path_get_indices(path)[0]);
 }
 
-static gboolean on_view_key(GtkWidget *w, GdkEventKey *ev, gpointer data)
+void kp_playlists_move_selected(kp_app *app, int delta)
 {
-    page_t *pg = data;
-    kp_app *app = g_object_get_data(G_OBJECT(w), "kp-app");
-    GdkModifierType mods = ev->state & gtk_accelerator_get_default_mod_mask();
-    if (mods == 0 && ev->keyval == GDK_Delete) {
-        kp_playlists_remove_selected(app);
-        return TRUE;
-    }
-    if (mods == 0 && (ev->keyval == GDK_q || ev->keyval == GDK_Q)) {
-        kp_playlists_toggle_queue(app);
-        return TRUE;
-    }
-    /* Alt+Up/Down move the selection a row. */
-    if (mods == GDK_MOD1_MASK && (ev->keyval == GDK_Up || ev->keyval == GDK_Down)) {
-        size_t n;
-        size_t *rows = selected_rows(pg, &n);
-        size_t count = kp_playlist_count(list_of(pg));
-        if (n && ev->keyval == GDK_Up && rows[0] > 0)
-            move_selection(app, pg, rows[0] - 1);
-        else if (n && ev->keyval == GDK_Down && rows[n - 1] + 1 < count)
-            move_selection(app, pg, rows[n - 1] + 2);
-        g_free(rows);
-        return TRUE;
-    }
-    return FALSE;
+    page_t *pg = current_page(app);
+    size_t n;
+    size_t *rows = pg ? selected_rows(pg, &n) : NULL;
+    if (!rows)
+        return;
+    size_t count = kp_playlist_count(list_of(pg));
+    if (n && delta < 0 && rows[0] > 0)
+        move_selection(app, pg, rows[0] - 1);
+    else if (n && delta > 0 && rows[n - 1] + 1 < count)
+        move_selection(app, pg, rows[n - 1] + 2);
+    g_free(rows);
 }
 
 static void show_columns(kp_app *app, page_t *pg)
@@ -884,7 +871,6 @@ static void ensure_view(kp_app *app, page_t *pg)
     g_signal_connect(view, "drag-end", G_CALLBACK(on_drag_end), pg);
     g_signal_connect(view, "button-press-event", G_CALLBACK(on_press), pg);
     g_signal_connect(view, "button-release-event", G_CALLBACK(on_release), pg);
-    g_signal_connect(view, "key-press-event", G_CALLBACK(on_view_key), pg);
     g_signal_connect(view, "row-activated", G_CALLBACK(on_row_activated), pg);
 
     show_columns(app, pg);

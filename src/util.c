@@ -98,6 +98,20 @@ bool kp_config_path(char *out, size_t size, const char *name)
     return kp_pathf(out, size, "%s/.config/kiplay/%s", home, name);
 }
 
+bool kp_data_path(char *out, size_t size, const char *name)
+{
+    const char *xdg = getenv("XDG_DATA_HOME");
+    if (xdg && xdg[0] == '/')
+        return kp_pathf(out, size, "%s/kiplay/%s", xdg, name);
+    const char *home = getenv("HOME");
+    if (!home || !*home) {
+        if (size)
+            out[0] = '\0';
+        return false;
+    }
+    return kp_pathf(out, size, "%s/.local/share/kiplay/%s", home, name);
+}
+
 void kp_format_duration(char *out, size_t size, int64_t ms)
 {
     if (ms < 0) {

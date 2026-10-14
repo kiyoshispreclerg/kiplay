@@ -6,6 +6,7 @@
 #include <stdbool.h>
 
 #include "backend.h"
+#include "filesettings.h"
 #include "plset.h"
 #include "prefs.h"
 #include "tagreader.h"
@@ -68,12 +69,22 @@ typedef struct {
     long index;
     const char *location; /* the entry's own string (kp_entry_ref), NULL none */
     bool loaded, paused, has_video;
+    bool starting;             /* handed to the engine, not loaded yet */
     double position, duration; /* seconds; duration <= 0 = unknown */
     char *title;               /* from the player, may be NULL */
     int failures;              /* files in a row that wouldn't play */
     int crashes;               /* backend restarts in the last minute */
     gint64 first_crash_us;
     bool stop_after;           /* stop when the current file ends */
+    bool muted;                /* volume 0 for the engines, the setting kept */
+    /* What is remembered of the playing file (kp_file_settings): the
+     * choices made in the Video/Audio/Subtitles menus land here and are
+     * written when the file stops. */
+    kp_file_settings file;
+    bool file_local;           /* a local file: it can have settings */
+    bool file_stored;          /* settings are on disk for it */
+    char *mpv_signature;       /* kp_mpv_pref_signature when mpv started */
+    char *audio_device;        /* the device kiplay-audio started with */
     /* Played by "next" (for "previous"), and, with shuffle, the entries of
      * the playing playlist already heard this round. */
     GArray *history;           /* kp_entry_ref, oldest first */
@@ -84,7 +95,6 @@ typedef struct {
 typedef struct {
     GtkWidget *window;
     GtkWidget *menubar;
-    GtkAccelGroup *accel;
     kp_prefs *prefs;
     kp_plset *playlists;
 
@@ -99,6 +109,13 @@ typedef struct {
     /* Transport bar widgets the player updates. */
     GtkWidget *seek, *time_label, *volume, *play_btn, *pause_btn;
     GtkWidget *stop_after_item; /* Playback > Stop after this track */
+    GtkWidget *repeat_btn, *shuffle_btn;
+    /* View menu items the preferences dialog drives (their handlers do
+     * the work). */
+    GtkWidget *show_video_item, *compact_item;
+    GtkWidget *video_pos_items[KP_VIDEO_POS_COUNT];
+    GtkWidget *controls_pos_items[KP_CONTROLS_POS_COUNT];
+    GtkWidget *column_items[KP_COLUMN_COUNT];
     bool seek_dragging; /* the user holds the seek bar: don't move it */
 
     /* Played before anything else, in order (Q). */
@@ -111,6 +128,7 @@ typedef struct {
     bool video_forced; /* View > Video area: always shown */
     bool show_video;   /* what layout.c shows: forced, or a video plays */
     bool fullscreen;
+    bool compact;      /* only the video and the controls */
 
     kp_playing playing;
 } kp_app;
@@ -128,6 +146,9 @@ void kp_layout_save(kp_app *app);
 void kp_layout_update_video(kp_app *app);
 /* Only the video (and nothing else) on the whole screen, or back. */
 void kp_layout_set_fullscreen(kp_app *app, bool on);
+/* Only the video and the controls (no menus, playlists, status), or back;
+ * without a video the window shrinks to the controls. */
+void kp_layout_set_compact(kp_app *app, bool on);
 
 /* playlists.c */
 void kp_playlists_init(kp_app *app);
@@ -169,11 +190,17 @@ kp_playlist *kp_playlists_get(kp_app *app, int id);
 void kp_playlists_open(kp_app *app, char **locations, bool play);
 /* Something changed in a playlist: write it soon. */
 void kp_playlists_changed(kp_app *app);
+/* Alt+Up/Down: the selected rows one row up (delta < 0) or down. */
+void kp_playlists_move_selected(kp_app *app, int delta);
 
 /* controls.c: the transport bar. */
 GtkWidget *kp_controls_new(kp_app *app);
 /* Time label and seek bar from app->playing. */
 void kp_controls_update(kp_app *app);
+/* The volume button moves by delta (percent); the player follows. */
+void kp_controls_change_volume(kp_app *app, int delta);
+/* Sets the volume button (0..100); the player follows. */
+void kp_controls_set_volume(kp_app *app, int volume);
 
 /* player.c: plays the playlists through the backend. */
 /* kiplay-audio next to the kiplay binary (a build tree), else in PATH. */
@@ -209,6 +236,59 @@ int kp_player_queue_pos(kp_app *app, int id, const kp_entry *e);
 void kp_player_set_stop_after(kp_app *app, bool on);
 /* The playing entry's tags arrived: the window title follows. */
 void kp_player_info_changed(kp_app *app);
+void kp_player_toggle_mute(kp_app *app);
+/* A short message in the status line, and over the video when it shows. */
+void kp_player_message(kp_app *app, const char *text);
+/* The preferences changed: engines whose options changed start again
+ * (the file playing goes on where it was). */
+void kp_player_prefs_changed(kp_app *app);
+
+/* tracks.c: the Video, Audio and Subtitles menus. */
+void kp_tracks_menus(kp_app *app, GtkWidget *bar);
+void kp_tracks_free(void);
+/* The engine's track list (n 0: none). */
+void kp_tracks_update(kp_app *app, const kp_track *tracks, int n);
+/* The engine or its state changed: the menus follow (what is greyed). */
+void kp_tracks_refresh(kp_app *app);
+/* Another file (or none): no tracks yet; the aspect from app->playing.file. */
+void kp_tracks_file_changed(kp_app *app);
+void kp_tracks_mute_changed(kp_app *app);
+void kp_tracks_cycle(kp_app *app, kp_track_type type);
+void kp_tracks_toggle_subs(kp_app *app);
+/* delta seconds later (0: no delay). */
+void kp_tracks_delay(kp_app *app, kp_track_type type, double delta);
+void kp_tracks_cycle_aspect(kp_app *app);
+
+/* shortcuts.c: the keyboard commands (Preferences > Shortcuts). */
+void kp_shortcuts_load(kp_app *app);
+/* Runs the command bound to that key; false if none. */
+bool kp_shortcuts_key(kp_app *app, const GdkEventKey *ev);
+/* The menu item shows the key of that command (and follows changes). */
+void kp_shortcuts_attach(GtkWidget *item, const char *action);
+GtkWidget *kp_shortcuts_editor_new(kp_app *app);
+/* Saves what the editor holds and uses it. */
+void kp_shortcuts_editor_apply(kp_app *app, GtkWidget *editor);
+
+/* prefsdlg.c: Options > Preferences. */
+void kp_prefs_dialog(kp_app *app);
+
+/* desktop.c: MPRIS and the tray icon. */
+void kp_desktop_init(kp_app *app);
+void kp_desktop_free(kp_app *app);
+/* What plays, its state or the volume changed. */
+void kp_desktop_update(kp_app *app);
+/* The position jumped to seconds. */
+void kp_desktop_seeked(kp_app *app, double seconds);
+/* [general] mpris / tray changed. */
+void kp_desktop_prefs_changed(kp_app *app);
+/* The window's close button: true if it went to the tray instead. */
+bool kp_desktop_close_to_tray(kp_app *app);
+/* Shows the window if hidden in the tray (and raises it). */
+void kp_desktop_present(kp_app *app);
+
+/* window.c */
+/* Saves everything and closes the window (Quit). */
+void kp_window_quit(kp_app *app);
 
 /* jump.c: Ctrl+J, find a file in the visible playlist and play or queue it. */
 void kp_jump_dialog(kp_app *app);

@@ -31,16 +31,19 @@ static GtkWidget *item(GtkWidget *menu, const char *label, GCallback cb, gpointe
     return it;
 }
 
-static void accel(GtkWidget *it, kp_app *app, guint key, GdkModifierType mods)
+/* An item that runs a keyboard command (shortcuts.c), showing its key. */
+static GtkWidget *command(GtkWidget *menu, const char *label, GCallback cb, kp_app *app,
+                          const char *action)
 {
-    gtk_widget_add_accelerator(it, "activate", app->accel, key, mods, GTK_ACCEL_VISIBLE);
+    GtkWidget *it = item(menu, label, cb, app);
+    kp_shortcuts_attach(it, action);
+    return it;
 }
 
-static GtkWidget *submenu(GtkWidget *bar, const char *label, kp_app *app)
+static GtkWidget *submenu(GtkWidget *bar, const char *label)
 {
     GtkWidget *top = gtk_menu_item_new_with_mnemonic(label);
     GtkWidget *menu = gtk_menu_new();
-    gtk_menu_set_accel_group(GTK_MENU(menu), app->accel);
     gtk_menu_item_set_submenu(GTK_MENU_ITEM(top), menu);
     gtk_menu_shell_append(GTK_MENU_SHELL(bar), top);
     return menu;
@@ -86,11 +89,12 @@ static void on_controls_pos(GtkCheckMenuItem *it, gpointer data)
 
 /* A group of radio items; the one equal to current starts active. */
 static void radio_group(GtkWidget *menu, kp_app *app, const char *const labels[], int n,
-                        int current, GCallback cb)
+                        int current, GCallback cb, GtkWidget **items)
 {
     GSList *group = NULL;
     for (int i = 0; i < n; i++) {
         GtkWidget *it = gtk_radio_menu_item_new_with_mnemonic(group, _(labels[i]));
+        items[i] = it;
         group = gtk_radio_menu_item_get_group(GTK_RADIO_MENU_ITEM(it));
         g_object_set_data(G_OBJECT(it), "kp-value", GINT_TO_POINTER(i));
         gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(it), i == current);
@@ -113,6 +117,7 @@ static void columns_menu(GtkWidget *menu, kp_app *app)
                                          N_("_Length"), N_("_Path")};
     for (int i = 0; i < KP_COLUMN_COUNT; i++) {
         GtkWidget *it = gtk_check_menu_item_new_with_mnemonic(_(labels[i]));
+        app->column_items[i] = it;
         g_object_set_data(G_OBJECT(it), "kp-value", GUINT_TO_POINTER(1u << i));
         gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(it), app->columns & (1u << i));
         g_signal_connect(it, "toggled", G_CALLBACK(on_column), app);
@@ -127,9 +132,19 @@ static void on_stop_after(GtkCheckMenuItem *it, gpointer data)
     kp_player_set_stop_after(data, gtk_check_menu_item_get_active(it));
 }
 
+static void on_compact(GtkCheckMenuItem *it, gpointer data)
+{
+    kp_layout_set_compact(data, gtk_check_menu_item_get_active(it));
+}
+
 static void toggle_fullscreen(kp_app *app)
 {
     kp_layout_set_fullscreen(app, !app->fullscreen);
+}
+
+static void toggle_compact(kp_app *app)
+{
+    gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(app->compact_item), !app->compact);
 }
 
 static void on_about(kp_app *app)
@@ -150,7 +165,10 @@ static void close_window(kp_window *w)
     kp_app *app = &w->app;
     /* The divider and the size to keep are the windowed ones. */
     kp_layout_set_fullscreen(app, false);
+    kp_layout_set_compact(app, false);
+    kp_desktop_free(app);
     kp_player_free(app);
+    kp_tracks_free();
     kp_playlists_save(app);
     kp_playlists_free(app);
     kp_layout_save(app);
@@ -162,7 +180,7 @@ static void close_window(kp_window *w)
     gtk_widget_destroy(app->window);
 }
 
-static void on_quit(kp_app *app)
+void kp_window_quit(kp_app *app)
 {
     /* app is the first member of kp_window. */
     close_window((kp_window *)app);
@@ -172,47 +190,57 @@ static GtkWidget *menu_bar(kp_app *app)
 {
     GtkWidget *bar = gtk_menu_bar_new();
 
-    GtkWidget *m = submenu(bar, _("_File"), app);
-    accel(item(m, _("_Add files..."), G_CALLBACK(kp_playlists_add_files), app), app, GDK_o,
-          GDK_CONTROL_MASK);
-    accel(item(m, _("Add _folder..."), G_CALLBACK(kp_playlists_add_folder), app), app, GDK_o,
-          GDK_CONTROL_MASK | GDK_SHIFT_MASK);
+    GtkWidget *m = submenu(bar, _("_File"));
+    command(m, _("_Add files..."), G_CALLBACK(kp_playlists_add_files), app, "add_files");
+    command(m, _("Add _folder..."), G_CALLBACK(kp_playlists_add_folder), app, "add_folder");
     separator(m);
     item(m, _("_Import playlist..."), G_CALLBACK(kp_playlists_import), app);
     item(m, _("_Export playlist..."), G_CALLBACK(kp_playlists_export), app);
     separator(m);
-    accel(item(m, _("_Quit"), G_CALLBACK(on_quit), app), app, GDK_q, GDK_CONTROL_MASK);
+    command(m, _("_Quit"), G_CALLBACK(kp_window_quit), app, "quit");
 
-    m = submenu(bar, _("_Playlist"), app);
-    accel(item(m, _("_New"), G_CALLBACK(kp_playlists_new), app), app, GDK_t, GDK_CONTROL_MASK);
-    accel(item(m, _("_Rename..."), G_CALLBACK(kp_playlists_rename), app), app, GDK_F2, 0);
-    accel(item(m, _("_Close"), G_CALLBACK(kp_playlists_close), app), app, GDK_w,
-          GDK_CONTROL_MASK);
+    m = submenu(bar, _("_Playlist"));
+    command(m, _("_New"), G_CALLBACK(kp_playlists_new), app, "new_playlist");
+    command(m, _("_Rename..."), G_CALLBACK(kp_playlists_rename), app, "rename_playlist");
+    command(m, _("_Close"), G_CALLBACK(kp_playlists_close), app, "close_playlist");
     separator(m);
-    accel(item(m, _("_Jump to file..."), G_CALLBACK(kp_jump_dialog), app), app, GDK_j,
-          GDK_CONTROL_MASK);
-    /* Q and Delete work in the list itself (a Q accelerator would eat the
-     * letter everywhere). */
-    item(m, _("_Queue / unqueue (Q)"), G_CALLBACK(kp_playlists_toggle_queue), app);
-    item(m, _("Remove _selected (Del)"), G_CALLBACK(kp_playlists_remove_selected), app);
+    command(m, _("_Jump to file..."), G_CALLBACK(kp_jump_dialog), app, "jump");
+    command(m, _("_Queue / unqueue"), G_CALLBACK(kp_playlists_toggle_queue), app, "queue");
+    command(m, _("Remove _selected"), G_CALLBACK(kp_playlists_remove_selected), app, "remove");
 
-    m = submenu(bar, _("_View"), app);
-    GtkWidget *show = gtk_check_menu_item_new_with_mnemonic(_("_Video area"));
-    gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(show), app->video_forced);
-    g_signal_connect(show, "toggled", G_CALLBACK(on_show_video), app);
-    accel(show, app, GDK_v, GDK_CONTROL_MASK | GDK_SHIFT_MASK);
-    gtk_menu_shell_append(GTK_MENU_SHELL(m), show);
+    m = submenu(bar, _("Play_back"));
+    command(m, _("_Play / Pause"), G_CALLBACK(kp_player_toggle_pause), app, "play_pause");
+    command(m, _("_Stop"), G_CALLBACK(kp_player_stop), app, "stop");
+    command(m, _("P_revious"), G_CALLBACK(kp_player_prev), app, "previous");
+    command(m, _("_Next"), G_CALLBACK(kp_player_next), app, "next");
+    app->stop_after_item = gtk_check_menu_item_new_with_mnemonic(_("Stop _after this track"));
+    g_signal_connect(app->stop_after_item, "toggled", G_CALLBACK(on_stop_after), app);
+    kp_shortcuts_attach(app->stop_after_item, "stop_after");
+    gtk_menu_shell_append(GTK_MENU_SHELL(m), app->stop_after_item);
+
+    kp_tracks_menus(app, bar);
+
+    m = submenu(bar, _("_View"));
+    app->show_video_item = gtk_check_menu_item_new_with_mnemonic(_("_Video area"));
+    gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(app->show_video_item), app->video_forced);
+    g_signal_connect(app->show_video_item, "toggled", G_CALLBACK(on_show_video), app);
+    kp_shortcuts_attach(app->show_video_item, "video_area");
+    gtk_menu_shell_append(GTK_MENU_SHELL(m), app->show_video_item);
+    app->compact_item = gtk_check_menu_item_new_with_mnemonic(_("C_ompact mode"));
+    g_signal_connect(app->compact_item, "toggled", G_CALLBACK(on_compact), app);
+    kp_shortcuts_attach(app->compact_item, "compact");
+    gtk_menu_shell_append(GTK_MENU_SHELL(m), app->compact_item);
     separator(m);
     static const char *const video_labels[] = {N_("Video _above the playlists"),
                                                N_("Video on the _left"),
                                                N_("Video on the _right")};
     radio_group(m, app, video_labels, KP_VIDEO_POS_COUNT, app->video_pos,
-                G_CALLBACK(on_video_pos));
+                G_CALLBACK(on_video_pos), app->video_pos_items);
     separator(m);
     static const char *const controls_labels[] = {N_("Controls at the _bottom"),
                                                   N_("Controls at the _top")};
     radio_group(m, app, controls_labels, KP_CONTROLS_POS_COUNT, app->controls_pos,
-                G_CALLBACK(on_controls_pos));
+                G_CALLBACK(on_controls_pos), app->controls_pos_items);
     separator(m);
     GtkWidget *cols = gtk_menu_item_new_with_mnemonic(_("Playlist _columns"));
     GtkWidget *cols_menu = gtk_menu_new();
@@ -220,32 +248,48 @@ static GtkWidget *menu_bar(kp_app *app)
     gtk_menu_shell_append(GTK_MENU_SHELL(m), cols);
     columns_menu(cols_menu, app);
 
-    m = submenu(bar, _("Play_back"), app);
-    item(m, _("_Play / Pause"), G_CALLBACK(kp_player_toggle_pause), app);
-    item(m, _("_Stop"), G_CALLBACK(kp_player_stop), app);
-    item(m, _("P_revious"), G_CALLBACK(kp_player_prev), app);
-    item(m, _("_Next"), G_CALLBACK(kp_player_next), app);
-    app->stop_after_item = gtk_check_menu_item_new_with_mnemonic(_("Stop _after this track"));
-    g_signal_connect(app->stop_after_item, "toggled", G_CALLBACK(on_stop_after), app);
-    accel(app->stop_after_item, app, GDK_m, GDK_CONTROL_MASK);
-    gtk_menu_shell_append(GTK_MENU_SHELL(m), app->stop_after_item);
-    separator(m);
-    accel(item(m, _("_Fullscreen"), G_CALLBACK(toggle_fullscreen), app), app, GDK_F11, 0);
+    m = submenu(bar, _("_Options"));
+    command(m, _("_Preferences..."), G_CALLBACK(kp_prefs_dialog), app, "preferences");
 
-    m = submenu(bar, _("_Help"), app);
+    m = submenu(bar, _("_Help"));
     item(m, _("_About"), G_CALLBACK(on_about), app);
     return bar;
 }
 
-static void change_volume(kp_app *app, int delta)
+/* Right click on the video or the controls: what is needed without the
+ * menu bar (compact mode, fullscreen). */
+static void context_menu(kp_app *app, GdkEventButton *ev)
 {
-    double v = gtk_scale_button_get_value(GTK_SCALE_BUTTON(app->volume)) + delta / 100.0;
-    /* The button tells the player through its value-changed signal. */
-    gtk_scale_button_set_value(GTK_SCALE_BUTTON(app->volume), CLAMP(v, 0.0, 1.0));
+    GtkWidget *m = gtk_menu_new();
+    command(m, _("_Play / Pause"), G_CALLBACK(kp_player_toggle_pause), app, "play_pause");
+    command(m, _("_Stop"), G_CALLBACK(kp_player_stop), app, "stop");
+    command(m, _("P_revious"), G_CALLBACK(kp_player_prev), app, "previous");
+    command(m, _("_Next"), G_CALLBACK(kp_player_next), app, "next");
+    separator(m);
+    command(m, app->fullscreen ? _("Leave _fullscreen") : _("_Fullscreen"),
+            G_CALLBACK(toggle_fullscreen), app, "fullscreen");
+    command(m, app->compact ? _("Leave c_ompact mode") : _("C_ompact mode"),
+            G_CALLBACK(toggle_compact), app, "compact");
+    separator(m);
+    command(m, _("_Preferences..."), G_CALLBACK(kp_prefs_dialog), app, "preferences");
+    command(m, _("_Quit"), G_CALLBACK(kp_window_quit), app, "quit");
+    gtk_widget_show_all(m);
+    g_signal_connect(m, "selection-done", G_CALLBACK(gtk_widget_destroy), NULL);
+    gtk_menu_popup(GTK_MENU(m), NULL, NULL, NULL, NULL, ev ? ev->button : 0,
+                   ev ? ev->time : gtk_get_current_event_time());
 }
 
-/* Player keys (SMPlayer/mpv habits), Alt+1..9 for the tabs, and the media
- * keys while the window has the focus. */
+static gboolean on_controls_click(GtkWidget *w, GdkEventButton *ev, gpointer data)
+{
+    (void)w;
+    if (ev->type != GDK_BUTTON_PRESS || ev->button != 3)
+        return FALSE;
+    context_menu(data, ev);
+    return TRUE;
+}
+
+/* The commands (shortcuts.c), Alt+1..9 for the tabs, and the media keys
+ * while the window has the focus. */
 static gboolean on_key(GtkWidget *widget, GdkEventKey *ev, gpointer data)
 {
     (void)widget;
@@ -255,14 +299,7 @@ static gboolean on_key(GtkWidget *widget, GdkEventKey *ev, gpointer data)
         gtk_notebook_set_current_page(GTK_NOTEBOOK(app->notebook), (int)(ev->keyval - GDK_1));
         return TRUE;
     }
-    /* Typing in a text field (tree view search, dialogs) is not a command. */
-    if (GTK_IS_EDITABLE(gtk_window_get_focus(GTK_WINDOW(app->window))))
-        return FALSE;
-    bool shift = mods == GDK_SHIFT_MASK;
-    if (mods != 0 && !shift)
-        return FALSE;
     switch (ev->keyval) {
-    case GDK_space:
     case GDK_AudioPlay:
     case GDK_AudioPause:
         kp_player_toggle_pause(app);
@@ -276,26 +313,17 @@ static gboolean on_key(GtkWidget *widget, GdkEventKey *ev, gpointer data)
     case GDK_AudioPrev:
         kp_player_prev(app);
         return TRUE;
-    case GDK_Right:
-        kp_player_seek_relative(app, shift ? 60 : 5);
+    case GDK_AudioMute:
+        kp_player_toggle_mute(app);
         return TRUE;
-    case GDK_Left:
-        kp_player_seek_relative(app, shift ? -60 : -5);
+    default:
+        break;
+    }
+    if (kp_shortcuts_key(app, ev))
         return TRUE;
-    case GDK_plus:
-    case GDK_KP_Add:
-    case GDK_equal:
-        change_volume(app, 5);
-        return TRUE;
-    case GDK_minus:
-    case GDK_KP_Subtract:
-        change_volume(app, -5);
-        return TRUE;
-    case GDK_f:
-    case GDK_F:
-    case GDK_F11:
-        toggle_fullscreen(app);
-        return TRUE;
+    if (mods != 0)
+        return FALSE;
+    switch (ev->keyval) {
     case GDK_Escape:
         if (app->fullscreen) {
             kp_layout_set_fullscreen(app, false);
@@ -306,7 +334,7 @@ static gboolean on_key(GtkWidget *widget, GdkEventKey *ev, gpointer data)
     case GDK_Down:
         /* In fullscreen there is no list to move in: volume. */
         if (app->fullscreen) {
-            change_volume(app, ev->keyval == GDK_Up ? 5 : -5);
+            kp_controls_change_volume(app, ev->keyval == GDK_Up ? 5 : -5);
             return TRUE;
         }
         return FALSE;
@@ -323,13 +351,15 @@ static gboolean on_video_click(GtkWidget *w, GdkEventButton *ev, gpointer data)
         toggle_fullscreen(app);
     else if (ev->type == GDK_BUTTON_PRESS && ev->button == 2)
         kp_player_toggle_pause(app);
+    else if (ev->type == GDK_BUTTON_PRESS && ev->button == 3)
+        context_menu(app, ev);
     return TRUE;
 }
 
 static gboolean on_video_scroll(GtkWidget *w, GdkEventScroll *ev, gpointer data)
 {
     (void)w;
-    change_volume(data, ev->direction == GDK_SCROLL_UP ? 5 : -5);
+    kp_controls_change_volume(data, ev->direction == GDK_SCROLL_UP ? 5 : -5);
     return TRUE;
 }
 
@@ -337,7 +367,8 @@ static gboolean on_configure(GtkWidget *widget, GdkEventConfigure *ev, gpointer 
 {
     (void)widget;
     kp_window *w = data;
-    if (!w->maximized && !w->app.fullscreen) {
+    /* The size to keep is the normal one (compact mode shrinks it). */
+    if (!w->maximized && !w->app.fullscreen && !w->app.compact) {
         w->width = ev->width;
         w->height = ev->height;
     }
@@ -356,7 +387,9 @@ static gboolean on_delete(GtkWidget *widget, GdkEvent *ev, gpointer data)
 {
     (void)widget;
     (void)ev;
-    close_window(data);
+    kp_window *w = data;
+    if (!kp_desktop_close_to_tray(&w->app))
+        close_window(w);
     return TRUE;
 }
 
@@ -396,6 +429,7 @@ static gboolean on_first_expose(GtkWidget *widget, GdkEventExpose *ev, gpointer 
 
 static void on_instance_files(void *ud, char **locations, bool enqueue)
 {
+    kp_desktop_present(ud);
     kp_player_open(ud, locations, enqueue);
 }
 
@@ -434,13 +468,12 @@ int kp_window_run(const kp_window_opts *opts)
     gtk_window_set_default_size(GTK_WINDOW(app->window), w.width, w.height);
     if (kp_prefs_get_bool(app->prefs, "window", "maximized", false))
         gtk_window_maximize(GTK_WINDOW(app->window));
-    app->accel = gtk_accel_group_new();
-    gtk_window_add_accel_group(GTK_WINDOW(app->window), app->accel);
 
     app->body = gtk_vbox_new(FALSE, 0);
     gtk_container_add(GTK_CONTAINER(app->window), app->body);
-    /* Before the menus: they show the columns it reads. */
+    /* Before the menus: they show the columns it reads, and the keys. */
     kp_playlists_init(app);
+    kp_shortcuts_load(app);
     app->menubar = menu_bar(app);
     gtk_box_pack_start(GTK_BOX(app->body), app->menubar, FALSE, FALSE, 0);
 
@@ -455,6 +488,7 @@ int kp_window_run(const kp_window_opts *opts)
     g_signal_connect(app->video, "scroll-event", G_CALLBACK(on_video_scroll), app);
 
     app->controls = kp_controls_new(app);
+    g_signal_connect(app->controls, "button-press-event", G_CALLBACK(on_controls_click), app);
     app->status = gtk_label_new("");
     gtk_misc_set_alignment(GTK_MISC(app->status), 0.0, 0.5);
     gtk_misc_set_padding(GTK_MISC(app->status), 6, 2);
@@ -464,6 +498,7 @@ int kp_window_run(const kp_window_opts *opts)
     kp_layout_apply(app);
     kp_playlists_update_status(app);
     kp_player_init(app);
+    kp_desktop_init(app);
     if (opts->instance_socket) {
         char *err = NULL;
         w.instance = kp_instance_listen(opts->instance_socket, on_instance_files, app, &err);

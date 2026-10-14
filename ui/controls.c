@@ -27,6 +27,7 @@ static void on_toggle(GtkToggleButton *b, gpointer data)
     const char *key = g_object_get_data(G_OBJECT(b), "kp-key");
     kp_prefs_set_bool(app->prefs, "playback", key, gtk_toggle_button_get_active(b));
     kp_player_requeue(app);
+    kp_desktop_update(app);
 }
 
 static GtkWidget *pref_toggle(kp_app *app, const char *stock, const char *tip, const char *key)
@@ -113,6 +114,18 @@ void kp_controls_update(kp_app *app)
     }
 }
 
+void kp_controls_set_volume(kp_app *app, int volume)
+{
+    /* The button tells the player through its value-changed signal. */
+    gtk_scale_button_set_value(GTK_SCALE_BUTTON(app->volume), CLAMP(volume, 0, 100) / 100.0);
+}
+
+void kp_controls_change_volume(kp_app *app, int delta)
+{
+    int v = (int)(gtk_scale_button_get_value(GTK_SCALE_BUTTON(app->volume)) * 100 + 0.5);
+    kp_controls_set_volume(app, v + delta);
+}
+
 static GtkWidget *action_button(kp_app *app, const char *stock, const char *tip,
                                 void (*action)(kp_app *))
 {
@@ -139,11 +152,10 @@ GtkWidget *kp_controls_new(kp_app *app)
     gtk_box_pack_start(GTK_BOX(bar),
                        action_button(app, GTK_STOCK_MEDIA_NEXT, _("Next"), kp_player_next), FALSE,
                        FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(bar), pref_toggle(app, "media-playlist-repeat", _("Repeat"), "repeat"),
-                       FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(bar),
-                       pref_toggle(app, "media-playlist-shuffle", _("Shuffle"), "shuffle"), FALSE,
-                       FALSE, 0);
+    app->repeat_btn = pref_toggle(app, "media-playlist-repeat", _("Repeat"), "repeat");
+    gtk_box_pack_start(GTK_BOX(bar), app->repeat_btn, FALSE, FALSE, 0);
+    app->shuffle_btn = pref_toggle(app, "media-playlist-shuffle", _("Shuffle"), "shuffle");
+    gtk_box_pack_start(GTK_BOX(bar), app->shuffle_btn, FALSE, FALSE, 0);
 
     app->seek = gtk_hscale_new_with_range(0, 1, 1);
     gtk_scale_set_draw_value(GTK_SCALE(app->seek), FALSE);
@@ -163,10 +175,14 @@ GtkWidget *kp_controls_new(kp_app *app)
     g_signal_connect(app->volume, "value-changed", G_CALLBACK(on_volume), app);
     gtk_box_pack_start(GTK_BOX(bar), app->volume, FALSE, FALSE, 0);
 
-    gtk_widget_show_all(bar);
+    /* In an event box: a right click on the bar opens the window's menu. */
+    GtkWidget *box = gtk_event_box_new();
+    gtk_event_box_set_visible_window(GTK_EVENT_BOX(box), FALSE);
+    gtk_container_add(GTK_CONTAINER(box), bar);
+    gtk_widget_show_all(box);
     gtk_widget_set_no_show_all(app->pause_btn, TRUE);
     gtk_widget_set_no_show_all(app->play_btn, TRUE);
     gtk_widget_hide(app->pause_btn);
-    g_object_ref_sink(bar); /* layout.c moves it around */
-    return bar;
+    g_object_ref_sink(box); /* layout.c moves it around */
+    return box;
 }

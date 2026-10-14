@@ -6,6 +6,8 @@
 #include "i18n.h"
 #include "log.h"
 #include "media.h"
+#include "mpvopts.h"
+#include "util.h"
 
 /* The playback controller: which entry plays, on which engine, what
  * happens when it ends, and the engines' events turned into what the
@@ -18,6 +20,9 @@
 #define MAX_CRASHES 3
 #define STATUS_MESSAGE_S 6
 #define MPV_IDLE_S 60
+/* Resuming: not for the first seconds, nor when the end was near. */
+#define RESUME_MIN_S 10
+#define RESUME_END_S 10
 
 static guint status_timer;
 
@@ -35,6 +40,13 @@ static void status_message(kp_app *app, const char *text)
     if (status_timer)
         g_source_remove(status_timer);
     status_timer = g_timeout_add_seconds(STATUS_MESSAGE_S, restore_status, app);
+}
+
+void kp_player_message(kp_app *app, const char *text)
+{
+    status_message(app, text);
+    if (app->playing.backend && app->playing.loaded && (app->show_video || app->fullscreen))
+        kp_backend_show_text(app->playing.backend, text);
 }
 
 static kp_playlist *playing_list(kp_app *app)
@@ -113,6 +125,7 @@ static void update_title(kp_app *app)
     }
     gtk_window_set_title(GTK_WINDOW(app->window), title);
     g_free(title);
+    kp_desktop_update(app);
 }
 
 static void update_buttons(kp_app *app)
@@ -120,6 +133,7 @@ static void update_buttons(kp_app *app)
     bool playing = app->playing.loaded && !app->playing.paused;
     gtk_widget_set_visible(app->play_btn, !playing);
     gtk_widget_set_visible(app->pause_btn, playing);
+    kp_desktop_update(app);
 }
 
 /* The playlist entry learns its length and, if the tag reader found no
@@ -137,6 +151,72 @@ static void store_info(kp_app *app, const char *title, double duration)
         kp_playlists_refresh_row(app, app->playing.playlist_id, app->playing.index);
         kp_playlists_changed(app);
     }
+}
+
+/* ---- what is remembered per file ----------------------------------------- */
+
+/* [files] resume: off, video (default: files that aren't music), all. */
+static bool resume_applies(kp_app *app, const char *location)
+{
+    static const char *const modes[] = {"off", "video", "all", NULL};
+    int mode = kp_prefs_get_choice(app->prefs, "files", "resume", modes, 1);
+    return mode == 2 || (mode == 1 && kp_media_kind_of(location) == KP_MEDIA_VIDEO);
+}
+
+static bool remember_choices(kp_app *app)
+{
+    return kp_prefs_get_bool(app->prefs, "files", "remember", true);
+}
+
+/* Reads what is remembered of the entry that starts. */
+static void load_file_settings(kp_app *app, const char *location)
+{
+    kp_playing *p = &app->playing;
+    p->file_local = is_local(location);
+    p->file_stored = p->file_local && kp_file_settings_load(NULL, location, &p->file);
+    if (!p->file_stored)
+        p->file = (kp_file_settings)KP_FILE_SETTINGS_INIT;
+    if (!remember_choices(app)) {
+        double pos = p->file.position;
+        p->file = (kp_file_settings)KP_FILE_SETTINGS_INIT;
+        p->file.position = pos;
+    }
+}
+
+/* How the playing entry opens: its remembered choices, from start. */
+static kp_load_opts load_opts(kp_app *app, double start)
+{
+    const kp_file_settings *f = &app->playing.file;
+    return (kp_load_opts){start, f->aid, f->sid, f->audio_delay, f->sub_delay, f->aspect};
+}
+
+/* Writes what is remembered of the playing entry before it goes;
+ * finished: it played to the end (nothing to resume). */
+static void save_file_settings(kp_app *app, bool finished)
+{
+    kp_playing *p = &app->playing;
+    if (!p->location || !p->file_local)
+        return;
+    /* Not loaded (stopped already, or it failed): the position known. */
+    if (finished)
+        p->file.position = 0;
+    else if (p->loaded)
+        p->file.position = resume_applies(app, p->location) && p->position >= RESUME_MIN_S &&
+                                   (p->duration <= 0 || p->position < p->duration - RESUME_END_S)
+                               ? p->position
+                               : 0;
+    kp_file_settings fs = p->file;
+    if (!remember_choices(app)) {
+        double pos = fs.position;
+        fs = (kp_file_settings)KP_FILE_SETTINGS_INIT;
+        fs.position = pos;
+    }
+    bool empty = kp_file_settings_empty(&fs);
+    if (empty && !p->file_stored)
+        return; /* nothing there, nothing to say */
+    if (kp_file_settings_save(NULL, p->location, &fs) == 0)
+        p->file_stored = !empty;
+    kp_log_debug("file settings: %s at %.1f s", empty ? "forgotten" : "saved", fs.position);
 }
 
 /* ---- what comes next ----------------------------------------------------- */
@@ -257,6 +337,7 @@ static void remember(kp_app *app)
 static void reset_state(kp_app *app)
 {
     app->playing.loaded = false;
+    app->playing.starting = false;
     app->playing.paused = false;
     app->playing.position = 0;
     app->playing.duration = 0;
@@ -290,6 +371,7 @@ static void stopped(kp_app *app)
     if (app->playing.backend)
         kp_backend_set_ticking(app->playing.backend, false);
     kp_layout_update_video(app);
+    kp_tracks_update(app, NULL, 0);
     update_buttons(app);
     update_title(app);
     kp_controls_update(app);
@@ -300,13 +382,14 @@ static void on_audio_event(void *ud, const kp_event *ev);
 
 static kp_backend *create(kp_app *app, bool audio)
 {
-    kp_backend_opts o = {
-        .volume = kp_prefs_get_int(app->prefs, "playback", "volume", 100, 0, 100),
-    };
+    int volume = kp_prefs_get_int(app->prefs, "playback", "volume", 100, 0, 100);
+    kp_backend_opts o = {.volume = app->playing.muted ? 0 : volume};
     if (audio) {
         char *program = kp_engine_path();
         o.program = program;
         o.device = kp_prefs_get_str(app->prefs, "playback", "device", "default");
+        g_free(app->playing.audio_device);
+        app->playing.audio_device = g_strdup(o.device);
         kp_backend *b = kp_backend_new_audio(&o, on_audio_event, app);
         g_free(program);
         return b;
@@ -316,7 +399,13 @@ static kp_backend *create(kp_app *app, bool audio)
     o.wid = (unsigned long)GDK_WINDOW_XID(app->video->window);
     o.use_config = kp_prefs_get_bool(app->prefs, "mpv", "use_config", false);
     o.extra = kp_prefs_get_str(app->prefs, "mpv", "extra", NULL);
-    return kp_backend_new_mpv(&o, on_mpv_event, app);
+    char **args = kp_mpv_pref_args(app->prefs);
+    o.args = (const char *const *)args;
+    g_free(app->playing.mpv_signature);
+    app->playing.mpv_signature = kp_mpv_pref_signature(app->prefs);
+    kp_backend *b = kp_backend_new_mpv(&o, on_mpv_event, app);
+    g_strfreev(args);
+    return b;
 }
 
 /* Makes the engine for that kind of file the current one, started; the
@@ -356,7 +445,7 @@ static bool ensure_backend(kp_app *app, bool audio)
     return false;
 }
 
-/* Starts location on the right engine. */
+/* Starts location on the right engine, with what is remembered of it. */
 static bool start_playing(kp_app *app, const char *location, double at)
 {
     bool audio = for_audio_engine(app, location);
@@ -365,7 +454,9 @@ static bool start_playing(kp_app *app, const char *location, double at)
     /* kiplay-audio takes "?N" and file:// itself; mpv gets a plain path. */
     char *path = audio ? g_strdup(location) : backend_path(location);
     kp_log_debug("play on %s: %s", kp_backend_name(app->playing.backend), path);
-    kp_backend_load(app->playing.backend, path, at);
+    kp_load_opts lo = load_opts(app, at);
+    kp_backend_load(app->playing.backend, path, &lo);
+    app->playing.starting = true;
     g_free(path);
     return true;
 }
@@ -380,6 +471,7 @@ static void play_entry(kp_app *app, int id, long index, bool remember_it)
         return;
     if (remember_it)
         remember(app);
+    save_file_settings(app, false);
     reset_state(app);
     app->playing.queued = -1;
     kp_playlists_mark_playing(app, app->playing.playlist_id, -1);
@@ -389,8 +481,18 @@ static void play_entry(kp_app *app, int id, long index, bool remember_it)
     kp_playlists_mark_playing(app, id, index);
     kp_prefs_set_int(app->prefs, "playback", "playlist", id);
     kp_prefs_set_int(app->prefs, "playback", "index", (int)index);
-    if (!start_playing(app, e->location, 0))
+    load_file_settings(app, e->location);
+    kp_tracks_file_changed(app);
+    double start = resume_applies(app, e->location) ? app->playing.file.position : 0;
+    if (!start_playing(app, e->location, start))
         return;
+    if (start > 0) {
+        char pos[32], *msg;
+        kp_format_duration(pos, sizeof pos, (int64_t)(start * 1000));
+        msg = g_strdup_printf(_("Resuming at %s"), pos);
+        status_message(app, msg);
+        g_free(msg);
+    }
     update_title(app);
     kp_controls_update(app);
 }
@@ -425,7 +527,10 @@ void kp_player_pause(kp_app *app)
 
 void kp_player_toggle_pause(kp_app *app)
 {
-    if (!app->playing.loaded)
+    /* A file on its way pauses when it comes, rather than starting over. */
+    if (!app->playing.loaded && app->playing.starting)
+        kp_backend_set_pause(app->playing.backend, !app->playing.paused);
+    else if (!app->playing.loaded)
         kp_player_play(app);
     else
         kp_backend_set_pause(app->playing.backend, !app->playing.paused);
@@ -433,6 +538,7 @@ void kp_player_toggle_pause(kp_app *app)
 
 void kp_player_stop(kp_app *app)
 {
+    save_file_settings(app, false);
     if (app->playing.backend)
         kp_backend_stop(app->playing.backend);
     stopped(app);
@@ -479,23 +585,53 @@ void kp_player_prev(kp_app *app)
 
 void kp_player_seek(kp_app *app, double seconds)
 {
-    if (app->playing.loaded)
-        kp_backend_seek(app->playing.backend, seconds < 0 ? 0 : seconds);
+    if (!app->playing.loaded)
+        return;
+    seconds = seconds < 0 ? 0 : seconds;
+    kp_backend_seek(app->playing.backend, seconds);
+    kp_desktop_seeked(app, seconds);
 }
 
 void kp_player_seek_relative(kp_app *app, double seconds)
 {
-    if (app->playing.loaded)
-        kp_backend_seek_relative(app->playing.backend, seconds);
+    if (!app->playing.loaded)
+        return;
+    kp_backend_seek_relative(app->playing.backend, seconds);
+    double to = app->playing.position + seconds;
+    if (app->playing.duration > 0 && to > app->playing.duration)
+        to = app->playing.duration;
+    kp_desktop_seeked(app, to < 0 ? 0 : to);
+}
+
+/* What the engines get: the setting, or 0 while muted. */
+static void send_volume(kp_app *app)
+{
+    int v = app->playing.muted ? 0
+                               : kp_prefs_get_int(app->prefs, "playback", "volume", 100, 0, 100);
+    if (app->playing.mpv)
+        kp_backend_set_volume(app->playing.mpv, v);
+    if (app->playing.audio)
+        kp_backend_set_volume(app->playing.audio, v);
 }
 
 void kp_player_set_volume(kp_app *app, int volume)
 {
     kp_prefs_set_int(app->prefs, "playback", "volume", volume);
-    if (app->playing.mpv)
-        kp_backend_set_volume(app->playing.mpv, volume);
-    if (app->playing.audio)
-        kp_backend_set_volume(app->playing.audio, volume);
+    /* Turning the volume is wanting to hear it. */
+    if (app->playing.muted) {
+        app->playing.muted = false;
+        kp_tracks_mute_changed(app);
+    }
+    send_volume(app);
+    kp_desktop_update(app);
+}
+
+void kp_player_toggle_mute(kp_app *app)
+{
+    app->playing.muted = !app->playing.muted;
+    send_volume(app);
+    kp_tracks_mute_changed(app);
+    kp_player_message(app, app->playing.muted ? _("Muted") : _("Sound on"));
 }
 
 void kp_player_open(kp_app *app, char **locations, bool enqueue)
@@ -589,6 +725,8 @@ void kp_player_info_changed(kp_app *app)
 /* The file ran out (or wouldn't play): on to the next one. */
 static void advance(kp_app *app, bool failed)
 {
+    if (!failed)
+        save_file_settings(app, true);
     kp_playlist *pl = playing_list(app);
     long n = pl ? (long)kp_playlist_count(pl) : 0;
     if (failed) {
@@ -654,6 +792,7 @@ static void took_next(kp_app *app)
     if (!e)
         return;
     remember(app);
+    save_file_settings(app, true);
     reset_state(app);
     kp_playlists_mark_playing(app, p->playlist_id, -1);
     p->playlist_id = p->queued_id;
@@ -663,6 +802,10 @@ static void took_next(kp_app *app)
     kp_playlists_mark_playing(app, p->playlist_id, p->index);
     kp_prefs_set_int(app->prefs, "playback", "playlist", p->playlist_id);
     kp_prefs_set_int(app->prefs, "playback", "index", (int)p->index);
+    /* Gapless only joins music on kiplay-audio: it started from the top,
+     * with nothing to choose. */
+    load_file_settings(app, e->location);
+    kp_tracks_file_changed(app);
     update_title(app);
     kp_controls_update(app);
 }
@@ -698,9 +841,11 @@ static void on_event(void *ud, const kp_event *ev)
     switch (ev->type) {
     case KP_EV_LOADED:
         p->loaded = true;
+        p->starting = false;
         p->failures = 0;
         kp_backend_set_ticking(p->backend, true);
         kp_layout_update_video(app);
+        kp_tracks_refresh(app);
         update_buttons(app);
         kp_player_requeue(app);
         break;
@@ -708,6 +853,7 @@ static void on_event(void *ud, const kp_event *ev)
         p->duration = ev->value;
         store_info(app, NULL, ev->value);
         kp_controls_update(app);
+        kp_desktop_update(app);
         break;
     case KP_EV_TIME:
         p->position = ev->value;
@@ -741,10 +887,14 @@ static void on_event(void *ud, const kp_event *ev)
         if (ev->flag && ev->text)
             kp_log_debug("ended with error: %s", ev->text);
         p->loaded = false;
+        p->starting = false;
         advance(app, ev->flag);
         break;
     case KP_EV_NEXT:
         took_next(app);
+        break;
+    case KP_EV_TRACKS:
+        kp_tracks_update(app, ev->tracks, ev->n_tracks);
         break;
     case KP_EV_IDLE:
         break;
@@ -795,8 +945,46 @@ void kp_player_init(kp_app *app)
     kp_controls_update(app);
 }
 
+/* Starts a running engine again with the options it has now; the file
+ * playing on it goes on where it was. */
+static void restart_engine(kp_app *app, bool audio)
+{
+    kp_playing *p = &app->playing;
+    kp_backend **slot = audio ? &p->audio : &p->mpv;
+    if (!*slot)
+        return;
+    bool current = p->backend == *slot && p->loaded;
+    save_file_settings(app, false); /* p->file.position: where it was */
+    double at = p->position;
+    bool paused = p->paused;
+    kp_log_debug("restarting %s for the new options", kp_backend_name(*slot));
+    if (p->backend == *slot)
+        p->backend = NULL;
+    kp_backend_free(*slot);
+    *slot = NULL;
+    const kp_entry *e = playing_entry(app);
+    if (!current || !e)
+        return;
+    reset_state(app);
+    if (start_playing(app, e->location, at) && paused)
+        kp_backend_set_pause(p->backend, true);
+}
+
+void kp_player_prefs_changed(kp_app *app)
+{
+    kp_playing *p = &app->playing;
+    char *sig = kp_mpv_pref_signature(app->prefs);
+    if (p->mpv && g_strcmp0(sig, p->mpv_signature) != 0)
+        restart_engine(app, false);
+    g_free(sig);
+    if (p->audio && g_strcmp0(kp_prefs_get_str(app->prefs, "playback", "device", "default"),
+                              p->audio_device) != 0)
+        restart_engine(app, true);
+}
+
 void kp_player_free(kp_app *app)
 {
+    save_file_settings(app, false);
     if (status_timer) {
         g_source_remove(status_timer);
         status_timer = 0;
@@ -809,6 +997,8 @@ void kp_player_free(kp_app *app)
     kp_backend_free(app->playing.audio);
     app->playing.backend = app->playing.mpv = app->playing.audio = NULL;
     g_clear_pointer(&app->playing.title, g_free);
+    g_clear_pointer(&app->playing.mpv_signature, g_free);
+    g_clear_pointer(&app->playing.audio_device, g_free);
     if (app->playing.history)
         g_array_free(app->playing.history, TRUE);
     app->playing.history = NULL;

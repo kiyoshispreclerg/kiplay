@@ -8,9 +8,9 @@ e chat de live gravado (lateral e danmaku). Leia o `PLANO.md` antes de
 começar uma fase (arquitetura, estado, medições) e o `docs/FORMATOS.md`
 antes de mexer num leitor.
 
-Fase atual: 3 feita (playlists: lista virtual, tags em processo à parte,
-fila, busca, comparação com o Audacious em `docs/BENCH.md`). Próxima: 4
-(configuração).
+Fase atual: 4 feita (configuração: preferências em abas, opções por
+arquivo, menus de faixas, atalhos editáveis, MPRIS, bandeja, modo
+compacto). Próxima: 5 (sidecars e legendas do YouTube).
 
 O usuário escreve em português (pt-BR) e quer as respostas em português.
 Comentários e identificadores no código, em inglês. A interface é
@@ -59,6 +59,11 @@ PULSE_SINK=kpbench tools/bench-compare.sh -k DIR -a CÓPIA[:nome] CENÁRIOS.tsv 
   GTK ignora).
 - Quadros com legenda sem janela: `mpv --no-config --no-audio --start=T
   --frames=1 --vo=image --vo-image-outdir=DIR --sub-file=X.ass VIDEO`.
+- O Kiplay de teste entra no barramento de sessão (MPRIS) e grava opções
+  por arquivo em `~/.local/share/kiplay/files/`: rode com `dbus-launch`
+  próprio (`eval $(dbus-launch --sh-syntax)`; senão ele aparece para as
+  teclas de mídia e applets do usuário) e `XDG_DATA_HOME=<scratchpad>/data`.
+  `test_mpris` usa um `dbus-daemon` próprio (`GTestDBus`).
 - Kiplay tocando em teste: `XDG_CONFIG_HOME=<scratchpad>/cfg` com
   `[mpv] extra = --ao=null` no `kiplay.ini` (sem som). A instância única
   usa um socket por pasta de configuração, então o Kiplay de teste nunca
@@ -107,7 +112,7 @@ PULSE_SINK=kpbench tools/bench-compare.sh -k DIR -a CÓPIA[:nome] CENÁRIOS.tsv 
 | `src/plset.c` | todas as playlists: `<id>.m3u8` numa pasta, ordem como lista de ids |
 | `src/i18n.h` | `_()`, `N_()`, domínio `kiplay` |
 | `ui/app.h` | o que as partes da janela compartilham, posições do vídeo e dos controles |
-| `ui/window.c` | janela, menus, atalhos, preferências da janela, salvar ao fechar |
+| `ui/window.c` | janela, menus (os comandos mostram a tecla pelo `kp_shortcuts_attach`), teclas fixas (mídia, Alt+1..9), menu do clique direito, salvar ao fechar |
 | `ui/layout.c` | monta vídeo + abas + controles; move a área de vídeo sem trocar o XID |
 | `ui/playlists.c` | abas (a lista de cada uma só nasce quando aparece), adicionar (pastas numa thread), remover, fila, arrastar, colunas, importar/exportar, pedidos de tags |
 | `ui/plmodel.c` | `GtkTreeModel` virtual sobre o `kp_playlist` (sem cópia; `GtkTreeDragSource` para o arrastar do GTK 2) |
@@ -125,6 +130,13 @@ PULSE_SINK=kpbench tools/bench-compare.sh -k DIR -a CÓPIA[:nome] CENÁRIOS.tsv 
 | `src/json.c` | caminhos `a.b[0]` no cJSON (vindo do kiremote); `vendor/cjson/` |
 | `src/instance.c` | instância única: socket unix por pasta de configuração, repasse de arquivos |
 | `ui/player.c` | o controlador: qual motor (extensão), o que toca, avanço, gapless, erros, quedas, mpv ocioso, área de vídeo, título |
+| `src/filesettings.c` | opções por arquivo (posição, faixas, atrasos, proporção): um `.ini` por arquivo, chave SHA-1 do local + tamanho |
+| `src/mpvopts.c` | preferências → opções do mpv; a "assinatura" que diz quando reiniciá-lo |
+| `src/mpris.c` | MPRIS 2 pelo GDBus (sem GTK): estado, metadados, pedidos do barramento por callbacks |
+| `ui/shortcuts.c` | os comandos de teclado (tabela, padrões, `[shortcuts]`), o despacho das teclas e o editor |
+| `ui/tracks.c` | menus Vídeo, Áudio e Legendas: faixas do arquivo, atrasos, proporção, mudo |
+| `ui/prefsdlg.c` | Opções → Preferências: controles ligados a chaves do ini, aplicar ao dar OK |
+| `ui/desktop.c` | MPRIS ligado ao player; ícone na bandeja |
 | `src/ytsub.c` | modelo neutro das legendas do YouTube (pens, posições, estilos, eventos) e os padrões |
 | `src/srv3.c` | leitor de srv3 (GMarkup) |
 | `src/ytsub_ass.c` | kp_ytsub → ASS: `\an`+`\pos`, cores, bordas; caixa (layer 0) e texto (layer 1) |

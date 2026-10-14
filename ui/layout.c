@@ -126,7 +126,9 @@ void kp_layout_apply(kp_app *app)
                           app->controls_pos == KP_CONTROLS_TOP ? 1 : 2);
     gtk_box_reorder_child(GTK_BOX(app->body), center,
                           app->controls_pos == KP_CONTROLS_TOP ? 2 : 1);
-    gtk_widget_show(app->controls);
+    gtk_widget_set_visible(app->controls, !app->fullscreen);
+    if (app->compact || app->fullscreen)
+        gtk_widget_hide(app->notebook);
 
     if (xid_before && gtk_widget_get_realized(app->video))
         kp_log_debug("layout: video XID %lu -> %lu", xid_before,
@@ -141,6 +143,23 @@ void kp_layout_update_video(kp_app *app)
     kp_layout_save(app);
     app->show_video = want;
     kp_layout_apply(app);
+    if (app->compact && !want) {
+        int w, h;
+        gtk_window_get_size(GTK_WINDOW(app->window), &w, &h);
+        gtk_window_resize(GTK_WINDOW(app->window), w, 1);
+    }
+}
+
+/* Fullscreen hides all but the video, compact mode all but the video
+ * and the controls; the paned gives the video all the room when the
+ * other side is hidden. */
+static void show_parts(kp_app *app)
+{
+    bool others = !app->fullscreen && !app->compact;
+    gtk_widget_set_visible(app->menubar, others);
+    gtk_widget_set_visible(app->notebook, others);
+    gtk_widget_set_visible(app->status, others);
+    gtk_widget_set_visible(app->controls, !app->fullscreen);
 }
 
 void kp_layout_set_fullscreen(kp_app *app, bool on)
@@ -149,13 +168,28 @@ void kp_layout_set_fullscreen(kp_app *app, bool on)
         return;
     app->fullscreen = on;
     kp_layout_update_video(app);
-    /* Everything but the video steps aside; the paned gives the video all
-     * the room when the other side is hidden. */
-    GtkWidget *others[] = {app->menubar, app->notebook, app->controls, app->status};
-    for (size_t i = 0; i < G_N_ELEMENTS(others); i++)
-        gtk_widget_set_visible(others[i], !on);
+    show_parts(app);
     if (on)
         gtk_window_fullscreen(GTK_WINDOW(app->window));
     else
         gtk_window_unfullscreen(GTK_WINDOW(app->window));
+}
+
+void kp_layout_set_compact(kp_app *app, bool on)
+{
+    static int height; /* the window's before, to come back to */
+    if (on == app->compact)
+        return;
+    app->compact = on;
+    int w, h;
+    gtk_window_get_size(GTK_WINDOW(app->window), &w, &h);
+    if (on)
+        height = h;
+    show_parts(app);
+    /* Without a video only the controls are left: the window shrinks to
+     * them (GTK takes 1 as "as small as it can be"). */
+    if (on && !app->show_video)
+        gtk_window_resize(GTK_WINDOW(app->window), w, 1);
+    else if (!on && height > 0 && !app->show_video)
+        gtk_window_resize(GTK_WINDOW(app->window), w, height);
 }

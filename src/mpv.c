@@ -34,7 +34,7 @@ typedef struct {
     kp_backend base;
     kp_backend_opts opts;
     char *program, *extra;
-    char **test_args;
+    char **args, **test_args;
     kp_event_cb cb;
     void *ud;
 
@@ -49,7 +49,7 @@ typedef struct {
 
 static void emit(mpv *m, kp_event_type type, double value, bool flag, const char *text)
 {
-    kp_event ev = {type, value, flag, text};
+    kp_event ev = {.type = type, .value = value, .flag = flag, .text = text};
     m->cb(m->ud, &ev);
 }
 
@@ -93,6 +93,52 @@ static const char *tag(const cJSON *meta, const char *name)
     return NULL;
 }
 
+static int track_type(const char *type)
+{
+    if (!type)
+        return -1;
+    if (!strcmp(type, "video"))
+        return KP_TRACK_VIDEO;
+    if (!strcmp(type, "audio"))
+        return KP_TRACK_AUDIO;
+    if (!strcmp(type, "sub"))
+        return KP_TRACK_SUB;
+    return -1;
+}
+
+/* The track list as kp_tracks pointing into the JSON (valid while it is). */
+static kp_track *tracks_of(const cJSON *list, int *n)
+{
+    *n = 0;
+    int size = cJSON_IsArray(list) ? cJSON_GetArraySize(list) : 0;
+    kp_track *t = g_new0(kp_track, size > 0 ? size : 1);
+    const cJSON *it;
+    cJSON_ArrayForEach(it, list)
+    {
+        int type = track_type(kp_json_str(it, "type"));
+        int id = (int)kp_json_num(it, "id", -1);
+        if (type < 0 || id < 1)
+            continue;
+        t[*n] = (kp_track){
+            .type = (kp_track_type)type,
+            .id = id,
+            .title = kp_json_str(it, "title"),
+            .lang = kp_json_str(it, "lang"),
+            .codec = kp_json_str(it, "codec"),
+            .selected = cJSON_IsTrue(cJSON_GetObjectItem(it, "selected")),
+            .external = cJSON_IsTrue(cJSON_GetObjectItem(it, "external")),
+            .albumart = cJSON_IsTrue(cJSON_GetObjectItem(it, "albumart")),
+        };
+        (*n)++;
+    }
+    return t;
+}
+
+static kp_event make_event(kp_event_type type, double value, bool flag, const char *text)
+{
+    return (kp_event){.type = type, .value = value, .flag = flag, .text = text};
+}
+
 void kp_mpv_parse_line(const char *line, kp_event_cb cb, void *ud)
 {
     locale_t old = uselocale(c_locale());
@@ -100,7 +146,7 @@ void kp_mpv_parse_line(const char *line, kp_event_cb cb, void *ud)
     uselocale(old);
     if (!j)
         return;
-    kp_event ev = {0};
+    kp_event ev = {.type = 0};
     bool send = false;
     char *owned = NULL;
     const char *event = kp_json_str(j, "event");
@@ -108,29 +154,37 @@ void kp_mpv_parse_line(const char *line, kp_event_cb cb, void *ud)
     if (event && !strcmp(event, "property-change")) {
         switch ((int)kp_json_num(j, "id", 0)) {
         case OBS_DURATION:
-            ev = (kp_event){KP_EV_DURATION, cJSON_IsNumber(data) ? data->valuedouble : -1, false, NULL};
+            ev = make_event(KP_EV_DURATION, cJSON_IsNumber(data) ? data->valuedouble : -1, false, NULL);
             send = true;
             break;
         case OBS_PAUSE:
-            ev = (kp_event){KP_EV_PAUSED, 0, cJSON_IsTrue(data), NULL};
+            ev = make_event(KP_EV_PAUSED, 0, cJSON_IsTrue(data), NULL);
             send = true;
             break;
         case OBS_TITLE:
             if (cJSON_IsString(data)) {
-                ev = (kp_event){KP_EV_TITLE, 0, false, data->valuestring};
+                ev = make_event(KP_EV_TITLE, 0, false, data->valuestring);
                 send = true;
             }
             break;
-        case OBS_TRACKS:
-            ev = (kp_event){KP_EV_VIDEO, 0, has_real_video(data), NULL};
-            send = true;
+        case OBS_TRACKS: {
+            /* Whether there is a picture to show, then the tracks for the
+             * menus. */
+            ev = make_event(KP_EV_VIDEO, 0, has_real_video(data), NULL);
+            cb(ud, &ev);
+            int n;
+            kp_track *tracks = tracks_of(data, &n);
+            ev = (kp_event){.type = KP_EV_TRACKS, .tracks = tracks, .n_tracks = n};
+            cb(ud, &ev);
+            g_free(tracks);
             break;
+        }
         case OBS_METADATA: {
             /* Audacious's "Artist - Title"; the title alone if no artist. */
             const char *title = tag(data, "title"), *artist = tag(data, "artist");
             if (title && artist)
                 owned = g_strdup_printf("%s - %s", artist, title);
-            ev = (kp_event){KP_EV_TAGS, 0, false, owned ? owned : title};
+            ev = make_event(KP_EV_TAGS, 0, false, owned ? owned : title);
             send = true;
             break;
         }
@@ -138,22 +192,21 @@ void kp_mpv_parse_line(const char *line, kp_event_cb cb, void *ud)
             break;
         }
     } else if (event && !strcmp(event, "file-loaded")) {
-        ev = (kp_event){KP_EV_LOADED, 0, false, NULL};
+        ev = make_event(KP_EV_LOADED, 0, false, NULL);
         send = true;
     } else if (event && !strcmp(event, "end-file")) {
         /* "stop", "quit" and "redirect" are ours or mpv's business: only
          * a file that ran out (or failed) moves the playlist on. */
         const char *reason = kp_json_str(j, "reason");
         if (reason && (!strcmp(reason, "eof") || !strcmp(reason, "error"))) {
-            ev = (kp_event){KP_EV_ENDED, 0, !strcmp(reason, "error"),
-                            kp_json_str(j, "file_error")};
+            ev = make_event(KP_EV_ENDED, 0, !strcmp(reason, "error"), kp_json_str(j, "file_error"));
             send = true;
         }
     } else if (event && !strcmp(event, "idle")) {
-        ev = (kp_event){KP_EV_IDLE, 0, false, NULL};
+        ev = make_event(KP_EV_IDLE, 0, false, NULL);
         send = true;
     } else if (!event && kp_json_num(j, "request_id", 0) == REQ_TIME && cJSON_IsNumber(data)) {
-        ev = (kp_event){KP_EV_TIME, data->valuedouble, false, NULL};
+        ev = make_event(KP_EV_TIME, data->valuedouble, false, NULL);
         send = true;
     }
     if (send)
@@ -325,6 +378,7 @@ static void mpv_free(kp_backend *b)
     g_free(m->sock_path);
     g_free(m->program);
     g_free(m->extra);
+    g_strfreev(m->args);
     g_strfreev(m->test_args);
     g_free(m);
 }
@@ -367,6 +421,8 @@ static bool start(kp_backend *b, char **err)
     g_ptr_array_add(argv, g_strdup_printf("--volume=%d", m->opts.volume));
     if (m->opts.wid)
         g_ptr_array_add(argv, g_strdup_printf("--wid=%lu", m->opts.wid));
+    for (char **t = m->args; t && *t; t++)
+        g_ptr_array_add(argv, g_strdup(*t));
     for (char **t = m->test_args; t && *t; t++)
         g_ptr_array_add(argv, g_strdup(*t));
     if (m->extra && *m->extra) {
@@ -399,18 +455,48 @@ static bool start(kp_backend *b, char **err)
     return true;
 }
 
-static void load(kp_backend *b, const char *path, double start_at)
+/* ",name=<seconds>" with a dot whatever the locale. */
+static void add_seconds(GString *o, const char *name, double v)
+{
+    char num[G_ASCII_DTOSTR_BUF_SIZE];
+    g_string_append_printf(o, ",%s=%s", name, g_ascii_formatd(num, sizeof num, "%.3f", v));
+}
+
+char *kp_mpv_file_options(const kp_load_opts *lo)
+{
+    GString *o = g_string_new(NULL);
+    if (lo->start > 0)
+        add_seconds(o, "start", lo->start);
+    if (lo->aid >= 0)
+        g_string_append_printf(o, lo->aid ? ",aid=%d" : ",aid=no", lo->aid);
+    if (lo->sid >= 0)
+        g_string_append_printf(o, lo->sid ? ",sid=%d" : ",sid=no", lo->sid);
+    if (lo->audio_delay != 0)
+        add_seconds(o, "audio-delay", lo->audio_delay);
+    if (lo->sub_delay != 0)
+        add_seconds(o, "sub-delay", lo->sub_delay);
+    /* %N% quotes a value of N bytes, whatever it holds. */
+    if (lo->aspect && *lo->aspect)
+        g_string_append_printf(o, ",video-aspect-override=%%%zu%%%s", strlen(lo->aspect),
+                               lo->aspect);
+    return g_string_free(o, FALSE);
+}
+
+static void load(kp_backend *b, const char *path, const kp_load_opts *lo)
 {
     mpv *m = (mpv *)b;
     set_property(m, "pause", cJSON_CreateFalse());
-    cJSON *cmd = command("loadfile");
-    cJSON_AddItemToArray(args_of(cmd), cJSON_CreateString(path));
-    cJSON_AddItemToArray(args_of(cmd), cJSON_CreateString("replace"));
-    if (start_at > 0) {
-        char opt[64], num[G_ASCII_DTOSTR_BUF_SIZE];
-        g_snprintf(opt, sizeof opt, "start=%s", g_ascii_formatd(num, sizeof num, "%.3f", start_at));
-        cJSON_AddItemToArray(args_of(cmd), cJSON_CreateString(opt));
-    }
+    /* Named arguments: mpv 0.38 put an index before the options, so the
+     * positional form means different things in different versions. */
+    cJSON *cmd = cJSON_CreateObject();
+    cJSON *c = cJSON_AddObjectToObject(cmd, "command");
+    cJSON_AddStringToObject(c, "name", "loadfile");
+    cJSON_AddStringToObject(c, "url", path);
+    cJSON_AddStringToObject(c, "flags", "replace");
+    char *opts = kp_mpv_file_options(lo);
+    if (*opts)
+        cJSON_AddStringToObject(c, "options", opts + 1); /* without the first comma */
+    g_free(opts);
     send_json(m, cmd);
 }
 
@@ -441,9 +527,35 @@ static void set_volume(kp_backend *b, int volume)
     set_property(m, "volume", cJSON_CreateNumber(volume));
 }
 
+static void set_track(kp_backend *b, kp_track_type type, int id)
+{
+    static const char *const names[] = {"vid", "aid", "sid"};
+    set_property((mpv *)b, names[type], id > 0 ? cJSON_CreateNumber(id) : cJSON_CreateString("no"));
+}
+
+static void set_delay(kp_backend *b, kp_track_type type, double seconds)
+{
+    set_property((mpv *)b, type == KP_TRACK_SUB ? "sub-delay" : "audio-delay",
+                 cJSON_CreateNumber(seconds));
+}
+
+static void set_aspect(kp_backend *b, const char *aspect)
+{
+    set_property((mpv *)b, "video-aspect-override",
+                 cJSON_CreateString(aspect && *aspect ? aspect : "no"));
+}
+
+static void show_text(kp_backend *b, const char *text)
+{
+    cJSON *cmd = command("show-text");
+    cJSON_AddItemToArray(args_of(cmd), cJSON_CreateString(text));
+    cJSON_AddItemToArray(args_of(cmd), cJSON_CreateNumber(1500));
+    send_json((mpv *)b, cmd);
+}
+
 static const kp_backend_ops mpv_ops = {
     .name = "mpv",
-    .caps = KP_CAP_VIDEO,
+    .caps = KP_CAP_VIDEO | KP_CAP_TRACKS,
     .start = start,
     .running = running,
     .pid = pid,
@@ -453,6 +565,10 @@ static const kp_backend_ops mpv_ops = {
     .seek = seek,
     .set_volume = set_volume,
     .set_ticking = set_ticking,
+    .set_track = set_track,
+    .set_delay = set_delay,
+    .set_aspect = set_aspect,
+    .show_text = show_text,
     .free = mpv_free,
 };
 
@@ -463,7 +579,9 @@ kp_backend *kp_backend_new_mpv(const kp_backend_opts *opts, kp_event_cb cb, void
     m->opts = *opts;
     m->program = g_strdup(opts->program ? opts->program : "mpv");
     m->extra = g_strdup(opts->extra);
+    m->args = g_strdupv((char **)opts->args);
     m->test_args = g_strdupv((char **)opts->test_args);
+    m->opts.args = NULL;
     m->opts.program = m->program;
     m->opts.extra = m->extra;
     m->opts.device = NULL;

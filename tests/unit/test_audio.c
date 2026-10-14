@@ -318,7 +318,7 @@ TEST(plays_through_the_engine)
     kp_backend_set_ticking(be, true);
 
     /* A, then B without a gap: one NEXT, and ENDED only after B. */
-    kp_backend_load(be, a, 0);
+    kp_backend_load(be, a, NULL);
     kp_backend_queue(be, b);
     CHECK(wait_event(&s, KP_EV_DURATION, 5000));
     CHECK(fabs(last(&s, KP_EV_DURATION, NULL) - 1.0) < 0.01);
@@ -334,7 +334,7 @@ TEST(plays_through_the_engine)
 
     /* Seek and pause land where asked. */
     s.n = 0;
-    kp_backend_load(be, a, 0.5);
+    kp_backend_load(be, a, &(kp_load_opts){.start = 0.5, .aid = -1, .sid = -1});
     CHECK(wait_event(&s, KP_EV_LOADED, 5000));
     CHECK(wait_event(&s, KP_EV_TIME, 2000));
     CHECK(last(&s, KP_EV_TIME, NULL) >= 0.5);
@@ -347,7 +347,7 @@ TEST(plays_through_the_engine)
     s.n = 0;
     char *bad = g_build_filename(dir, "bad.mp3", NULL);
     g_file_set_contents(bad, "not audio at all", -1, NULL);
-    kp_backend_load(be, bad, 0);
+    kp_backend_load(be, bad, NULL);
     CHECK(wait_event(&s, KP_EV_ENDED, 5000));
     last(&s, KP_EV_ENDED, &error);
     CHECK(error);
@@ -358,7 +358,7 @@ TEST(plays_through_the_engine)
     CHECK(wait_event(&s, KP_EV_CRASHED, 5000));
     CHECK(!kp_backend_running(be));
     CHECK(kp_backend_start(be, &err));
-    kp_backend_load(be, b, 0);
+    kp_backend_load(be, b, NULL);
     CHECK(wait_event(&s, KP_EV_ENDED, 5000));
 
     kp_backend_free(be);

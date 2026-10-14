@@ -262,9 +262,12 @@ mpv não faz. A música fica no motor próprio por padrão.
 - Preferências em abas: Geral, Vídeo, Áudio, Legendas, Chat, Playlists,
   Atalhos, Backend (programa, caminho, opções extras), Avançado.
 - Opções por arquivo (como o `file_settings` do SMPlayer): posição para
-  retomar, faixas de áudio e legenda, atrasos, volume, proporção. Chave =
+  retomar, faixas de áudio e legenda, atrasos, proporção. Chave =
   hash do caminho + tamanho, em `~/.local/share/kiplay/files/`.
 - Atalhos editáveis; MPRIS; ícone na bandeja opcional; modo compacto.
+- Como ficou: ver a fase 4. A aba Chat entra com a fase 6; Backend e
+  Avançado viraram uma aba só ("Avançado": programa, mpv.conf, opções
+  extras).
 
 ## Arquivos ao lado do vídeo (sidecars)
 
@@ -563,8 +566,48 @@ identificadores em inglês; interface pelo gettext com msgids em inglês.
    - entradas seguidas por ponteiro (a string do local, única por
      entrada no `GStringChunk`): a fila, o histórico e a faixa que toca
      acham a entrada depois de reordenar, mesmo com arquivos repetidos.
-4. **Configuração**: preferências, opções por arquivo (retomar), atalhos,
-   MPRIS, bandeja.
+4. **Configuração** *(feita)*: Opções → Preferências em abas (Geral,
+   Interface, Vídeo, Áudio, Legendas, Atalhos, Avançado; `ui/prefsdlg.c`),
+   cada controle ligado a uma chave do `kiplay.ini`, que só guarda o que
+   difere do padrão; mudar uma opção do mpv (`src/mpvopts.c`: hwdec, vo,
+   ao, idiomas, fonte e tamanho da legenda, legendas externas, programa,
+   opções extras) reinicia o mpv e o vídeo continua no mesmo ponto.
+   Opções por arquivo (`src/filesettings.c`, um `.ini` por arquivo em
+   `~/.local/share/kiplay/files/`, chave = SHA-1 do local + tamanho):
+   continuar de onde parou (só vídeos por padrão), faixas de áudio e
+   legenda, atrasos, proporção, entregues ao mpv no próprio `loadfile`.
+   Menus Vídeo, Áudio e Legendas (`ui/tracks.c`) com as faixas do
+   arquivo, atrasos e proporção; mudo. Atalhos editáveis
+   (`ui/shortcuts.c`: 37 comandos, até duas teclas cada, editor com aviso
+   de conflito); MPRIS (`src/mpris.c`, GDBus, testado num barramento
+   próprio); ícone na bandeja e fechar para a bandeja (`ui/desktop.c`);
+   modo compacto (Ctrl+C) e menu no clique direito do vídeo e da barra.
+   Medido no Xvfb: parado, ~5,2 MB, como na fase 3 (a variação entre
+   execuções é de ±0,5 MB); o MPRIS custa ~30 kB. Lições:
+   - **o `loadfile` posicional muda de sentido no mpv 0.38** (entrou um
+     índice antes das opções): o comando vai com argumentos nomeados
+     (`{"name": "loadfile", "url", "flags", "options"}`, desde o 0.31);
+     as opções por arquivo nele valem só para aquele arquivo;
+   - o `track-list` observado também avisa quando a faixa escolhida muda:
+     o menu segue sem pedir `aid`/`sid`;
+   - no GTK 2 o rótulo de tecla de um menu só lê de um `GtkAccelGroup`
+     (`gtk_accel_label_set_accel` é do GTK 3): as teclas aparecem por um
+     grupo que nenhuma janela tem, e quem executa é o tratador de teclas
+     da janela (as teclas simples, como Espaço e Q, precisam passar por
+     ele de qualquer forma);
+   - o `GtkCellRendererAccel` no modo GTK recusa teclas sem modificador:
+     o editor usa o modo "other"; e o `gtk_accelerator_name` do 2.24
+     escreve `<Primary>` (o `gtk_accelerator_parse` lê os dois);
+   - Shift conta como modificador só quando não é ele que faz o
+     caractere: "+" no teclado americano é Shift+=, e casa com `plus`;
+   - um `GtkHBox` não recebe cliques: a barra de controle vai num
+     `GtkEventBox` invisível para o clique direito;
+   - apertar Espaço com um arquivo ainda carregando recomeçava o
+     arquivo: agora pausa o que está chegando.
+   A bandeja não foi vista funcionando: o Xvfb com openbox não tem área
+   de notificação (sem ela, fechar a janela fecha o programa, como
+   sempre). Fica para depois: aba Chat (fase 6), volume por arquivo,
+   mouse configurável, limpar opções de arquivos que sumiram.
 5. **Sidecars e legendas do YouTube**: detecção, menu de legendas, srv3 e
    json3 → ASS, `--convert`. Aceite: o clipe de "Bassline Yatteru" com as
    legendas dançando como no YouTube.

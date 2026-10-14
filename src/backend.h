@@ -28,13 +28,31 @@ typedef enum {
     KP_EV_NEXT,     /* gapless: the queued file took over (LOADED etc. follow) */
     KP_EV_IDLE,     /* nothing loaded */
     KP_EV_CRASHED,  /* the process went away; text = why */
+    KP_EV_TRACKS,   /* tracks/n_tracks = the file's tracks (KP_CAP_TRACKS) */
 } kp_event_type;
+
+typedef enum {
+    KP_TRACK_VIDEO,
+    KP_TRACK_AUDIO,
+    KP_TRACK_SUB,
+} kp_track_type;
+
+/* One track of the playing file, as the backend numbers it (ids start at 1
+ * per type; 0 means "none" when choosing). */
+typedef struct {
+    kp_track_type type;
+    int id;
+    const char *title, *lang, *codec; /* NULL if unknown */
+    bool selected, external, albumart;
+} kp_track;
 
 typedef struct {
     kp_event_type type;
     double value;
     bool flag;
     const char *text;
+    const kp_track *tracks;
+    int n_tracks;
 } kp_event;
 
 typedef void (*kp_event_cb)(void *ud, const kp_event *ev);
@@ -43,6 +61,7 @@ typedef void (*kp_event_cb)(void *ud, const kp_event *ev);
 enum {
     KP_CAP_VIDEO = 1 << 0,   /* draws video into opts.wid */
     KP_CAP_GAPLESS = 1 << 1, /* kp_backend_queue: the next file starts without a gap */
+    KP_CAP_TRACKS = 1 << 2,  /* KP_EV_TRACKS, tracks, delays and aspect can be chosen */
 };
 
 typedef struct {
@@ -56,6 +75,8 @@ typedef struct {
     int volume;
     /* kiplay-audio: ALSA device ("default", "hw:1"...); NULL = default. */
     const char *device;
+    /* Options from the preferences (kp_mpv_pref_args), may be NULL. */
+    const char *const *args;
     /* Extra arguments as typed by the user (shell quoting), may be NULL. */
     const char *extra;
     /* Arguments for tests (e.g. {"--ao=null", "--vo=null", NULL}), may be NULL. */
@@ -78,8 +99,19 @@ bool kp_backend_running(const kp_backend *b);
 /* Process id, 0 when not running (logs and tests). */
 int kp_backend_pid(const kp_backend *b);
 
-/* Plays path (a file or URL) from start seconds (0 = beginning). */
-void kp_backend_load(kp_backend *b, const char *path, double start);
+/* How a file starts: what Kiplay remembers of it (kp_file_settings).
+ * Backends without KP_CAP_TRACKS only look at start. */
+typedef struct {
+    double start;                   /* seconds; 0 = beginning */
+    int aid, sid;                   /* track ids; -1 = the backend's choice, sid 0 = none */
+    double audio_delay, sub_delay;  /* seconds */
+    const char *aspect;             /* "16:9", "1.85"...; NULL or "" = the file's */
+} kp_load_opts;
+
+#define KP_LOAD_OPTS_INIT {.start = 0, .aid = -1, .sid = -1}
+
+/* Plays path (a file or URL); lo NULL = from the beginning, as it comes. */
+void kp_backend_load(kp_backend *b, const char *path, const kp_load_opts *lo);
 /* What to play when the current file ends, without a gap (KP_CAP_GAPLESS;
  * NULL clears it). KP_EV_NEXT tells when it took over. */
 void kp_backend_queue(kp_backend *b, const char *path);
@@ -90,9 +122,20 @@ void kp_backend_seek_relative(kp_backend *b, double seconds);
 void kp_backend_set_volume(kp_backend *b, int volume);        /* 0..100 */
 /* Asks for the time 4x a second while true (only while playing and shown). */
 void kp_backend_set_ticking(kp_backend *b, bool on);
+/* KP_CAP_TRACKS (no-ops otherwise). id 0 = none (subtitles). */
+void kp_backend_set_track(kp_backend *b, kp_track_type type, int id);
+/* Audio or subtitle delay, seconds (positive: later). */
+void kp_backend_set_delay(kp_backend *b, kp_track_type type, double seconds);
+/* "16:9", "4:3"...; NULL or "" = the file's own. */
+void kp_backend_set_aspect(kp_backend *b, const char *aspect);
+/* A short message drawn over the video (fullscreen feedback), if it can. */
+void kp_backend_show_text(kp_backend *b, const char *text);
 
 /* For tests: one line of mpv's JSON IPC to events, as the backend would
  * deliver them. */
 void kp_mpv_parse_line(const char *line, kp_event_cb cb, void *ud);
+/* For tests: loadfile's per-file options, each after a comma
+ * (",start=12.000,sid=no"); "" for none. g_free it. */
+char *kp_mpv_file_options(const kp_load_opts *lo);
 
 #endif

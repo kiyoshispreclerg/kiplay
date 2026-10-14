@@ -25,7 +25,7 @@ typedef struct {
 
 static void emit(audioback *a, kp_event_type type, double value, bool flag, const char *text)
 {
-    kp_event ev = {type, value, flag, text};
+    kp_event ev = {.type = type, .value = value, .flag = flag, .text = text};
     a->cb(a->ud, &ev);
 }
 
@@ -129,11 +129,11 @@ static int pid(const kp_backend *b)
     return kp_child_pid(((const audioback *)b)->child);
 }
 
-static void load(kp_backend *b, const char *path, double start_at)
+static void load(kp_backend *b, const char *path, const kp_load_opts *lo)
 {
     char n[G_ASCII_DTOSTR_BUF_SIZE];
     char *p = one_line(path);
-    send((audioback *)b, "load %s %s", num(n, start_at), p);
+    send((audioback *)b, "load %s %s", num(n, lo->start), p);
     g_free(p);
 }
 

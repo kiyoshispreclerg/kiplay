@@ -100,6 +100,19 @@ void kp_prefs_set_str(kp_prefs *p, const char *section, const char *key, const c
         p->dirty = true;
 }
 
+const char *kp_prefs_get_raw(const kp_prefs *p, const char *section, const char *key)
+{
+    return kp_ini_get(p->ini, section, key);
+}
+
+void kp_prefs_unset(kp_prefs *p, const char *section, const char *key)
+{
+    if (!kp_ini_get(p->ini, section, key))
+        return;
+    kp_ini_unset(p->ini, section, key);
+    p->dirty = true;
+}
+
 bool kp_prefs_get_bool(const kp_prefs *p, const char *section, const char *key, bool def)
 {
     const char *s = kp_ini_get(p->ini, section, key);

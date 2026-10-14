@@ -13,12 +13,13 @@ possível do original:
   a tela (danmaku);
 - as legendas comuns (srt, ass, vtt...).
 
-**Estado:** em desenvolvimento, fase 3: já é um player de uso diário
+**Estado:** em desenvolvimento, fase 4: já é um player de uso diário
 (vídeo pelo mpv, música pelo motor próprio `kiplay-audio` com gapless e
 música de console NSF/SPC/GBS/VGM; playlists em abas com tags, fila,
 busca, arrastar para reordenar, importar e exportar m3u/pls; layout
-configurável). As legendas do YouTube e o chat ainda não estão ligados ao
-programa. Veja o [plano](PLANO.md) e a [comparação com o
+configurável; preferências em abas, atalhos editáveis, continuar de onde
+parou, faixas de áudio e legenda, MPRIS, bandeja, modo compacto). As
+legendas do YouTube e o chat ainda não estão ligados ao programa. Veja o [plano](PLANO.md) e a [comparação com o
 Audacious](docs/BENCH.md).
 
 ## Uso
@@ -38,24 +39,43 @@ de áudio e vídeo.
 |---|---|
 | Espaço, tecla de mídia | tocar / pausar |
 | ← / → | volta / avança 5 s (Shift: 1 min) |
-| + / − | volume |
+| Ctrl+← / Ctrl+→, < / > | faixa anterior / próxima |
+| + / −, M | volume, mudo |
 | F, F11, duplo clique no vídeo | tela cheia (Esc sai) |
+| Ctrl+C | modo compacto: só o vídeo e os controles |
+| # , J, V | próxima faixa de áudio, próxima legenda, mostrar/esconder legenda |
+| Ctrl++ / Ctrl+−, X / Z | atraso do áudio, atraso da legenda (100 ms) |
+| A | próxima proporção (4:3, 16:9...) |
 | Enter, duplo clique na lista | toca a faixa |
 | Del | remove da playlist |
 | Q | põe na fila (ou tira); a fila toca antes do resto |
 | Ctrl+J | ir para arquivo: busca na playlist da tela |
-| Ctrl+M | parar após esta faixa |
+| Ctrl+M, Ctrl+R, Ctrl+S | parar após esta faixa, repetir, aleatório |
 | Alt+↑ / Alt+↓, arrastar | move as faixas selecionadas |
 | Ctrl+O, Ctrl+Shift+O | adicionar arquivos, adicionar pasta |
 | Ctrl+T, F2, Ctrl+W | nova playlist, renomear, fechar |
+| Ctrl+P | preferências |
 | Alt+1..9 | vai para a playlist |
+
+Os atalhos se trocam em Opções → Preferências → Atalhos (até duas teclas
+por comando). Clique direito no vídeo ou na barra de controle abre um menu
+com o essencial (útil no modo compacto e na tela cheia).
+
+O Kiplay lembra de cada vídeo onde ele parou, as faixas de áudio e
+legenda escolhidas, os atrasos e a proporção (em
+`~/.local/share/kiplay/files/`), e continua dali da próxima vez. Em
+Preferências → Geral dá para estender a música ou desligar.
 
 As colunas (número, artista, álbum, duração, caminho) ficam em Exibir →
 Colunas da playlist. As tags são lidas em segundo plano, num processo à
 parte, e guardadas na playlist.
 
-Configuração em `~/.config/kiplay/kiplay.ini`; por enquanto, o mpv se
-ajusta à mão:
+O Kiplay aparece para a área de trabalho por MPRIS (teclas de mídia,
+applets, o kikarinhas) e pode ter um ícone na bandeja.
+
+A configuração fica em `~/.config/kiplay/kiplay.ini`, que a janela de
+preferências escreve e que também pode ser editado à mão (comentários são
+mantidos; só o que difere do padrão é gravado):
 
 ```ini
 [mpv]
@@ -64,13 +84,29 @@ program = mpv
 # true: lê também o seu ~/.config/mpv/mpv.conf
 use_config = false
 # opções extras, como no SMPlayer
-extra = --hwdec=auto
+extra = --deband
+
+[video]
+hwdec = auto-safe
+
+[subtitles]
+languages = pt-BR,pt,en
+font_size = 48
 
 [playback]
 # auto: música no kiplay-audio (leve, gapless); mpv: tudo pelo mpv
 engine = auto
 # dispositivo ALSA do kiplay-audio
 device = default
+
+[files]
+# off, video ou all: continuar de onde parou
+resume = video
+
+[shortcuts]
+# teclas no formato do GTK; vazio: nenhuma
+next = <Control>Right,greater
+mute =
 ```
 
 (Comentários só em linha própria: depois do valor, o `#` faria parte

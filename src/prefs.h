@@ -29,6 +29,11 @@ const char *kp_prefs_get_str(const kp_prefs *p, const char *section, const char 
                              const char *def);
 void kp_prefs_set_str(kp_prefs *p, const char *section, const char *key, const char *v);
 
+/* The value as written ("" if empty), NULL if absent. */
+const char *kp_prefs_get_raw(const kp_prefs *p, const char *section, const char *key);
+/* Removes the key (back to its default). */
+void kp_prefs_unset(kp_prefs *p, const char *section, const char *key);
+
 /* true/yes/1 and false/no/0 (any case); anything else gives the default. */
 bool kp_prefs_get_bool(const kp_prefs *p, const char *section, const char *key, bool def);
 void kp_prefs_set_bool(kp_prefs *p, const char *section, const char *key, bool v);

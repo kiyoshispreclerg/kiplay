@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: kiplay\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-13 20:18-0300\n"
+"POT-Creation-Date: 2026-10-14 10:17-0300\n"
 "PO-Revision-Date: 2026-10-09 16:23-0300\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -61,27 +61,27 @@ msgstr "aviso: "
 msgid "error: "
 msgstr "erro: "
 
-#: ui/window.c:112
+#: ui/window.c:116 ui/prefsdlg.c:236
 msgid "_Number"
 msgstr "_Número"
 
-#: ui/window.c:112
+#: ui/window.c:116 ui/prefsdlg.c:236
 msgid "_Artist"
 msgstr "_Artista"
 
-#: ui/window.c:112
+#: ui/window.c:116 ui/prefsdlg.c:236
 msgid "Al_bum"
 msgstr "Ál_bum"
 
-#: ui/window.c:113
+#: ui/window.c:117 ui/prefsdlg.c:237
 msgid "_Length"
 msgstr "_Duração"
 
-#: ui/window.c:113
+#: ui/window.c:117 ui/prefsdlg.c:237
 msgid "_Path"
 msgstr "_Caminho"
 
-#: ui/window.c:140
+#: ui/window.c:155
 msgid ""
 "Light audio and video player for KiDesktop, with YouTube's styled captions "
 "and recorded live chat."
@@ -89,136 +89,156 @@ msgstr ""
 "Reprodutor leve de áudio e vídeo para o KiDesktop, com as legendas "
 "estilizadas do YouTube e o chat de lives gravadas."
 
-#: ui/window.c:161
+#: ui/window.c:179 ui/prefsdlg.c:381
 #, c-format
 msgid "could not save the settings: %s"
 msgstr "não foi possível salvar a configuração: %s"
 
-#: ui/window.c:175
+#: ui/window.c:193
 msgid "_File"
 msgstr "_Arquivo"
 
-#: ui/window.c:176
+#: ui/window.c:194
 msgid "_Add files..."
 msgstr "_Adicionar arquivos..."
 
-#: ui/window.c:178
+#: ui/window.c:195
 msgid "Add _folder..."
 msgstr "Adicionar _pasta..."
 
-#: ui/window.c:181
+#: ui/window.c:197
 msgid "_Import playlist..."
 msgstr "_Importar playlist..."
 
-#: ui/window.c:182
+#: ui/window.c:198
 msgid "_Export playlist..."
 msgstr "_Exportar playlist..."
 
-#: ui/window.c:184
+#: ui/window.c:200 ui/window.c:275 ui/desktop.c:176
 msgid "_Quit"
 msgstr "_Sair"
 
-#: ui/window.c:186
+#: ui/window.c:202
 msgid "_Playlist"
 msgstr "_Playlist"
 
-#: ui/window.c:187
+#: ui/window.c:203
 msgid "_New"
 msgstr "_Nova"
 
-#: ui/window.c:188
+#: ui/window.c:204
 msgid "_Rename..."
 msgstr "_Renomear..."
 
-#: ui/window.c:189
+#: ui/window.c:205
 msgid "_Close"
 msgstr "_Fechar"
 
-#: ui/window.c:192
+#: ui/window.c:207
 msgid "_Jump to file..."
 msgstr "_Ir para arquivo..."
 
-#: ui/window.c:196
-msgid "_Queue / unqueue (Q)"
-msgstr "_Pôr na fila / tirar (Q)"
-
-#: ui/window.c:197
-msgid "Remove _selected (Del)"
-msgstr "Remover _selecionadas (Del)"
-
-#: ui/window.c:199
-msgid "_View"
-msgstr "_Exibir"
-
-#: ui/window.c:200
-msgid "_Video area"
-msgstr "Área de _vídeo"
-
-#: ui/window.c:206
-msgid "Video _above the playlists"
-msgstr "Vídeo _acima das playlists"
-
-#: ui/window.c:207
-msgid "Video on the _left"
-msgstr "Vídeo à _esquerda"
-
 #: ui/window.c:208
-msgid "Video on the _right"
-msgstr "Vídeo à _direita"
+msgid "_Queue / unqueue"
+msgstr "Pôr na _fila / tirar"
 
-#: ui/window.c:212
-msgid "Controls at the _bottom"
-msgstr "Controles no _rodapé"
+#: ui/window.c:209
+msgid "Remove _selected"
+msgstr "Remover _selecionadas"
 
-#: ui/window.c:213
-msgid "Controls at the _top"
-msgstr "Controles no _topo"
-
-#: ui/window.c:217
-msgid "Playlist _columns"
-msgstr "_Colunas da playlist"
-
-#: ui/window.c:223
+#: ui/window.c:211
 msgid "Play_back"
 msgstr "_Reprodução"
 
-#: ui/window.c:224
+#: ui/window.c:212 ui/window.c:264 ui/desktop.c:169
 msgid "_Play / Pause"
 msgstr "_Tocar / Pausar"
 
-#: ui/window.c:225
+#: ui/window.c:213 ui/window.c:265 ui/desktop.c:170
 msgid "_Stop"
 msgstr "_Parar"
 
-#: ui/window.c:226
+#: ui/window.c:214 ui/window.c:266 ui/desktop.c:171
 msgid "P_revious"
 msgstr "_Anterior"
 
-#: ui/window.c:227
+#: ui/window.c:215 ui/window.c:267 ui/desktop.c:172
 msgid "_Next"
 msgstr "_Próxima"
 
-#: ui/window.c:228
+#: ui/window.c:216
 msgid "Stop _after this track"
 msgstr "_Parar após esta faixa"
 
-#: ui/window.c:233
-msgid "_Fullscreen"
-msgstr "Tela _cheia"
+#: ui/window.c:223
+msgid "_View"
+msgstr "_Exibir"
+
+#: ui/window.c:224
+msgid "_Video area"
+msgstr "Área de _vídeo"
+
+#: ui/window.c:229 ui/window.c:271
+msgid "C_ompact mode"
+msgstr "Modo c_ompacto"
+
+#: ui/window.c:234
+msgid "Video _above the playlists"
+msgstr "Vídeo _acima das playlists"
 
 #: ui/window.c:235
+msgid "Video on the _left"
+msgstr "Vídeo à _esquerda"
+
+#: ui/window.c:236
+msgid "Video on the _right"
+msgstr "Vídeo à _direita"
+
+#: ui/window.c:240
+msgid "Controls at the _bottom"
+msgstr "Controles no _rodapé"
+
+#: ui/window.c:241
+msgid "Controls at the _top"
+msgstr "Controles no _topo"
+
+#: ui/window.c:245
+msgid "Playlist _columns"
+msgstr "_Colunas da playlist"
+
+#: ui/window.c:251
+msgid "_Options"
+msgstr "_Opções"
+
+#: ui/window.c:252 ui/window.c:274
+msgid "_Preferences..."
+msgstr "_Preferências..."
+
+#: ui/window.c:254
 msgid "_Help"
 msgstr "Aj_uda"
 
-#: ui/window.c:236
+#: ui/window.c:255
 msgid "_About"
 msgstr "_Sobre"
 
-#: ui/window.c:408
+#: ui/window.c:269
+msgid "Leave _fullscreen"
+msgstr "Sair da tela _cheia"
+
+#: ui/window.c:269 ui/tracks.c:378
+msgid "_Fullscreen"
+msgstr "Tela _cheia"
+
+#: ui/window.c:271
+msgid "Leave c_ompact mode"
+msgstr "Sair do modo c_ompacto"
+
+#: ui/window.c:442
 msgid "out of memory"
 msgstr "memória insuficiente"
 
-#: ui/window.c:413
+#: ui/window.c:447
 msgid "cannot find the settings folder (is $HOME set?)"
 msgstr "não achei a pasta de configuração ($HOME está definido?)"
 
@@ -272,98 +292,98 @@ msgid_plural "%s — reading tags (%zu files left)"
 msgstr[0] "%s — lendo tags (falta %zu arquivo)"
 msgstr[1] "%s — lendo tags (faltam %zu arquivos)"
 
-#: ui/playlists.c:564
+#: ui/playlists.c:563 ui/shortcuts.c:100
 msgid "Add folder"
 msgstr "Adicionar pasta"
 
-#: ui/playlists.c:564
+#: ui/playlists.c:563 ui/shortcuts.c:99
 msgid "Add files"
 msgstr "Adicionar arquivos"
 
-#: ui/playlists.c:1010
+#: ui/playlists.c:995
 #, c-format
 msgid "Playlist %zu"
 msgstr "Playlist %zu"
 
-#: ui/playlists.c:1025
+#: ui/playlists.c:1010 ui/shortcuts.c:102
 msgid "Rename playlist"
 msgstr "Renomear playlist"
 
-#: ui/playlists.c:1058
+#: ui/playlists.c:1043
 #, c-format
 msgid "Close the playlist \"%s\"?"
 msgstr "Fechar a playlist \"%s\"?"
 
-#: ui/playlists.c:1061
+#: ui/playlists.c:1046
 #, c-format
 msgid "Its %zu track will be removed from the list (the file stays)."
 msgid_plural "Its %zu tracks will be removed from the list (the files stay)."
 msgstr[0] "A %zu faixa sai da lista (o arquivo continua no disco)."
 msgstr[1] "As %zu faixas saem da lista (os arquivos continuam no disco)."
 
-#: ui/playlists.c:1092
+#: ui/playlists.c:1077
 msgid "Playlists (m3u, m3u8, pls)"
 msgstr "Playlists (m3u, m3u8, pls)"
 
-#: ui/playlists.c:1102
+#: ui/playlists.c:1087
 msgid "Import playlist"
 msgstr "Importar playlist"
 
-#: ui/playlists.c:1123
+#: ui/playlists.c:1108
 #, c-format
 msgid "Cannot read %s"
 msgstr "Não foi possível ler %s"
 
-#: ui/playlists.c:1153
+#: ui/playlists.c:1138
 msgid "Export playlist"
 msgstr "Exportar playlist"
 
-#: ui/playlists.c:1166
+#: ui/playlists.c:1151
 #, c-format
 msgid "Cannot write %s"
 msgstr "Não foi possível gravar %s"
 
-#: ui/playlists.c:1217
+#: ui/playlists.c:1202
 msgid "Playlist 1"
 msgstr "Playlist 1"
 
-#: ui/controls.c:130
+#: ui/controls.c:143 ui/shortcuts.c:74
 msgid "Previous"
 msgstr "Anterior"
 
-#: ui/controls.c:132
+#: ui/controls.c:145
 msgid "Play"
 msgstr "Tocar"
 
-#: ui/controls.c:133
+#: ui/controls.c:146
 msgid "Pause"
 msgstr "Pausar"
 
-#: ui/controls.c:137
+#: ui/controls.c:150 ui/shortcuts.c:73
 msgid "Stop"
 msgstr "Parar"
 
-#: ui/controls.c:140
+#: ui/controls.c:153 ui/shortcuts.c:75
 msgid "Next"
 msgstr "Próxima"
 
-#: ui/controls.c:142
+#: ui/controls.c:155 ui/shortcuts.c:81
 msgid "Repeat"
 msgstr "Repetir"
 
-#: ui/controls.c:145
+#: ui/controls.c:157 ui/shortcuts.c:82
 msgid "Shuffle"
 msgstr "Aleatório"
 
-#: ui/player.c:346
+#: ui/player.c:435
 msgid "Cannot run the music engine (kiplay-audio)"
 msgstr "Não foi possível rodar o motor de música (kiplay-audio)"
 
-#: ui/player.c:347
+#: ui/player.c:436
 msgid "Cannot run the player program (mpv)"
 msgstr "Não foi possível rodar o programa que toca (mpv)"
 
-#: ui/player.c:350
+#: ui/player.c:439
 msgid ""
 "Reinstall Kiplay, or play music through mpv with [playback] engine = mpv in "
 "kiplay.ini."
@@ -371,22 +391,35 @@ msgstr ""
 "Reinstale o Kiplay, ou toque as músicas pelo mpv com [playback] engine = mpv "
 "no kiplay.ini."
 
-#: ui/player.c:352
+#: ui/player.c:441
 msgid "Install mpv, or set its path in kiplay.ini ([mpv] program = ...)."
 msgstr ""
 "Instale o mpv ou informe o caminho dele no kiplay.ini ([mpv] program = ...)."
 
-#: ui/player.c:597
+#: ui/player.c:492
+#, c-format
+msgid "Resuming at %s"
+msgstr "Continuando em %s"
+
+#: ui/player.c:634
+msgid "Muted"
+msgstr "Mudo"
+
+#: ui/player.c:634
+msgid "Sound on"
+msgstr "Som ligado"
+
+#: ui/player.c:735
 #, c-format
 msgid "Could not play %s"
 msgstr "Não foi possível tocar %s"
 
-#: ui/player.c:679
+#: ui/player.c:822
 #, c-format
 msgid "the player program stopped (%s)"
 msgstr "o programa que toca parou (%s)"
 
-#: ui/player.c:682
+#: ui/player.c:825
 msgid "The player program keeps stopping; giving up for now."
 msgstr "O programa que toca continua parando; desisti por enquanto."
 
@@ -397,7 +430,7 @@ msgid_plural "%zu files"
 msgstr[0] "%zu arquivo"
 msgstr[1] "%zu arquivos"
 
-#: ui/jump.c:139
+#: ui/jump.c:139 ui/shortcuts.c:104
 msgid "Jump to file"
 msgstr "Ir para arquivo"
 
@@ -409,3 +442,549 @@ msgstr "_Fila"
 #, c-format
 msgid "cannot read tags (%s): %s"
 msgstr "não foi possível ler as tags (%s): %s"
+
+#: ui/shortcuts.c:72
+msgid "Play / Pause"
+msgstr "Tocar / pausar"
+
+#: ui/shortcuts.c:76
+msgid "Forward 5 s"
+msgstr "Avançar 5 s"
+
+#: ui/shortcuts.c:77
+msgid "Back 5 s"
+msgstr "Voltar 5 s"
+
+#: ui/shortcuts.c:78
+msgid "Forward 1 min"
+msgstr "Avançar 1 min"
+
+#: ui/shortcuts.c:79
+msgid "Back 1 min"
+msgstr "Voltar 1 min"
+
+#: ui/shortcuts.c:80
+msgid "Stop after this track"
+msgstr "Parar após esta faixa"
+
+#: ui/shortcuts.c:83
+msgid "Volume up"
+msgstr "Aumentar o volume"
+
+#: ui/shortcuts.c:84
+msgid "Volume down"
+msgstr "Diminuir o volume"
+
+#: ui/shortcuts.c:85
+msgid "Mute"
+msgstr "Mudo"
+
+#: ui/shortcuts.c:86
+msgid "Next audio track"
+msgstr "Próxima faixa de áudio"
+
+#: ui/shortcuts.c:87
+msgid "Audio delay +100 ms"
+msgstr "Atraso do áudio +100 ms"
+
+#: ui/shortcuts.c:89
+msgid "Audio delay -100 ms"
+msgstr "Atraso do áudio −100 ms"
+
+#: ui/shortcuts.c:91
+msgid "Next subtitle"
+msgstr "Próxima legenda"
+
+#: ui/shortcuts.c:92
+msgid "Show / hide subtitles"
+msgstr "Mostrar / esconder legendas"
+
+#: ui/shortcuts.c:93
+msgid "Subtitle delay +100 ms"
+msgstr "Atraso da legenda +100 ms"
+
+#: ui/shortcuts.c:94
+msgid "Subtitle delay -100 ms"
+msgstr "Atraso da legenda −100 ms"
+
+#: ui/shortcuts.c:95
+msgid "Next aspect ratio"
+msgstr "Próxima proporção"
+
+#: ui/shortcuts.c:96
+msgid "Fullscreen"
+msgstr "Tela cheia"
+
+#: ui/shortcuts.c:97
+msgid "Compact mode"
+msgstr "Modo compacto"
+
+#: ui/shortcuts.c:98
+msgid "Video area"
+msgstr "Área de vídeo"
+
+#: ui/shortcuts.c:101
+msgid "New playlist"
+msgstr "Nova playlist"
+
+#: ui/shortcuts.c:103
+msgid "Close playlist"
+msgstr "Fechar playlist"
+
+#: ui/shortcuts.c:105
+msgid "Queue / unqueue"
+msgstr "Pôr na fila / tirar"
+
+#: ui/shortcuts.c:106
+msgid "Remove selected"
+msgstr "Remover selecionadas"
+
+#: ui/shortcuts.c:107
+msgid "Move selection up"
+msgstr "Subir as selecionadas"
+
+#: ui/shortcuts.c:108
+msgid "Move selection down"
+msgstr "Descer as selecionadas"
+
+#: ui/shortcuts.c:109 ui/prefsdlg.c:391
+msgid "Preferences"
+msgstr "Preferências"
+
+#: ui/shortcuts.c:110
+msgid "Quit"
+msgstr "Sair"
+
+#: ui/shortcuts.c:140
+#, c-format
+msgid "unknown key in [shortcuts]: %s"
+msgstr "tecla desconhecida em [shortcuts]: %s"
+
+#: ui/shortcuts.c:331
+#, c-format
+msgid "%s was taken from \"%s\"."
+msgstr "%s saiu de “%s”."
+
+#: ui/shortcuts.c:407
+msgid ""
+"Click a key to change it; Backspace removes it. The media keys and Alt+1..9 "
+"(tabs) always work."
+msgstr ""
+"Clique numa tecla para trocá-la; Backspace a remove. As teclas de mídia e "
+"Alt+1..9 (abas) sempre funcionam."
+
+#: ui/shortcuts.c:418
+msgid "Command"
+msgstr "Comando"
+
+#: ui/shortcuts.c:421
+msgid "Key"
+msgstr "Tecla"
+
+#: ui/shortcuts.c:422
+msgid "Alternative"
+msgstr "Alternativa"
+
+#: ui/shortcuts.c:435
+msgid "Restore _defaults"
+msgstr "Restaurar _padrões"
+
+#: ui/tracks.c:54
+msgid "(file)"
+msgstr "(arquivo)"
+
+#: ui/tracks.c:137 ui/prefsdlg.c:289
+msgid "None"
+msgstr "Nenhuma"
+
+#: ui/tracks.c:147
+msgid "No tracks"
+msgstr "Nenhuma faixa"
+
+#: ui/tracks.c:227
+#, c-format
+msgid "Subtitles: %s"
+msgstr "Legenda: %s"
+
+#: ui/tracks.c:227
+#, c-format
+msgid "Audio: %s"
+msgstr "Áudio: %s"
+
+#: ui/tracks.c:228
+msgid "none"
+msgstr "nenhuma"
+
+#: ui/tracks.c:240
+msgid "Subtitles hidden"
+msgstr "Legendas escondidas"
+
+#: ui/tracks.c:249
+msgid "Subtitles shown"
+msgstr "Legendas à mostra"
+
+#: ui/tracks.c:263
+#, c-format
+msgid "Subtitle delay: %d ms"
+msgstr "Atraso da legenda: %d ms"
+
+#: ui/tracks.c:264
+#, c-format
+msgid "Audio delay: %d ms"
+msgstr "Atraso do áudio: %d ms"
+
+#: ui/tracks.c:277
+#, c-format
+msgid "Aspect ratio: %s"
+msgstr "Proporção: %s"
+
+#: ui/tracks.c:277
+msgid "auto"
+msgstr "automática"
+
+#: ui/tracks.c:360
+msgid "_Video"
+msgstr "_Vídeo"
+
+#: ui/tracks.c:361 ui/tracks.c:384 ui/tracks.c:396
+msgid "_Track"
+msgstr "_Faixa"
+
+#: ui/tracks.c:362
+msgid "_Aspect ratio"
+msgstr "_Proporção"
+
+#: ui/tracks.c:369
+msgid "_Auto"
+msgstr "_Automática"
+
+#: ui/tracks.c:376
+msgid "_Next aspect ratio"
+msgstr "Próxima pro_porção"
+
+#: ui/tracks.c:383
+msgid "_Audio"
+msgstr "Á_udio"
+
+#: ui/tracks.c:386 ui/tracks.c:399
+msgid "Delay +100 ms"
+msgstr "Atraso +100 ms"
+
+#: ui/tracks.c:387 ui/tracks.c:400
+msgid "Delay -100 ms"
+msgstr "Atraso −100 ms"
+
+#: ui/tracks.c:388 ui/tracks.c:401
+msgid "_No delay"
+msgstr "_Sem atraso"
+
+#: ui/tracks.c:390
+msgid "_Mute"
+msgstr "_Mudo"
+
+#: ui/tracks.c:395
+msgid "_Subtitles"
+msgstr "_Legendas"
+
+#: ui/tracks.c:397
+msgid "_Show / hide"
+msgstr "_Mostrar / esconder"
+
+#: ui/prefsdlg.c:195
+msgid "General"
+msgstr "Geral"
+
+#: ui/prefsdlg.c:196
+msgid "Files"
+msgstr "Arquivos"
+
+#: ui/prefsdlg.c:198
+msgid "Never"
+msgstr "Nunca"
+
+#: ui/prefsdlg.c:198
+msgid "Videos"
+msgstr "Vídeos"
+
+#: ui/prefsdlg.c:199
+msgid "Videos and music"
+msgstr "Vídeos e músicas"
+
+#: ui/prefsdlg.c:200
+msgid "_Resume where it stopped:"
+msgstr "_Continuar de onde parou:"
+
+#: ui/prefsdlg.c:202
+msgid "Remember the _tracks, delays and aspect ratio of each file"
+msgstr "Lembrar as _faixas, os atrasos e a proporção de cada arquivo"
+
+#: ui/prefsdlg.c:204
+msgid "Kept in ~/.local/share/kiplay/files, one small file per media file."
+msgstr ""
+"Guardados em ~/.local/share/kiplay/files, um arquivo pequeno por arquivo de "
+"mídia."
+
+#: ui/prefsdlg.c:206
+msgid "Desktop"
+msgstr "Área de trabalho"
+
+#: ui/prefsdlg.c:207
+msgid "Let the desktop and other programs control playback (_MPRIS)"
+msgstr ""
+"Deixar a área de trabalho e outros programas controlarem o que toca (_MPRIS)"
+
+#: ui/prefsdlg.c:209
+msgid "Show an icon in the _system tray"
+msgstr "Mostrar um ícone na _bandeja do sistema"
+
+#: ui/prefsdlg.c:210
+msgid "_Closing the window leaves Kiplay in the tray"
+msgstr "_Fechar a janela deixa o Kiplay na bandeja"
+
+#: ui/prefsdlg.c:220
+msgid "Interface"
+msgstr "Interface"
+
+#: ui/prefsdlg.c:221
+msgid "Layout"
+msgstr "Disposição"
+
+#: ui/prefsdlg.c:222
+msgid "Above the playlists"
+msgstr "Acima das playlists"
+
+#: ui/prefsdlg.c:222
+msgid "On the left"
+msgstr "À esquerda"
+
+#: ui/prefsdlg.c:223
+msgid "On the right"
+msgstr "À direita"
+
+#: ui/prefsdlg.c:224
+msgid "_Video:"
+msgstr "_Vídeo:"
+
+#: ui/prefsdlg.c:227
+msgid "At the bottom"
+msgstr "Embaixo"
+
+#: ui/prefsdlg.c:227
+msgid "At the top"
+msgstr "Em cima"
+
+#: ui/prefsdlg.c:228
+msgid "C_ontrols:"
+msgstr "C_ontroles:"
+
+#: ui/prefsdlg.c:231
+msgid "_Always show the video area"
+msgstr "_Sempre mostrar a área de vídeo"
+
+#: ui/prefsdlg.c:233
+msgid "Without it, the video area shows up only while a video plays."
+msgstr "Sem isso, a área de vídeo só aparece enquanto um vídeo toca."
+
+#: ui/prefsdlg.c:235
+msgid "Playlist columns"
+msgstr "Colunas da playlist"
+
+#: ui/prefsdlg.c:246
+msgid "Video"
+msgstr "Vídeo"
+
+#: ui/prefsdlg.c:247
+msgid "Decoding and output (mpv)"
+msgstr "Decodificação e saída (mpv)"
+
+#: ui/prefsdlg.c:249
+msgid "Off (mpv's default)"
+msgstr "Desligada (padrão do mpv)"
+
+#: ui/prefsdlg.c:249
+msgid "Automatic, safe"
+msgstr "Automática, segura"
+
+#: ui/prefsdlg.c:250
+msgid "VA-API"
+msgstr "VA-API"
+
+#: ui/prefsdlg.c:250
+msgid "VDPAU"
+msgstr "VDPAU"
+
+#: ui/prefsdlg.c:251
+msgid "_Hardware decoding:"
+msgstr "Decodificação por _hardware:"
+
+#: ui/prefsdlg.c:253 ui/prefsdlg.c:273
+msgid "mpv's default"
+msgstr "padrão do mpv"
+
+#: ui/prefsdlg.c:253
+msgid "gpu (OpenGL)"
+msgstr "gpu (OpenGL)"
+
+#: ui/prefsdlg.c:254
+msgid "xv (old graphics cards)"
+msgstr "xv (placas de vídeo antigas)"
+
+#: ui/prefsdlg.c:255
+msgid "x11 (software, slowest)"
+msgstr "x11 (por software, a mais lenta)"
+
+#: ui/prefsdlg.c:256
+msgid "Video _output:"
+msgstr "_Saída de vídeo:"
+
+#: ui/prefsdlg.c:257
+msgid "Changes here restart mpv; the video goes on where it was."
+msgstr "Mudanças aqui reiniciam o mpv; o vídeo continua de onde estava."
+
+#: ui/prefsdlg.c:262
+msgid "Audio"
+msgstr "Áudio"
+
+#: ui/prefsdlg.c:263
+msgid "Music"
+msgstr "Música"
+
+#: ui/prefsdlg.c:265
+msgid "kiplay-audio (light, gapless)"
+msgstr "kiplay-audio (leve, sem pausa entre faixas)"
+
+#: ui/prefsdlg.c:266
+msgid "mpv, like the videos"
+msgstr "mpv, como os vídeos"
+
+#: ui/prefsdlg.c:267
+msgid "Play music _with:"
+msgstr "Tocar música _com:"
+
+#: ui/prefsdlg.c:268
+msgid "ALSA _device:"
+msgstr "_Dispositivo ALSA:"
+
+#: ui/prefsdlg.c:269
+msgid "For kiplay-audio: default, pulse, hw:1, plughw:0,0..."
+msgstr "Para o kiplay-audio: default, pulse, hw:1, plughw:0,0..."
+
+#: ui/prefsdlg.c:271
+msgid "Videos (mpv)"
+msgstr "Vídeos (mpv)"
+
+#: ui/prefsdlg.c:273
+msgid "PulseAudio"
+msgstr "PulseAudio"
+
+#: ui/prefsdlg.c:274
+msgid "PipeWire"
+msgstr "PipeWire"
+
+#: ui/prefsdlg.c:274
+msgid "ALSA"
+msgstr "ALSA"
+
+#: ui/prefsdlg.c:274
+msgid "JACK"
+msgstr "JACK"
+
+#: ui/prefsdlg.c:275
+msgid "Audio _output:"
+msgstr "_Saída de áudio:"
+
+#: ui/prefsdlg.c:276 ui/prefsdlg.c:284
+msgid "Preferred _languages:"
+msgstr "_Idiomas preferidos:"
+
+#: ui/prefsdlg.c:277
+msgid "Language codes in order, e.g. ja,en"
+msgstr "Códigos de idioma em ordem, ex.: ja,en"
+
+#: ui/prefsdlg.c:282
+msgid "Subtitles"
+msgstr "Legendas"
+
+#: ui/prefsdlg.c:283
+msgid "Subtitles (mpv)"
+msgstr "Legendas (mpv)"
+
+#: ui/prefsdlg.c:285
+msgid "Language codes in order, e.g. pt-BR,pt,en"
+msgstr "Códigos de idioma em ordem, ex.: pt-BR,pt,en"
+
+#: ui/prefsdlg.c:287
+msgid "With the video's exact name"
+msgstr "Com o nome exato do vídeo"
+
+#: ui/prefsdlg.c:288
+msgid "With names containing the video's"
+msgstr "Com nomes que contêm o do vídeo"
+
+#: ui/prefsdlg.c:290
+msgid "Load subtitle _files:"
+msgstr "Carregar _arquivos de legenda:"
+
+#: ui/prefsdlg.c:291
+msgid "_Font:"
+msgstr "_Fonte:"
+
+#: ui/prefsdlg.c:292
+msgid "A font family, e.g. DejaVu Sans; empty: mpv's default"
+msgstr "Uma família de fontes, ex.: DejaVu Sans; vazio: a padrão do mpv"
+
+#: ui/prefsdlg.c:293
+msgid "Font _size:"
+msgstr "_Tamanho da fonte:"
+
+#: ui/prefsdlg.c:294
+msgid ""
+"Size 0 is mpv's default (55, scaled to a 720-line screen). Styled subtitles "
+"(ASS) keep their own fonts."
+msgstr ""
+"Tamanho 0 é o padrão do mpv (55, numa tela de 720 linhas). Legendas com "
+"estilo (ASS) mantêm as próprias fontes."
+
+#: ui/prefsdlg.c:301
+msgid "Shortcuts"
+msgstr "Atalhos"
+
+#: ui/prefsdlg.c:306
+msgid "Advanced"
+msgstr "Avançado"
+
+#: ui/prefsdlg.c:307
+msgid "mpv"
+msgstr "mpv"
+
+#: ui/prefsdlg.c:308
+msgid "_Program:"
+msgstr "_Programa:"
+
+#: ui/prefsdlg.c:309
+msgid "Also read my mpv _configuration (~/.config/mpv/mpv.conf)"
+msgstr "Ler também a minha _configuração do mpv (~/.config/mpv/mpv.conf)"
+
+#: ui/prefsdlg.c:311
+msgid "_Extra options:"
+msgstr "Opções _extras:"
+
+#: ui/prefsdlg.c:313
+msgid "Passed to mpv as typed, e.g. --deband --scale=ewa_lanczos"
+msgstr "Passadas ao mpv como digitadas, ex.: --deband --scale=ewa_lanczos"
+
+#: ui/prefsdlg.c:314
+msgid ""
+"Kiplay controls mpv's window, keys and on-screen controls; options that "
+"change those can break it."
+msgstr ""
+"O Kiplay controla a janela, as teclas e os controles na tela do mpv; opções "
+"que mexem nisso podem quebrá-lo."
+
+#: ui/desktop.c:174
+msgid "_Hide window"
+msgstr "_Esconder a janela"
+
+#: ui/desktop.c:174
+msgid "_Show window"
+msgstr "_Mostrar a janela"

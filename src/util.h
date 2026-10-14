@@ -27,6 +27,9 @@ bool kp_pathf(char *out, size_t size, const char *fmt, ...)
  * or if it does not fit. */
 bool kp_config_path(char *out, size_t size, const char *name);
 
+/* $XDG_DATA_HOME/kiplay/<name> (or ~/.local/share/...); same rules. */
+bool kp_data_path(char *out, size_t size, const char *name);
+
 /* Playback times as players show them: "3:18", "1:02:03"; "--:--" for a
  * negative (unknown) duration. */
 void kp_format_duration(char *out, size_t size, int64_t ms);
