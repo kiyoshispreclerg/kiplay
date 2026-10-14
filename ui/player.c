@@ -7,6 +7,7 @@
 #include "log.h"
 #include "media.h"
 #include "mpvopts.h"
+#include "sidecar.h"
 #include "util.h"
 
 /* The playback controller: which entry plays, on which engine, what
@@ -187,7 +188,7 @@ static void load_file_settings(kp_app *app, const char *location)
 static kp_load_opts load_opts(kp_app *app, double start)
 {
     const kp_file_settings *f = &app->playing.file;
-    return (kp_load_opts){start, f->aid, f->sid, f->audio_delay, f->sub_delay, f->aspect};
+    return (kp_load_opts){start, f->aid, f->sid, f->audio_delay, f->sub_delay, f->aspect, NULL, 0};
 }
 
 /* Writes what is remembered of the playing entry before it goes;
@@ -445,6 +446,55 @@ static bool ensure_backend(kp_app *app, bool audio)
     return false;
 }
 
+/* The subtitle files that sit next to a local video, YouTube's captions
+ * already converted to ASS. n = 0 when there are none (or the setting says
+ * not to look), and then mpv does its own search. Free with free_subs. */
+static kp_sub_file *sidecar_subs(kp_app *app, const char *location, int *n)
+{
+    static const char *const autos[] = {"exact", "fuzzy", "no", NULL};
+    *n = 0;
+    if (!is_local(location) || kp_media_kind_of(location) != KP_MEDIA_VIDEO ||
+        kp_prefs_get_choice(app->prefs, "subtitles", "auto", autos, 0) == 2)
+        return NULL;
+    char *path = backend_path(location);
+    GPtrArray *found = kp_sidecars_find(path);
+    GArray *out = g_array_new(FALSE, FALSE, sizeof(kp_sub_file));
+    kp_ytass_opts o;
+    kp_sidecar_ass_opts(app->prefs, &o);
+    for (guint i = 0; i < found->len; i++) {
+        const kp_sidecar *sc = g_ptr_array_index(found, i);
+        if (sc->kind == KP_SIDECAR_CHAT)
+            continue;
+        char *err = NULL;
+        char *file = kp_sidecar_play_path(sc, &o, NULL, &err);
+        if (!file) {
+            kp_log_warn(_("cannot read the captions %s: %s"), sc->path, err);
+            g_free(err);
+            continue;
+        }
+        /* The title is how the track shows in the menu. */
+        char *title = *sc->lang ? g_strdup(sc->lang) : g_path_get_basename(sc->path);
+        kp_sub_file f = {file, title, *sc->lang ? g_strdup(sc->lang) : NULL};
+        g_array_append_val(out, f);
+    }
+    g_ptr_array_free(found, TRUE);
+    g_free(path);
+    *n = (int)out->len;
+    if (*n)
+        kp_log_debug("%d subtitle file(s) next to %s", *n, location);
+    return (kp_sub_file *)g_array_free(out, FALSE);
+}
+
+static void free_subs(kp_sub_file *subs, int n)
+{
+    for (int i = 0; i < n; i++) {
+        g_free((char *)subs[i].path);
+        g_free((char *)subs[i].title);
+        g_free((char *)subs[i].lang);
+    }
+    g_free(subs);
+}
+
 /* Starts location on the right engine, with what is remembered of it. */
 static bool start_playing(kp_app *app, const char *location, double at)
 {
@@ -455,7 +505,10 @@ static bool start_playing(kp_app *app, const char *location, double at)
     char *path = audio ? g_strdup(location) : backend_path(location);
     kp_log_debug("play on %s: %s", kp_backend_name(app->playing.backend), path);
     kp_load_opts lo = load_opts(app, at);
+    kp_sub_file *subs = audio ? NULL : sidecar_subs(app, location, &lo.n_sub_files);
+    lo.sub_files = subs;
     kp_backend_load(app->playing.backend, path, &lo);
+    free_subs(subs, lo.n_sub_files);
     app->playing.starting = true;
     g_free(path);
     return true;

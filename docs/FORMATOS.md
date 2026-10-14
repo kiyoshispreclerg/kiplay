@@ -93,9 +93,22 @@ gravação deslocada de 1,117 s. Resultado:
 
 ## json3
 
-Mesmo conteúdo do srv3 em JSON (`pens`, `wsWinStyles`, `wpWinPositions`,
-`events` com `tStartMs`, `dDurationMs`, `segs[].utf8`, `segs[].pPenId`).
-Leitor a fazer na fase 5.
+Mesmo conteúdo do srv3 em JSON, lido por `src/json3.c` para o mesmo
+`kp_ytsub` (o ASS sai idêntico ao do srv3 do mesmo vídeo, byte a byte, nos
+dois arquivos de teste):
+
+- `pens`, `wsWinStyles` e `wpWinPositions` são **arrays indexados pelo id**
+  (o `{}` do índice 0 é o padrão); os ids do srv3 são esparsos, aqui não.
+- Cores são inteiros decimais (`fcForeColor: 15679346` = `#EF3F72`).
+- Pen: `szPenSize` (sz), `fcForeColor`/`foForeAlpha`, `bcBackColor`/
+  `boBackAlpha`, `ecEdgeColor`, `etEdgeType`, `fsFontStyle`, `ofOffset`,
+  `rbRubyPart`; `bAttr` é máscara de bits (1 negrito, 2 itálico, 4
+  sublinhado). Ausente = padrão do YouTube.
+- `wp`: `apPoint`, `ahHorPos`, `avVerPos` (`rcRows`/`ccCols` aparecem em
+  alguns, ignorados). `ws`: `juJustifCode`, `pdPrintDir`, `sdScrollDir`.
+- `events`: `tStartMs`, `dDurationMs`, `wpWinPosId`, `wsWinStyleId`,
+  `pPenId`, `segs[].utf8` e `segs[].pPenId`. Evento sem `segs` só define
+  uma janela: não vira legenda. Um evento do ko não tem `dDurationMs`.
 
 ## live_chat.json (yt-dlp)
 

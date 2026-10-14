@@ -293,6 +293,13 @@ static void subtitles_tab(dialog *d, GtkWidget *nb)
     spin(d, t, _("Font _size:"), "subtitles", "font_size", 0, 0, 200);
     note(t, _("Size 0 is mpv's default (55, scaled to a 720-line screen). Styled subtitles (ASS) "
               "keep their own fonts."));
+    GtkWidget *yt = section(p, _("YouTube captions (srv3, json3)"));
+    static const char *const edges[] = {"youtube", "strong", NULL};
+    static const char *const edge_labels[] = {N_("Thin, as on YouTube"),
+                                              N_("Thick and blurred (easier to read)")};
+    choice(d, yt, _("Text _outline:"), "subtitles", "youtube_edge", edges, edge_labels, "youtube");
+    note(yt, _("Captions saved with their style are drawn as they look on YouTube, wherever "
+               "the video's file name matches. Takes effect on the next file."));
 }
 
 static void shortcuts_tab(dialog *d, GtkWidget *nb)

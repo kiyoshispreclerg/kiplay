@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "../harness.h"
+#include "json3.h"
 #include "srv3.h"
 #include "ytsub_ass.h"
 
@@ -59,6 +60,65 @@ TEST(parses_heads_and_events)
     kp_ytsub_free(s);
 }
 
+/* The srv3 sample above, as YouTube's json3 writes it: pens, positions and
+ * styles are arrays indexed by id, colors integers, bAttr a bit mask. */
+static const char json3_sample[] =
+    "{\"wireMagic\":\"pb3\","
+    "\"pens\":[{},"
+    "{\"szPenSize\":100,\"fcForeColor\":16711422,\"foForeAlpha\":0,\"boBackAlpha\":0},{},"
+    "{\"bAttr\":1,\"szPenSize\":500,\"etEdgeType\":3,\"fcForeColor\":15679346,"
+    "\"foForeAlpha\":254,\"boBackAlpha\":0,\"ecEdgeColor\":8969404}],"
+    "\"wsWinStyles\":[{},{\"juJustifCode\":2,\"pdPrintDir\":0,\"sdScrollDir\":0}],"
+    "\"wpWinPositions\":[{},{},{\"apPoint\":0,\"ahHorPos\":0.5,\"avVerPos\":0}],"
+    "\"events\":["
+    "{\"tStartMs\":0,\"dDurationMs\":5000,\"id\":1,\"wpWinPosId\":2,\"wsWinStyleId\":1},"
+    "{\"tStartMs\":1,\"dDurationMs\":1999,\"wpWinPosId\":2,\"wsWinStyleId\":1,\"pPenId\":3,"
+    "\"segs\":[{\"utf8\":\"Line one\\nline & two\"}]},"
+    "{\"tStartMs\":36340,\"dDurationMs\":100,\"wpWinPosId\":2,"
+    "\"segs\":[{\"utf8\":\"PA\",\"pPenId\":3},{\"utf8\":\"RTY\"}]}]}";
+
+TEST(json3_fills_the_same_model)
+{
+    char *err = NULL;
+    kp_ytsub *s = kp_json3_parse(json3_sample, strlen(json3_sample), &err);
+    CHECK(s != NULL);
+    /* The window definition (no segs) is not an event. */
+    CHECK_INT_EQ(s->nevents, 2);
+    const kp_ytpen *p = kp_ytsub_pen(s, 3);
+    CHECK_INT_EQ(p->fc, 0xEF3F72);
+    CHECK_INT_EQ(p->ec, 0x88DCBC);
+    CHECK_INT_EQ(p->sz, 500);
+    CHECK_INT_EQ(p->et, KP_YT_EDGE_GLOW);
+    CHECK(p->b && !p->i && !p->u);
+    CHECK_INT_EQ(kp_ytsub_pen(s, 1)->fo, 0);
+    CHECK_INT_EQ(kp_ytsub_pen(s, 2)->bo, 191); /* {} = YouTube's defaults */
+    CHECK_INT_EQ(kp_ytsub_style(s, 1)->ju, 2);
+    /* Decimals read the same under a locale with a decimal comma. */
+    CHECK(fabs(kp_ytsub_pos(s, 2)->ah - 0.5) < 1e-9);
+
+    const kp_ytevent *e = &s->events[0];
+    CHECK_INT_EQ(e->t, 1);
+    CHECK_INT_EQ(e->d, 1999);
+    CHECK_INT_EQ(e->pos, 2);
+    CHECK_INT_EQ(e->pen, 3);
+    CHECK_STR_EQ(e->segs[0].text, "Line one\nline & two");
+    e = &s->events[1];
+    CHECK_INT_EQ(e->pen, -1);
+    CHECK_INT_EQ(e->nsegs, 2);
+    CHECK_INT_EQ(e->segs[0].pen, 3);
+    CHECK_INT_EQ(e->segs[1].pen, -1);
+    kp_ytsub_free(s);
+}
+
+TEST(json3_rejects_what_is_not_json3)
+{
+    char *err = NULL;
+    CHECK(kp_json3_parse("<timedtext/>", 12, &err) == NULL);
+    CHECK(err != NULL);
+    g_free(err);
+    CHECK(kp_json3_parse("[1,2]", 5, NULL) == NULL);
+}
+
 TEST(rejects_broken_xml)
 {
     char *err = NULL;
@@ -103,6 +163,8 @@ TEST(writes_positioned_ass)
 int main(void)
 {
     RUN(parses_heads_and_events);
+    RUN(json3_fills_the_same_model);
+    RUN(json3_rejects_what_is_not_json3);
     RUN(rejects_broken_xml);
     RUN(size_scale_is_a_quarter);
     RUN(writes_positioned_ass);

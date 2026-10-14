@@ -200,6 +200,16 @@ TEST(per_file_options)
     o = kp_mpv_file_options(&some);
     CHECK_STR_EQ(o, ",sid=3");
     g_free(o);
+    /* Subtitle files: mpv's own search goes off, and the track choice waits
+     * until they are added. */
+    const kp_sub_file subs[] = {{"/v/a.ko.ass", "ko", "ko"}};
+    kp_load_opts withsubs = KP_LOAD_OPTS_INIT;
+    withsubs.sub_files = subs;
+    withsubs.n_sub_files = 1;
+    withsubs.sid = 2;
+    o = kp_mpv_file_options(&withsubs);
+    CHECK_STR_EQ(o, ",sub-auto=no");
+    g_free(o);
 }
 
 /* ---- a real mpv ------------------------------------------------------------ */

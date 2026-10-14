@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: kiplay\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-14 10:17-0300\n"
+"POT-Creation-Date: 2026-10-14 11:26-0300\n"
 "PO-Revision-Date: 2026-10-09 16:23-0300\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
-#: src/main.c:44
+#: src/main.c:45
 #, c-format
 msgid ""
 "Usage: kiplay [OPTION]... [FILE]...\n"
@@ -28,6 +28,8 @@ msgid ""
 "\n"
 "  -e, --enqueue        add the files without playing them\n"
 "  -c, --config FILE    settings file (default ~/.config/kiplay/kiplay.ini)\n"
+"      --convert FILE   write YouTube captions (srv3, json3) as ASS to the\n"
+"                       standard output and exit\n"
 "  -v, --verbose        print what is going on\n"
 "  -V, --version        print the version and exit\n"
 "  -h, --help           print this help and exit\n"
@@ -40,11 +42,19 @@ msgstr ""
 "  -e, --enqueue        adiciona os arquivos sem tocar\n"
 "  -c, --config ARQ     arquivo de configuração (padrão ~/.config/kiplay/"
 "kiplay.ini)\n"
+"      --convert ARQ    grava as legendas do YouTube (srv3, json3) como ASS na\n"
+"                       saída padrão e sai\n"
 "  -v, --verbose        mostra o que está acontecendo\n"
 "  -V, --version        mostra a versão e sai\n"
 "  -h, --help           mostra esta ajuda e sai\n"
 
-#: src/main.c:113
+#: src/main.c:77
+#, c-format
+msgid ""
+"Usage: kiplay --convert FILE.srv3|FILE.json3 [-s WIDTHxHEIGHT] [-g EDGE]\n"
+msgstr "Uso: kiplay --convert ARQUIVO.srv3|ARQUIVO.json3 [-s LARGURAxALTURA] [-g CONTORNO]\n"
+
+#: src/main.c:153
 msgid "cannot open the display"
 msgstr "não foi possível abrir a tela"
 
@@ -89,7 +99,7 @@ msgstr ""
 "Reprodutor leve de áudio e vídeo para o KiDesktop, com as legendas "
 "estilizadas do YouTube e o chat de lives gravadas."
 
-#: ui/window.c:179 ui/prefsdlg.c:381
+#: ui/window.c:179 ui/prefsdlg.c:388
 #, c-format
 msgid "could not save the settings: %s"
 msgstr "não foi possível salvar a configuração: %s"
@@ -226,7 +236,7 @@ msgstr "_Sobre"
 msgid "Leave _fullscreen"
 msgstr "Sair da tela _cheia"
 
-#: ui/window.c:269 ui/tracks.c:378
+#: ui/window.c:269 ui/tracks.c:381
 msgid "_Fullscreen"
 msgstr "Tela _cheia"
 
@@ -375,15 +385,15 @@ msgstr "Repetir"
 msgid "Shuffle"
 msgstr "Aleatório"
 
-#: ui/player.c:435
+#: ui/player.c:436
 msgid "Cannot run the music engine (kiplay-audio)"
 msgstr "Não foi possível rodar o motor de música (kiplay-audio)"
 
-#: ui/player.c:436
+#: ui/player.c:437
 msgid "Cannot run the player program (mpv)"
 msgstr "Não foi possível rodar o programa que toca (mpv)"
 
-#: ui/player.c:439
+#: ui/player.c:440
 msgid ""
 "Reinstall Kiplay, or play music through mpv with [playback] engine = mpv in "
 "kiplay.ini."
@@ -391,35 +401,40 @@ msgstr ""
 "Reinstale o Kiplay, ou toque as músicas pelo mpv com [playback] engine = mpv "
 "no kiplay.ini."
 
-#: ui/player.c:441
+#: ui/player.c:442
 msgid "Install mpv, or set its path in kiplay.ini ([mpv] program = ...)."
 msgstr ""
 "Instale o mpv ou informe o caminho dele no kiplay.ini ([mpv] program = ...)."
 
-#: ui/player.c:492
+#: ui/player.c:471
+#, c-format
+msgid "cannot read the captions %s: %s"
+msgstr "não foi possível ler as legendas %s: %s"
+
+#: ui/player.c:545
 #, c-format
 msgid "Resuming at %s"
 msgstr "Continuando em %s"
 
-#: ui/player.c:634
+#: ui/player.c:687
 msgid "Muted"
 msgstr "Mudo"
 
-#: ui/player.c:634
+#: ui/player.c:687
 msgid "Sound on"
 msgstr "Som ligado"
 
-#: ui/player.c:735
+#: ui/player.c:788
 #, c-format
 msgid "Could not play %s"
 msgstr "Não foi possível tocar %s"
 
-#: ui/player.c:822
+#: ui/player.c:875
 #, c-format
 msgid "the player program stopped (%s)"
 msgstr "o programa que toca parou (%s)"
 
-#: ui/player.c:825
+#: ui/player.c:878
 msgid "The player program keeps stopping; giving up for now."
 msgstr "O programa que toca continua parando; desisti por enquanto."
 
@@ -547,7 +562,7 @@ msgstr "Subir as selecionadas"
 msgid "Move selection down"
 msgstr "Descer as selecionadas"
 
-#: ui/shortcuts.c:109 ui/prefsdlg.c:391
+#: ui/shortcuts.c:109 ui/prefsdlg.c:398
 msgid "Preferences"
 msgstr "Preferências"
 
@@ -589,104 +604,108 @@ msgstr "Alternativa"
 msgid "Restore _defaults"
 msgstr "Restaurar _padrões"
 
-#: ui/tracks.c:54
+#: ui/tracks.c:56
+msgid "(YouTube style)"
+msgstr "(estilo do YouTube)"
+
+#: ui/tracks.c:57
 msgid "(file)"
 msgstr "(arquivo)"
 
-#: ui/tracks.c:137 ui/prefsdlg.c:289
+#: ui/tracks.c:140 ui/prefsdlg.c:289
 msgid "None"
 msgstr "Nenhuma"
 
-#: ui/tracks.c:147
+#: ui/tracks.c:150
 msgid "No tracks"
 msgstr "Nenhuma faixa"
 
-#: ui/tracks.c:227
+#: ui/tracks.c:230
 #, c-format
 msgid "Subtitles: %s"
 msgstr "Legenda: %s"
 
-#: ui/tracks.c:227
+#: ui/tracks.c:230
 #, c-format
 msgid "Audio: %s"
 msgstr "Áudio: %s"
 
-#: ui/tracks.c:228
+#: ui/tracks.c:231
 msgid "none"
 msgstr "nenhuma"
 
-#: ui/tracks.c:240
+#: ui/tracks.c:243
 msgid "Subtitles hidden"
 msgstr "Legendas escondidas"
 
-#: ui/tracks.c:249
+#: ui/tracks.c:252
 msgid "Subtitles shown"
 msgstr "Legendas à mostra"
 
-#: ui/tracks.c:263
+#: ui/tracks.c:266
 #, c-format
 msgid "Subtitle delay: %d ms"
 msgstr "Atraso da legenda: %d ms"
 
-#: ui/tracks.c:264
+#: ui/tracks.c:267
 #, c-format
 msgid "Audio delay: %d ms"
 msgstr "Atraso do áudio: %d ms"
 
-#: ui/tracks.c:277
+#: ui/tracks.c:280
 #, c-format
 msgid "Aspect ratio: %s"
 msgstr "Proporção: %s"
 
-#: ui/tracks.c:277
+#: ui/tracks.c:280
 msgid "auto"
 msgstr "automática"
 
-#: ui/tracks.c:360
+#: ui/tracks.c:363
 msgid "_Video"
 msgstr "_Vídeo"
 
-#: ui/tracks.c:361 ui/tracks.c:384 ui/tracks.c:396
+#: ui/tracks.c:364 ui/tracks.c:387 ui/tracks.c:399
 msgid "_Track"
 msgstr "_Faixa"
 
-#: ui/tracks.c:362
+#: ui/tracks.c:365
 msgid "_Aspect ratio"
 msgstr "_Proporção"
 
-#: ui/tracks.c:369
+#: ui/tracks.c:372
 msgid "_Auto"
 msgstr "_Automática"
 
-#: ui/tracks.c:376
+#: ui/tracks.c:379
 msgid "_Next aspect ratio"
 msgstr "Próxima pro_porção"
 
-#: ui/tracks.c:383
+#: ui/tracks.c:386
 msgid "_Audio"
 msgstr "Á_udio"
 
-#: ui/tracks.c:386 ui/tracks.c:399
+#: ui/tracks.c:389 ui/tracks.c:402
 msgid "Delay +100 ms"
 msgstr "Atraso +100 ms"
 
-#: ui/tracks.c:387 ui/tracks.c:400
+#: ui/tracks.c:390 ui/tracks.c:403
 msgid "Delay -100 ms"
 msgstr "Atraso −100 ms"
 
-#: ui/tracks.c:388 ui/tracks.c:401
+#: ui/tracks.c:391 ui/tracks.c:404
 msgid "_No delay"
 msgstr "_Sem atraso"
 
-#: ui/tracks.c:390
+#: ui/tracks.c:393
 msgid "_Mute"
 msgstr "_Mudo"
 
-#: ui/tracks.c:395
+#: ui/tracks.c:398
 msgid "_Subtitles"
 msgstr "_Legendas"
 
-#: ui/tracks.c:397
+#: ui/tracks.c:400
 msgid "_Show / hide"
 msgstr "_Mostrar / esconder"
 
@@ -945,35 +964,57 @@ msgstr ""
 "Tamanho 0 é o padrão do mpv (55, numa tela de 720 linhas). Legendas com "
 "estilo (ASS) mantêm as próprias fontes."
 
+#: ui/prefsdlg.c:296
+msgid "YouTube captions (srv3, json3)"
+msgstr "Legendas do YouTube (srv3, json3)"
+
+#: ui/prefsdlg.c:298
+msgid "Thin, as on YouTube"
+msgstr "Fino, como no YouTube"
+
+#: ui/prefsdlg.c:299
+msgid "Thick and blurred (easier to read)"
+msgstr "Grosso e borrado (mais fácil de ler)"
+
+#: ui/prefsdlg.c:300
+msgid "Text _outline:"
+msgstr "_Contorno do texto:"
+
 #: ui/prefsdlg.c:301
+msgid ""
+"Captions saved with their style are drawn as they look on YouTube, wherever "
+"the video's file name matches. Takes effect on the next file."
+msgstr "As legendas salvas com o estilo são desenhadas como aparecem no YouTube, quando o nome do arquivo bate com o do vídeo. Vale a partir do próximo arquivo."
+
+#: ui/prefsdlg.c:308
 msgid "Shortcuts"
 msgstr "Atalhos"
 
-#: ui/prefsdlg.c:306
+#: ui/prefsdlg.c:313
 msgid "Advanced"
 msgstr "Avançado"
 
-#: ui/prefsdlg.c:307
+#: ui/prefsdlg.c:314
 msgid "mpv"
 msgstr "mpv"
 
-#: ui/prefsdlg.c:308
+#: ui/prefsdlg.c:315
 msgid "_Program:"
 msgstr "_Programa:"
 
-#: ui/prefsdlg.c:309
+#: ui/prefsdlg.c:316
 msgid "Also read my mpv _configuration (~/.config/mpv/mpv.conf)"
 msgstr "Ler também a minha _configuração do mpv (~/.config/mpv/mpv.conf)"
 
-#: ui/prefsdlg.c:311
+#: ui/prefsdlg.c:318
 msgid "_Extra options:"
 msgstr "Opções _extras:"
 
-#: ui/prefsdlg.c:313
+#: ui/prefsdlg.c:320
 msgid "Passed to mpv as typed, e.g. --deband --scale=ewa_lanczos"
 msgstr "Passadas ao mpv como digitadas, ex.: --deband --scale=ewa_lanczos"
 
-#: ui/prefsdlg.c:314
+#: ui/prefsdlg.c:321
 msgid ""
 "Kiplay controls mpv's window, keys and on-screen controls; options that "
 "change those can break it."

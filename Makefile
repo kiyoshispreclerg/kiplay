@@ -25,6 +25,8 @@ LIB_SRC = src/log.c \
       src/mpris.c \
       src/ytsub.c \
       src/srv3.c \
+      src/json3.c \
+      src/sidecar.c \
       src/ytsub_ass.c
 VENDOR_SRC = vendor/cjson/cJSON.c
 LIBKP = $(BUILD)/libkp.a

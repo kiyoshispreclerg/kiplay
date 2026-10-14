@@ -43,6 +43,7 @@ typedef struct {
     kp_track_type type;
     int id;
     const char *title, *lang, *codec; /* NULL if unknown */
+    const char *file;                 /* external track: its file; else NULL */
     bool selected, external, albumart;
 } kp_track;
 
@@ -99,6 +100,12 @@ bool kp_backend_running(const kp_backend *b);
 /* Process id, 0 when not running (logs and tests). */
 int kp_backend_pid(const kp_backend *b);
 
+/* A subtitle file that goes with the video: title and lang (a code such as
+ * "ko" or "es-419", which the language preference matches) may be NULL. */
+typedef struct {
+    const char *path, *title, *lang;
+} kp_sub_file;
+
 /* How a file starts: what Kiplay remembers of it (kp_file_settings).
  * Backends without KP_CAP_TRACKS only look at start. */
 typedef struct {
@@ -106,6 +113,10 @@ typedef struct {
     int aid, sid;                   /* track ids; -1 = the backend's choice, sid 0 = none */
     double audio_delay, sub_delay;  /* seconds */
     const char *aspect;             /* "16:9", "1.85"...; NULL or "" = the file's */
+    /* Subtitle files to load with it. When there are any, the backend's own
+     * search for subtitles next to the file is off: the list is everything. */
+    const kp_sub_file *sub_files;
+    int n_sub_files;
 } kp_load_opts;
 
 #define KP_LOAD_OPTS_INIT {.start = 0, .aid = -1, .sid = -1}

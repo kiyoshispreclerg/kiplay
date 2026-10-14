@@ -45,6 +45,11 @@ typedef struct {
     guint connect_timer, tick_timer;
     int connect_elapsed;
     bool loaded;
+    /* Subtitle files to add once the file is open (mpv can't take a list
+     * with titles and languages as an option), and the track to choose
+     * after them: -1 = mpv's choice. */
+    GArray *subs; /* of owned kp_sub_file strings */
+    int sub_choice;
 } mpv;
 
 static void emit(mpv *m, kp_event_type type, double value, bool flag, const char *text)
@@ -125,6 +130,7 @@ static kp_track *tracks_of(const cJSON *list, int *n)
             .title = kp_json_str(it, "title"),
             .lang = kp_json_str(it, "lang"),
             .codec = kp_json_str(it, "codec"),
+            .file = kp_json_str(it, "external-filename"),
             .selected = cJSON_IsTrue(cJSON_GetObjectItem(it, "selected")),
             .external = cJSON_IsTrue(cJSON_GetObjectItem(it, "external")),
             .albumart = cJSON_IsTrue(cJSON_GetObjectItem(it, "albumart")),
@@ -215,11 +221,54 @@ void kp_mpv_parse_line(const char *line, kp_event_cb cb, void *ud)
     cJSON_Delete(j);
 }
 
+static void send_json(mpv *m, cJSON *cmd);
+static cJSON *command(const char *name);
+static cJSON *args_of(cJSON *cmd);
+static void set_property(mpv *m, const char *name, cJSON *value);
+
+static void clear_subs(mpv *m)
+{
+    if (!m->subs)
+        return;
+    for (guint i = 0; i < m->subs->len; i++) {
+        kp_sub_file *f = &g_array_index(m->subs, kp_sub_file, i);
+        g_free((char *)f->path);
+        g_free((char *)f->title);
+        g_free((char *)f->lang);
+    }
+    g_array_set_size(m->subs, 0);
+}
+
+/* The pending subtitle files go in as sub-add, then the track is chosen:
+ * the remembered one, or else mpv picks among all of them (the language
+ * preference decides). */
+static void add_subs(mpv *m)
+{
+    if (!m->subs || m->subs->len == 0)
+        return;
+    for (guint i = 0; i < m->subs->len; i++) {
+        const kp_sub_file *f = &g_array_index(m->subs, kp_sub_file, i);
+        cJSON *cmd = command("sub-add");
+        cJSON_AddItemToArray(args_of(cmd), cJSON_CreateString(f->path));
+        cJSON_AddItemToArray(args_of(cmd), cJSON_CreateString("cached"));
+        cJSON_AddItemToArray(args_of(cmd), cJSON_CreateString(f->title ? f->title : ""));
+        cJSON_AddItemToArray(args_of(cmd), cJSON_CreateString(f->lang ? f->lang : ""));
+        send_json(m, cmd);
+    }
+    clear_subs(m);
+    /* "auto" runs mpv's own choice again, now that they are there. */
+    set_property(m, "sid", m->sub_choice < 0   ? cJSON_CreateString("auto")
+                           : m->sub_choice > 0 ? cJSON_CreateNumber(m->sub_choice)
+                                               : cJSON_CreateString("no"));
+}
+
 static void on_parsed(void *ud, const kp_event *ev)
 {
     mpv *m = ud;
-    if (ev->type == KP_EV_LOADED)
+    if (ev->type == KP_EV_LOADED) {
         m->loaded = true;
+        add_subs(m);
+    }
     else if (ev->type == KP_EV_ENDED || ev->type == KP_EV_IDLE)
         m->loaded = false;
     m->cb(m->ud, ev);
@@ -375,6 +424,9 @@ static void mpv_free(kp_backend *b)
     set_ticking(b, false);
     shutdown_process(m);
     kp_lineio_free(m->io);
+    clear_subs(m);
+    if (m->subs)
+        g_array_free(m->subs, TRUE);
     g_free(m->sock_path);
     g_free(m->program);
     g_free(m->extra);
@@ -469,13 +521,16 @@ char *kp_mpv_file_options(const kp_load_opts *lo)
         add_seconds(o, "start", lo->start);
     if (lo->aid >= 0)
         g_string_append_printf(o, lo->aid ? ",aid=%d" : ",aid=no", lo->aid);
-    if (lo->sid >= 0)
+    /* With subtitle files the choice waits for them (see add_subs). */
+    if (lo->sid >= 0 && lo->n_sub_files == 0)
         g_string_append_printf(o, lo->sid ? ",sid=%d" : ",sid=no", lo->sid);
     if (lo->audio_delay != 0)
         add_seconds(o, "audio-delay", lo->audio_delay);
     if (lo->sub_delay != 0)
         add_seconds(o, "sub-delay", lo->sub_delay);
     /* %N% quotes a value of N bytes, whatever it holds. */
+    if (lo->n_sub_files > 0)
+        g_string_append(o, ",sub-auto=no");
     if (lo->aspect && *lo->aspect)
         g_string_append_printf(o, ",video-aspect-override=%%%zu%%%s", strlen(lo->aspect),
                                lo->aspect);
@@ -485,6 +540,17 @@ char *kp_mpv_file_options(const kp_load_opts *lo)
 static void load(kp_backend *b, const char *path, const kp_load_opts *lo)
 {
     mpv *m = (mpv *)b;
+    clear_subs(m);
+    if (lo->n_sub_files > 0) {
+        if (!m->subs)
+            m->subs = g_array_new(FALSE, FALSE, sizeof(kp_sub_file));
+        for (int i = 0; i < lo->n_sub_files; i++) {
+            kp_sub_file f = {g_strdup(lo->sub_files[i].path), g_strdup(lo->sub_files[i].title),
+                             g_strdup(lo->sub_files[i].lang)};
+            g_array_append_val(m->subs, f);
+        }
+    }
+    m->sub_choice = lo->sid;
     set_property(m, "pause", cJSON_CreateFalse());
     /* Named arguments: mpv 0.38 put an index before the options, so the
      * positional form means different things in different versions. */
@@ -505,6 +571,7 @@ static void stop(kp_backend *b)
     mpv *m = (mpv *)b;
     send_json(m, command("stop"));
     m->loaded = false;
+    clear_subs(m);
 }
 
 static void set_pause(kp_backend *b, bool paused)

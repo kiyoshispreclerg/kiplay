@@ -14,13 +14,14 @@ close to the original as possible:
   it (danmaku);
 - ordinary subtitles (srt, ass, vtt...).
 
-**Status:** in development, phase 4: already an everyday player (video
+**Status:** in development, phase 5: already an everyday player (video
 through mpv, music through its own `kiplay-audio` engine with gapless and
 NSF/SPC/GBS/VGM game music; tabbed playlists with tags, a play queue,
 search, drag to reorder, m3u/pls import and export; configurable layout;
 tabbed preferences, editable shortcuts, resume where it stopped, audio
-and subtitle tracks, MPRIS, tray icon, compact mode). YouTube captions
-and chat aren't wired into the program yet. See
+and subtitle tracks, MPRIS, tray icon, compact mode; YouTube captions with
+their style and position, as on the site). The saved chat isn't wired into
+the program yet. See
 the [plan](PLANO.md) and the [comparison with Audacious](docs/BENCH.md)
 (both in Portuguese).
 
@@ -120,6 +121,20 @@ yt-dlp --write-subs --sub-langs all,live_chat --sub-format srv3/json3/best URL
 ```
 
 yt-dlp's default format is vtt, which loses positions, colors and sizes.
+
+Kiplay finds the files next to the video by name (`Title [ID].mp4` →
+`Title [ID].ko.srv3`, `.json3`, `.vtt`, `.srt`, `.ass`...). For each
+language the srv3 (or json3) wins over the plain ones: it is converted to
+ASS (in `~/.cache/kiplay/subs`) and shows in the Subtitles menu as "YouTube
+style". The language is picked from the `[subtitles] languages` list. To
+convert by hand, for another player:
+
+```sh
+kiplay --convert "Title [ID].ko.srv3" > ko.ass
+```
+
+In `[subtitles]`, `youtube_edge = strong` swaps YouTube's thin outline for a
+thick, blurred one that is easier to read; `auto = no` turns the search off.
 
 ## Building
 

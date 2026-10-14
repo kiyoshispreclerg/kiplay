@@ -8,9 +8,8 @@ e chat de live gravado (lateral e danmaku). Leia o `PLANO.md` antes de
 começar uma fase (arquitetura, estado, medições) e o `docs/FORMATOS.md`
 antes de mexer num leitor.
 
-Fase atual: 4 feita (configuração: preferências em abas, opções por
-arquivo, menus de faixas, atalhos editáveis, MPRIS, bandeja, modo
-compacto). Próxima: 5 (sidecars e legendas do YouTube).
+Fase atual: 5 feita (sidecars e legendas do YouTube: srv3/json3 → ASS,
+menu Legendas, `--convert`). Próxima: 6 (chat lateral).
 
 O usuário escreve em português (pt-BR) e quer as respostas em português.
 Comentários e identificadores no código, em inglês. A interface é
@@ -138,7 +137,8 @@ PULSE_SINK=kpbench tools/bench-compare.sh -k DIR -a CÓPIA[:nome] CENÁRIOS.tsv 
 | `ui/prefsdlg.c` | Opções → Preferências: controles ligados a chaves do ini, aplicar ao dar OK |
 | `ui/desktop.c` | MPRIS ligado ao player; ícone na bandeja |
 | `src/ytsub.c` | modelo neutro das legendas do YouTube (pens, posições, estilos, eventos) e os padrões |
-| `src/srv3.c` | leitor de srv3 (GMarkup) |
+| `src/srv3.c`, `src/json3.c` | leitores de srv3 (GMarkup) e json3 (cJSON) |
+| `src/sidecar.c` | arquivos ao lado do vídeo (legendas, chat), conversão para ASS em `~/.cache/kiplay/subs` |
 | `src/ytsub_ass.c` | kp_ytsub → ASS: `\an`+`\pos`, cores, bordas; caixa (layer 0) e texto (layer 1) |
 | `proto/subconv.c` | srv3 → ASS na linha de comando |
 | `proto/embed.c` | mpv `--wid` numa `GtkDrawingArea`, IPC pelo GIO |

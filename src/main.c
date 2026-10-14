@@ -9,6 +9,7 @@
 #include "i18n.h"
 #include "instance.h"
 #include "log.h"
+#include "sidecar.h"
 #include "util.h"
 #include "window.h"
 
@@ -48,9 +49,47 @@ static void usage(FILE *f)
                  "\n"
                  "  -e, --enqueue        add the files without playing them\n"
                  "  -c, --config FILE    settings file (default ~/.config/kiplay/kiplay.ini)\n"
+                 "      --convert FILE   write YouTube captions (srv3, json3) as ASS to the\n"
+                 "                       standard output and exit\n"
                  "  -v, --verbose        print what is going on\n"
                  "  -V, --version        print the version and exit\n"
                  "  -h, --help           print this help and exit\n"));
+}
+
+/* kiplay --convert X.srv3 [-s WxH] > X.ass: the same conversion the
+ * player does, for other players and for checking the result. */
+static int convert_main(int argc, char **argv)
+{
+    kp_ytass_opts o;
+    kp_ytass_opts_default(&o);
+    const char *file = NULL;
+    bool bad = false;
+    for (int i = 0; i < argc; i++) {
+        if (!strcmp(argv[i], "-s") && i + 1 < argc)
+            bad = sscanf(argv[++i], "%dx%d", &o.width, &o.height) != 2;
+        else if (!strcmp(argv[i], "-g") && i + 1 < argc)
+            o.edge_scale = g_ascii_strtod(argv[++i], NULL);
+        else if (!file && argv[i][0] != '-')
+            file = argv[i];
+        else
+            bad = true;
+    }
+    if (bad || !file || o.width < 1 || o.height < 1) {
+        fprintf(stderr, _("Usage: kiplay --convert FILE.srv3|FILE.json3 [-s WIDTHxHEIGHT] [-g EDGE]\n"));
+        return 2;
+    }
+    char *err = NULL;
+    kp_ytsub *sub = kp_ytsub_load(file, &err);
+    if (!sub) {
+        fprintf(stderr, "%s: %s\n", file, err);
+        g_free(err);
+        return 1;
+    }
+    char *ass = kp_ytsub_to_ass(sub, &o);
+    fputs(ass, stdout);
+    g_free(ass);
+    kp_ytsub_free(sub);
+    return 0;
 }
 
 int main(int argc, char **argv)
@@ -61,6 +100,8 @@ int main(int argc, char **argv)
     setlocale(LC_ALL, "");
     find_self_dir();
     setup_gettext();
+    if (argc > 1 && !strcmp(argv[1], "--convert"))
+        return convert_main(argc - 2, argv + 2);
 
     for (int i = 1; i < argc; i++) {
         const char *a = argv[i];

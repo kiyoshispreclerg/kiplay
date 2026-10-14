@@ -608,9 +608,36 @@ identificadores em inglês; interface pelo gettext com msgids em inglês.
    de notificação (sem ela, fechar a janela fecha o programa, como
    sempre). Fica para depois: aba Chat (fase 6), volume por arquivo,
    mouse configurável, limpar opções de arquivos que sumiram.
-5. **Sidecars e legendas do YouTube**: detecção, menu de legendas, srv3 e
-   json3 → ASS, `--convert`. Aceite: o clipe de "Bassline Yatteru" com as
-   legendas dançando como no YouTube.
+5. **Sidecars e legendas do YouTube** *(feita)*: detecção, menu de
+   legendas, srv3 e json3 → ASS, `--convert`. Aceite: o clipe de "Bassline
+   Yatteru" com as legendas dançando como no YouTube.
+   - `src/sidecar.c`: acha `Título [ID].<lang>.<ext>` ao lado do vídeo
+     (mesmo nome-base; só vídeos tocados pelo mpv). Por idioma o srv3 vence
+     o json3, que vence os comuns (ass, ssa, srt, vtt, smi, sub, sup);
+     `live_chat.json` é achado e fica na lista, mas ninguém o usa até a
+     fase 6. ttml e sbv não são lidos.
+   - `src/json3.c`: o leitor de json3 (ver `docs/FORMATOS.md`); o ASS de um
+     json3 sai idêntico ao do srv3 do mesmo vídeo.
+   - O ASS vai para `~/.cache/kiplay/subs/<sha1 de origem+tamanho+mtime+
+     opções>.<lang>.ass` (refeito se o arquivo ou as opções mudarem; a
+     pasta não é limpa). PlayRes fixo em 1920×1080: posições são em % do
+     vídeo, então vale para qualquer proporção; o tamanho do texto segue a
+     altura (em vídeo 4:3 não foi conferido).
+   - mpv: `sub-auto=no` só quando há sidecar (sem nenhum, o mpv procura
+     sozinho, como antes); depois do `file-loaded` o `mpv.c` manda um
+     `sub-add` por arquivo, com título e idioma (o mpv 0.34 não tira o
+     idioma do nome) e então `sid`: o lembrado do arquivo ou `auto`, que
+     aplica a lista de idiomas. `sub-files-append` repetido não serve: só
+     o último vale.
+   - Menu Legendas: "N: ko (estilo do YouTube) — ass".
+   - Preferências: `[subtitles] youtube_edge = youtube|strong`; `auto = no`
+     desliga tudo. `kiplay --convert X.srv3|X.json3 [-s LxA] [-g contorno]`.
+   - Conferido no Xvfb com o "Bassline Yatteru" (cinco idiomas, ko
+     escolhido pela lista de idiomas, a caixa e o texto no lugar) e com o
+     3DMV da Akirose (json3 en/ja). Opção lembrada (`sid`) conferida.
+   - Falta: mexer na posição com o mouse; ASR (`<s t=...>`) e ruby/vertical
+     como já estavam; conferir lado a lado com o YouTube de novo depois do
+     json3.
 6. **Chat lateral**: índice, painel, seek, emotes.
 7. **Danmaku**.
 8. **Backend MPlayer**, provando que a interface é mesmo plugável.

@@ -13,13 +13,14 @@ possível do original:
   a tela (danmaku);
 - as legendas comuns (srt, ass, vtt...).
 
-**Estado:** em desenvolvimento, fase 4: já é um player de uso diário
+**Estado:** em desenvolvimento, fase 5: já é um player de uso diário
 (vídeo pelo mpv, música pelo motor próprio `kiplay-audio` com gapless e
 música de console NSF/SPC/GBS/VGM; playlists em abas com tags, fila,
 busca, arrastar para reordenar, importar e exportar m3u/pls; layout
 configurável; preferências em abas, atalhos editáveis, continuar de onde
-parou, faixas de áudio e legenda, MPRIS, bandeja, modo compacto). As
-legendas do YouTube e o chat ainda não estão ligados ao programa. Veja o [plano](PLANO.md) e a [comparação com o
+parou, faixas de áudio e legenda, MPRIS, bandeja, modo compacto; legendas
+do YouTube com estilo e posição, como no site). O chat gravado ainda não
+está ligado ao programa. Veja o [plano](PLANO.md) e a [comparação com o
 Audacious](docs/BENCH.md).
 
 ## Uso
@@ -119,6 +120,20 @@ yt-dlp --write-subs --sub-langs all,live_chat --sub-format srv3/json3/best URL
 ```
 
 O formato padrão do yt-dlp é vtt, que perde posição, cores e tamanhos.
+
+O Kiplay acha os arquivos ao lado do vídeo pelo nome (`Título [ID].mp4` →
+`Título [ID].ko.srv3`, `.json3`, `.vtt`, `.srt`, `.ass`...). De cada
+idioma, o srv3 (ou o json3) vence os comuns: ele é convertido para ASS
+(em `~/.cache/kiplay/subs`) e entra no menu Legendas como "estilo do
+YouTube". O idioma é escolhido pela lista de [subtitles] languages.
+Para converter à mão, para usar em outro player:
+
+```sh
+kiplay --convert "Título [ID].ko.srv3" > ko.ass
+```
+
+Em [subtitles], `youtube_edge = strong` troca o contorno fino do YouTube por
+um grosso e borrado, mais fácil de ler; `auto = no` desliga a busca.
 
 ## Compilar
 

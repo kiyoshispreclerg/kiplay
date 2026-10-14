@@ -4,6 +4,7 @@
 
 #include "app.h"
 #include "i18n.h"
+#include "sidecar.h"
 
 /* The Video, Audio and Subtitles menus: the playing file's tracks (from
  * KP_EV_TRACKS), the delays and the aspect ratio. What is chosen here goes
@@ -51,7 +52,9 @@ static char *track_label(const kp_track *t)
     if (t->lang)
         g_string_append_printf(s, title ? " (%s)" : ": %s", t->lang);
     if (t->external)
-        g_string_append_printf(s, " %s", _("(file)"));
+        g_string_append_printf(s, " %s", t->file && kp_sidecar_is_converted(t->file)
+                                             ? _("(YouTube style)")
+                                             : _("(file)"));
     if (t->codec)
         g_string_append_printf(s, " — %s", t->codec);
     if (g_utf8_strlen(s->str, -1) > MAX_LABEL) {
