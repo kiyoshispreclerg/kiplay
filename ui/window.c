@@ -65,6 +65,16 @@ static void on_show_video(GtkCheckMenuItem *it, gpointer data)
     kp_layout_update_video(app);
 }
 
+static void on_playlists(GtkCheckMenuItem *it, gpointer data)
+{
+    kp_app *app = data;
+    bool on = gtk_check_menu_item_get_active(it);
+    kp_prefs_set_bool(app->prefs, "layout", "show_playlists", on);
+    if (app->playlists_btn)
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(app->playlists_btn), on);
+    kp_layout_set_playlists(app, on);
+}
+
 static void on_chat(GtkCheckMenuItem *it, gpointer data)
 {
     kp_app *app = data;
@@ -238,6 +248,11 @@ static GtkWidget *menu_bar(kp_app *app)
     g_signal_connect(app->compact_item, "toggled", G_CALLBACK(on_compact), app);
     kp_shortcuts_attach(app->compact_item, "compact");
     gtk_menu_shell_append(GTK_MENU_SHELL(m), app->compact_item);
+    app->playlists_item = gtk_check_menu_item_new_with_mnemonic(_("_Playlists"));
+    gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(app->playlists_item), app->playlists_shown);
+    g_signal_connect(app->playlists_item, "toggled", G_CALLBACK(on_playlists), app);
+    kp_shortcuts_attach(app->playlists_item, "playlists");
+    gtk_menu_shell_append(GTK_MENU_SHELL(m), app->playlists_item);
     app->chat_item = gtk_check_menu_item_new_with_mnemonic(_("_Chat"));
     gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(app->chat_item), app->chat_shown);
     gtk_widget_set_sensitive(app->chat_item, app->chat_available);
@@ -284,6 +299,9 @@ static void context_menu(kp_app *app, GdkEventButton *ev)
             G_CALLBACK(toggle_fullscreen), app, "fullscreen");
     command(m, app->compact ? _("Leave c_ompact mode") : _("C_ompact mode"),
             G_CALLBACK(toggle_compact), app, "compact");
+    if (app->chat_available)
+        command(m, app->chat_shown ? _("Hide c_hat") : _("Show c_hat"),
+                G_CALLBACK(kp_chat_toggle), app, "chat");
     separator(m);
     command(m, _("_Preferences..."), G_CALLBACK(kp_prefs_dialog), app, "preferences");
     command(m, _("_Quit"), G_CALLBACK(kp_window_quit), app, "quit");
@@ -471,6 +489,7 @@ int kp_window_run(const kp_window_opts *opts)
                                          KP_VIDEO_ABOVE);
     app->controls_pos = kp_prefs_get_choice(app->prefs, "layout", "controls",
                                             kp_controls_pos_names, KP_CONTROLS_BOTTOM);
+    app->playlists_shown = kp_prefs_get_bool(app->prefs, "layout", "show_playlists", true);
     app->video_forced = kp_prefs_get_bool(app->prefs, "layout", "show_video", false);
     app->show_video = app->video_forced;
 

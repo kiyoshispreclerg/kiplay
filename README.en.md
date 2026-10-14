@@ -51,6 +51,7 @@ too.
 | + / −, M | volume, mute |
 | F, F11, double click on the video | fullscreen (Esc leaves; the control bar shows when the mouse moves near its edge, at the bottom or top) |
 | Ctrl+C | compact mode: only the video and the controls |
+| Ctrl+L | show/hide the playlists (also the button on the control bar) |
 | # , J, V | next audio track, next subtitle, show/hide subtitles |
 | Ctrl++ / Ctrl+−, X / Z | audio delay, subtitle delay (100 ms) |
 | A | next aspect ratio (4:3, 16:9...) |

@@ -154,7 +154,7 @@ void kp_layout_apply(kp_app *app)
         kp_fsbar_attach(app);
     else
         pack_controls(app);
-    if (app->compact || app->fullscreen)
+    if (app->compact || app->fullscreen || !app->playlists_shown)
         gtk_widget_hide(app->notebook);
 
     if (xid_before && gtk_widget_get_realized(app->video))
@@ -194,7 +194,7 @@ static void show_parts(kp_app *app)
 {
     bool others = !app->fullscreen && !app->compact;
     gtk_widget_set_visible(app->menubar, others);
-    gtk_widget_set_visible(app->notebook, others);
+    gtk_widget_set_visible(app->notebook, others && app->playlists_shown);
     gtk_widget_set_visible(app->status, others);
 }
 
@@ -233,5 +233,26 @@ void kp_layout_set_compact(kp_app *app, bool on)
     if (on && !app->show_video)
         gtk_window_resize(GTK_WINDOW(app->window), w, 1);
     else if (!on && height > 0 && !app->show_video)
+        gtk_window_resize(GTK_WINDOW(app->window), w, height);
+}
+
+void kp_layout_set_playlists(kp_app *app, bool on)
+{
+    static int height; /* the window's before, to come back to */
+    if (on == app->playlists_shown)
+        return;
+    app->playlists_shown = on;
+    int w, h;
+    gtk_window_get_size(GTK_WINDOW(app->window), &w, &h);
+    if (!on)
+        height = h;
+    show_parts(app);
+    /* Without a video only the controls are left: the window shrinks to
+     * them, and grows back (GTK takes 1 as "as small as it can be"). */
+    if (app->fullscreen || app->compact || app->show_video)
+        return;
+    if (!on)
+        gtk_window_resize(GTK_WINDOW(app->window), w, 1);
+    else if (height > 0)
         gtk_window_resize(GTK_WINDOW(app->window), w, height);
 }

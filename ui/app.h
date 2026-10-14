@@ -114,7 +114,8 @@ typedef struct {
     /* Transport bar widgets the player updates. */
     GtkWidget *seek, *time_label, *volume, *play_btn, *pause_btn;
     GtkWidget *stop_after_item; /* Playback > Stop after this track */
-    GtkWidget *repeat_btn, *shuffle_btn;
+    GtkWidget *repeat_btn, *shuffle_btn, *playlists_btn;
+    GtkWidget *playlists_item; /* View > Playlists */
     /* View menu items the preferences dialog drives (their handlers do
      * the work). */
     GtkWidget *show_video_item, *compact_item;
@@ -134,6 +135,7 @@ typedef struct {
     bool show_video;   /* what layout.c shows: forced, or a video plays */
     bool fullscreen;
     bool compact;      /* only the video and the controls */
+    bool playlists_shown; /* the tabs are in the layout (View > Playlists) */
 
     kp_playing playing;
 } kp_app;
@@ -153,6 +155,10 @@ void kp_layout_update_video(kp_app *app);
 void kp_layout_update_chat(kp_app *app);
 /* Only the video (and nothing else) on the whole screen, or back. */
 void kp_layout_set_fullscreen(kp_app *app, bool on);
+/* Shows or hides the playlists (the tabs); with no video the window
+ * shrinks to the rest. Not for fullscreen and compact mode, which hide
+ * them anyway. */
+void kp_layout_set_playlists(kp_app *app, bool on);
 /* Only the video and the controls (no menus, playlists, status), or back;
  * without a video the window shrinks to the controls. */
 void kp_layout_set_compact(kp_app *app, bool on);

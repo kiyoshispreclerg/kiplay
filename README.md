@@ -49,6 +49,7 @@ playlist do Kiplay", esta também para pastas.
 | + / −, M | volume, mudo |
 | F, F11, duplo clique no vídeo | tela cheia (Esc sai; a barra de controle aparece ao mexer o mouse perto da borda, embaixo ou no topo) |
 | Ctrl+C | modo compacto: só o vídeo e os controles |
+| Ctrl+L | mostrar/ocultar as playlists (também o botão na barra de controle) |
 | # , J, V | próxima faixa de áudio, próxima legenda, mostrar/esconder legenda |
 | Ctrl++ / Ctrl+−, X / Z | atraso do áudio, atraso da legenda (100 ms) |
 | A | próxima proporção (4:3, 16:9...) |

@@ -40,6 +40,14 @@ static GtkWidget *pref_toggle(kp_app *app, const char *stock, const char *tip, c
     return b;
 }
 
+/* The View menu's item does the work (and the key goes through it too). */
+static void on_playlists_toggled(GtkToggleButton *b, gpointer data)
+{
+    kp_app *app = data;
+    gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(app->playlists_item),
+                                   gtk_toggle_button_get_active(b));
+}
+
 static void on_volume(GtkScaleButton *b, gdouble v, gpointer data)
 {
     (void)b;
@@ -156,6 +164,11 @@ GtkWidget *kp_controls_new(kp_app *app)
     gtk_box_pack_start(GTK_BOX(bar), app->repeat_btn, FALSE, FALSE, 0);
     app->shuffle_btn = pref_toggle(app, "media-playlist-shuffle", _("Shuffle"), "shuffle");
     gtk_box_pack_start(GTK_BOX(bar), app->shuffle_btn, FALSE, FALSE, 0);
+
+    app->playlists_btn = icon_button(GTK_STOCK_INDEX, _("Show / hide the playlists"), true);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(app->playlists_btn), app->playlists_shown);
+    g_signal_connect(app->playlists_btn, "toggled", G_CALLBACK(on_playlists_toggled), app);
+    gtk_box_pack_start(GTK_BOX(bar), app->playlists_btn, FALSE, FALSE, 0);
 
     app->seek = gtk_hscale_new_with_range(0, 1, 1);
     gtk_scale_set_draw_value(GTK_SCALE(app->seek), FALSE);

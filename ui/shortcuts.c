@@ -68,6 +68,7 @@ static void shuffle(kp_app *app) { toggle(app->shuffle_btn); }
 static void compact(kp_app *app) { toggle(app->compact_item); }
 static void video_area(kp_app *app) { toggle(app->show_video_item); }
 static void chat(kp_app *app) { toggle(app->chat_item); }
+static void playlists(kp_app *app) { toggle(app->playlists_item); }
 
 static const action actions[] = {
     {"play_pause", N_("Play / Pause"), "space", kp_player_toggle_pause, false},
@@ -97,6 +98,7 @@ static const action actions[] = {
     {"fullscreen", N_("Fullscreen"), "f,F11", fullscreen, false},
     {"compact", N_("Compact mode"), "<Control>c", compact, false},
     {"video_area", N_("Video area"), "<Control><Shift>v", video_area, false},
+    {"playlists", N_("Playlists"), "<Control>l", playlists, false},
     {"chat", N_("Chat"), "c", chat, false},
     {"add_files", N_("Add files"), "<Control>o", kp_playlists_add_files, false},
     {"add_folder", N_("Add folder"), "<Control><Shift>o", kp_playlists_add_folder, false},
