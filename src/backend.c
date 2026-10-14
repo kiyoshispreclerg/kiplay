@@ -99,3 +99,15 @@ void kp_backend_show_text(kp_backend *b, const char *text)
     if (b->ops->show_text)
         b->ops->show_text(b, text);
 }
+
+void kp_backend_overlay(kp_backend *b, const char *path, int x, int y, int w, int h, int stride)
+{
+    if (b->ops->overlay)
+        b->ops->overlay(b, path, x, y, w, h, stride);
+}
+
+void kp_backend_set_margin_right(kp_backend *b, double ratio)
+{
+    if (b->ops->set_margin_right)
+        b->ops->set_margin_right(b, ratio);
+}

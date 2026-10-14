@@ -144,7 +144,7 @@ tempo do vídeo e refazendo-se a cada pulo: mensagens com os emojis do
 canal e os avatares (baixados uma vez com o `curl` para
 `~/.cache/kiplay/chat`, com botão para limpar o cache em Preferências → Chat), Super Chats e novos membros em cartões coloridos,
 nome em dourado/azul/verde para o canal, moderadores e membros. Menu Exibir
-→ Chat (tecla `c`); em Preferências → Chat: largura e filtro ("só Super
+→ Chat (tecla `c`; em tela cheia o próprio mpv desenha o chat à direita do vídeo); em Preferências → Chat: largura e filtro ("só Super
 Chats e membros").
 
 Em [subtitles], `youtube_edge = strong` troca o contorno fino do YouTube por

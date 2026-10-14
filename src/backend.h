@@ -142,6 +142,15 @@ void kp_backend_set_aspect(kp_backend *b, const char *aspect);
 /* A short message drawn over the video (fullscreen feedback), if it can. */
 void kp_backend_show_text(kp_backend *b, const char *text);
 
+/* A BGRA picture (premultiplied, Cairo's ARGB32 on little-endian) drawn
+ * over the video at x, y in window pixels, read from the file at path,
+ * which must stay as it is until replaced: hand a different file for the
+ * next picture. path NULL removes it. One overlay per backend. */
+void kp_backend_overlay(kp_backend *b, const char *path, int x, int y, int w, int h, int stride);
+/* Keeps this fraction of the window's width at the right free of video
+ * (0 = none), for something drawn there. */
+void kp_backend_set_margin_right(kp_backend *b, double ratio);
+
 /* For tests: one line of mpv's JSON IPC to events, as the backend would
  * deliver them. */
 void kp_mpv_parse_line(const char *line, kp_event_cb cb, void *ud);

@@ -26,6 +26,8 @@ typedef struct {
     void (*set_delay)(kp_backend *b, kp_track_type type, double seconds);
     void (*set_aspect)(kp_backend *b, const char *aspect);
     void (*show_text)(kp_backend *b, const char *text);
+    void (*overlay)(kp_backend *b, const char *path, int x, int y, int w, int h, int stride);
+    void (*set_margin_right)(kp_backend *b, double ratio);
     void (*free)(kp_backend *b);
 } kp_backend_ops;
 

@@ -620,6 +620,41 @@ static void show_text(kp_backend *b, const char *text)
     send_json((mpv *)b, cmd);
 }
 
+/* overlay-add id x y file offset fmt w h stride; numbers as strings, which
+ * mpv parses for any command argument. */
+static void overlay(kp_backend *b, const char *path, int x, int y, int w, int h, int stride)
+{
+    if (!path) {
+        cJSON *cmd = command("overlay-remove");
+        cJSON_AddItemToArray(args_of(cmd), cJSON_CreateString("0"));
+        send_json((mpv *)b, cmd);
+        return;
+    }
+    cJSON *cmd = command("overlay-add");
+    cJSON *a = args_of(cmd);
+    char n[32];
+    cJSON_AddItemToArray(a, cJSON_CreateString("0"));
+    g_snprintf(n, sizeof n, "%d", x);
+    cJSON_AddItemToArray(a, cJSON_CreateString(n));
+    g_snprintf(n, sizeof n, "%d", y);
+    cJSON_AddItemToArray(a, cJSON_CreateString(n));
+    cJSON_AddItemToArray(a, cJSON_CreateString(path));
+    cJSON_AddItemToArray(a, cJSON_CreateString("0"));
+    cJSON_AddItemToArray(a, cJSON_CreateString("bgra"));
+    g_snprintf(n, sizeof n, "%d", w);
+    cJSON_AddItemToArray(a, cJSON_CreateString(n));
+    g_snprintf(n, sizeof n, "%d", h);
+    cJSON_AddItemToArray(a, cJSON_CreateString(n));
+    g_snprintf(n, sizeof n, "%d", stride);
+    cJSON_AddItemToArray(a, cJSON_CreateString(n));
+    send_json((mpv *)b, cmd);
+}
+
+static void set_margin_right(kp_backend *b, double ratio)
+{
+    set_property((mpv *)b, "video-margin-ratio-right", cJSON_CreateNumber(ratio));
+}
+
 static const kp_backend_ops mpv_ops = {
     .name = "mpv",
     .caps = KP_CAP_VIDEO | KP_CAP_TRACKS,
@@ -636,6 +671,8 @@ static const kp_backend_ops mpv_ops = {
     .set_delay = set_delay,
     .set_aspect = set_aspect,
     .show_text = show_text,
+    .overlay = overlay,
+    .set_margin_right = set_margin_right,
     .free = mpv_free,
 };
 

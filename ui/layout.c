@@ -10,6 +10,11 @@ const char *const kp_controls_pos_names[] = {"bottom", "top", NULL};
 
 /* Whether the chat panel is in the layout now. */
 static bool chat_in_layout;
+/* Left fullscreen: put the divider back where it was once the window is
+ * its normal size again. GtkPaned moves it by however much the window
+ * grows and shrinks while both sides show, and the parts hidden and shown
+ * around fullscreen make that come out uneven. */
+static bool restore_divider;
 
 /* Takes w out of its parent, keeping it alive. */
 static void detach(GtkWidget *w)
@@ -26,7 +31,9 @@ static const char *paned_key(const kp_app *app)
 
 void kp_layout_save(kp_app *app)
 {
-    if (app->paned)
+    /* With the playlists hidden (fullscreen, compact mode) the divider is
+     * wherever GTK left it, not where the user put it. */
+    if (app->paned && gtk_widget_get_visible(app->notebook))
         kp_prefs_set_int(app->prefs, "layout", paned_key(app),
                          gtk_paned_get_position(GTK_PANED(app->paned)));
 }
@@ -60,28 +67,6 @@ static gboolean map_backend_windows_later(gpointer data)
     return G_SOURCE_REMOVE;
 }
 
-/* _NET_WM_BYPASS_COMPOSITOR = 2 ("don't bypass") while the fullscreen
- * window holds the chat beside the video. A compositor that unredirects
- * fullscreen windows hands the X server the whole window to scan out, but
- * mpv's window then covers only part of the output: its frames are copied
- * instead of flipped, next to the panel's own drawing, and they come out
- * of time when an effect takes the output back. With the video alone mpv's
- * window covers the output and flips cleanly, so the hint is removed. */
-static void update_bypass_hint(kp_app *app)
-{
-    GdkWindow *win = app->window ? app->window->window : NULL;
-    if (!win)
-        return;
-    GdkAtom atom = gdk_atom_intern_static_string("_NET_WM_BYPASS_COMPOSITOR");
-    if (app->fullscreen && chat_in_layout) {
-        gulong value = 2;
-        gdk_property_change(win, atom, gdk_atom_intern_static_string("CARDINAL"), 32,
-                            GDK_PROP_MODE_REPLACE, (const guchar *)&value, 1);
-    } else {
-        gdk_property_delete(win, atom);
-    }
-}
-
 /* Controls right above or below the center (the paned, or the notebook
  * alone). The status line is packed at the end and stays last. */
 static void pack_controls(kp_app *app)
@@ -93,6 +78,21 @@ static void pack_controls(kp_app *app)
     gtk_box_reorder_child(GTK_BOX(app->body), app->controls,
                           app->controls_pos == KP_CONTROLS_TOP ? pos : pos + 1);
     gtk_widget_show(app->controls);
+}
+
+static void on_paned_allocate(GtkWidget *w, GtkAllocation *a, gpointer data)
+{
+    (void)a;
+    kp_app *app = data;
+    if (!restore_divider || app->fullscreen)
+        return;
+    GdkWindowState st = app->window->window ? gdk_window_get_state(app->window->window) : 0;
+    if (st & GDK_WINDOW_STATE_FULLSCREEN)
+        return; /* the window manager hasn't given the normal size back yet */
+    restore_divider = false;
+    int def = app->video_pos == KP_VIDEO_ABOVE ? 320 : 560;
+    gtk_paned_set_position(GTK_PANED(w), kp_prefs_get_int(app->prefs, "layout", paned_key(app),
+                                                          def, 50, 10000));
 }
 
 void kp_layout_apply(kp_app *app)
@@ -127,6 +127,7 @@ void kp_layout_apply(kp_app *app)
     GtkWidget *center = app->notebook;
     if (app->show_video) {
         app->paned = app->video_pos == KP_VIDEO_ABOVE ? gtk_vpaned_new() : gtk_hpaned_new();
+        g_signal_connect_after(app->paned, "size-allocate", G_CALLBACK(on_paned_allocate), app);
         bool video_first = app->video_pos != KP_VIDEO_RIGHT;
         /* With a chat the video's slot is a box: video, then the panel. */
         bool with_chat = kp_chat_wanted(app);
@@ -151,7 +152,10 @@ void kp_layout_apply(kp_app *app)
         if (with_chat) {
             gtk_widget_reparent(app->video, placeholder);
             gtk_box_pack_end(GTK_BOX(placeholder), app->chat, FALSE, FALSE, 0);
-            gtk_widget_show(app->chat);
+            /* In fullscreen it stays in the layout, hidden: mpv draws it
+             * (chatpanel.c's overlay) so that mpv's window alone covers
+             * the output. */
+            gtk_widget_set_visible(app->chat, !app->fullscreen);
             occupant = placeholder;
         } else {
             gtk_container_remove(GTK_CONTAINER(slot), placeholder);
@@ -179,7 +183,7 @@ void kp_layout_apply(kp_app *app)
     if (app->compact || app->fullscreen || !app->playlists_shown)
         gtk_widget_hide(app->notebook);
 
-    update_bypass_hint(app);
+    kp_chat_overlay_update(app);
     if (xid_before && gtk_widget_get_realized(app->video))
         kp_log_debug("layout: video XID %lu -> %lu", xid_before,
                      (unsigned long)GDK_WINDOW_XID(app->video->window));
@@ -187,8 +191,10 @@ void kp_layout_apply(kp_app *app)
 
 void kp_layout_update_chat(kp_app *app)
 {
-    if (!app->show_video || kp_chat_wanted(app) == chat_in_layout)
+    if (!app->show_video || kp_chat_wanted(app) == chat_in_layout) {
+        kp_chat_overlay_update(app);
         return;
+    }
     kp_layout_save(app);
     kp_layout_apply(app);
 }
@@ -219,12 +225,18 @@ static void show_parts(kp_app *app)
     gtk_widget_set_visible(app->menubar, others);
     gtk_widget_set_visible(app->notebook, others && app->playlists_shown);
     gtk_widget_set_visible(app->status, others);
+    if (chat_in_layout)
+        gtk_widget_set_visible(app->chat, !app->fullscreen);
 }
 
 void kp_layout_set_fullscreen(kp_app *app, bool on)
 {
     if (on == app->fullscreen)
         return;
+    if (on)
+        kp_layout_save(app); /* the divider to come back to */
+    else
+        restore_divider = true;
     app->fullscreen = on;
     if (!on)
         kp_fsbar_detach(app);
@@ -234,7 +246,7 @@ void kp_layout_set_fullscreen(kp_app *app, bool on)
     else if (!gtk_widget_get_parent(app->controls))
         pack_controls(app);
     show_parts(app);
-    update_bypass_hint(app);
+    kp_chat_overlay_update(app);
     if (on)
         gtk_window_fullscreen(GTK_WINDOW(app->window));
     else

@@ -1,6 +1,13 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
+#include <errno.h>
+#include <fcntl.h>
 #include <math.h>
+#include <stdlib.h>
 #include <string.h>
+#include <sys/mman.h>
+#include <unistd.h>
+
+#include <glib/gstdio.h>
 
 #include "app.h"
 #include "chatlog.h"
@@ -15,8 +22,16 @@
  * clock) starts again from the index, taking the last messages before the
  * new time.
  *
+ * In fullscreen the panel leaves the window and mpv draws it instead, as
+ * an overlay at the right of its own window (with a margin keeping the
+ * video clear of it): the same items painted by the same code into a
+ * picture in shared memory. mpv's window then covers the whole output by
+ * itself, and a compositor has one thing drawing there, not two.
+ *
  * Memory: the panel owns the log (a mapping and an index), and the last
- * MAX_ITEMS messages decoded, nothing more. */
+ * MAX_ITEMS messages decoded; in fullscreen also two pictures the size of
+ * the panel (two, so mpv never reads the one being painted), in
+ * XDG_RUNTIME_DIR, removed when the overlay goes. */
 
 #define MAX_ITEMS 300
 #define BACKFILL 120      /* lines taken before the time on a (re)start */
@@ -29,9 +44,20 @@
  * window share the screen) shows the video's frames out of time. */
 #define REDRAW_MS 250
 
+/* A picture handed to mpv: a file in shared memory, mapped. */
+typedef struct {
+    char *path;
+    void *map;
+    size_t size;
+} shm_pic;
+
 typedef struct {
     kp_app *app;
     GtkWidget *area;
+    shm_pic pics[2];
+    int next_pic;
+    bool overlay_on;     /* mpv has the panel (fullscreen) */
+    bool follows_video;  /* size-allocate of the video area connected */
     kp_chatlog *log;
     GCancellable *opening;
     char *path;          /* the chat file being read */
@@ -49,12 +75,17 @@ static panel *the_panel;
 
 /* ---- redrawing ------------------------------------------------------------ */
 
+static void overlay_paint(panel *p);
+
 static gboolean redraw_now(gpointer data)
 {
     panel *p = data;
     p->redraw_timer = 0;
     p->last_redraw_us = g_get_monotonic_time();
-    gtk_widget_queue_draw(p->area);
+    if (p->overlay_on)
+        overlay_paint(p);
+    else
+        gtk_widget_queue_draw(p->area);
     return G_SOURCE_REMOVE;
 }
 
@@ -164,7 +195,7 @@ static void draw_emote(cairo_t *cr, PangoAttrShape *attr, gboolean do_path, gpoi
 }
 
 typedef struct {
-    GtkWidget *w;
+    GtkStyle *style; /* fonts and colors: the panel widget's */
     int line_h;
     GPtrArray *refs; /* emote_ref, freed after the frame */
 } frame;
@@ -197,7 +228,7 @@ static PangoLayout *build(cairo_t *cr, frame *f, const kp_chat_item *it, int wid
     PangoLayout *layout = pango_cairo_create_layout(cr);
     pango_cairo_context_set_shape_renderer(pango_layout_get_context(layout), draw_emote, NULL,
                                            NULL);
-    pango_layout_set_font_description(layout, f->w->style->font_desc);
+    pango_layout_set_font_description(layout, f->style->font_desc);
     pango_layout_set_width(layout, width * PANGO_SCALE);
     pango_layout_set_wrap(layout, PANGO_WRAP_WORD_CHAR);
 
@@ -274,18 +305,17 @@ static void circle_picture(cairo_t *cr, GdkPixbuf *pb, double x, double y, int s
     cairo_restore(cr);
 }
 
-static gboolean on_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
+/* The panel: background, then the messages from the newest at the bottom
+ * up until the top is reached. Into the window, or into the picture handed
+ * to mpv in fullscreen (overlay below). */
+static void paint(panel *p, cairo_t *cr, GtkStyle *style, int width, int height)
 {
-    panel *p = data;
-    (void)ev;
-    cairo_t *cr = gdk_cairo_create(w->window);
-    int width = w->allocation.width, height = w->allocation.height;
-    gdk_cairo_set_source_color(cr, &w->style->base[GTK_STATE_NORMAL]);
+    gdk_cairo_set_source_color(cr, &style->base[GTK_STATE_NORMAL]);
     cairo_paint(cr);
 
-    frame f = {.w = w, .refs = g_ptr_array_new_with_free_func(g_free)};
+    frame f = {.style = style, .refs = g_ptr_array_new_with_free_func(g_free)};
     PangoLayout *probe = pango_cairo_create_layout(cr);
-    pango_layout_set_font_description(probe, w->style->font_desc);
+    pango_layout_set_font_description(probe, style->font_desc);
     pango_layout_set_text(probe, "Ag", -1);
     int tw;
     pango_layout_get_pixel_size(probe, &tw, &f.line_h);
@@ -298,7 +328,7 @@ static gboolean on_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
         for (guint i = p->items->len; i > 0 && y > 0; i--) {
             const kp_chat_item *it = p->items->pdata[i - 1];
             bool card = it->kind != KP_CHAT_TEXT;
-            GdkColor fg = w->style->text[GTK_STATE_NORMAL];
+            GdkColor fg = style->text[GTK_STATE_NORMAL];
             double bg_r = 0, bg_g = 0, bg_b = 0;
             if (card) {
                 unsigned rgb = it->kind == KP_CHAT_PAID ? 0xE8A317 : 0x0F9D58;
@@ -320,7 +350,7 @@ static gboolean on_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
                 cairo_fill(cr);
             }
             circle_picture(cr, it->avatar ? kp_img_get(it->avatar) : NULL, PAD, y, AVATAR_PX);
-            gdk_cairo_set_source_color(cr, card ? &fg : &w->style->text[GTK_STATE_NORMAL]);
+            gdk_cairo_set_source_color(cr, card ? &fg : &style->text[GTK_STATE_NORMAL]);
             cairo_move_to(cr, text_x + (card ? PAD / 2.0 : 0), y + (card ? PAD : 0));
             pango_cairo_show_layout(cr, layout);
             g_object_unref(layout);
@@ -328,6 +358,13 @@ static gboolean on_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
         }
     }
     g_ptr_array_free(f.refs, TRUE);
+}
+
+static gboolean on_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
+{
+    (void)ev;
+    cairo_t *cr = gdk_cairo_create(w->window);
+    paint(data, cr, w->style, w->allocation.width, w->allocation.height);
     cairo_destroy(cr);
     return TRUE;
 }
@@ -335,6 +372,126 @@ static gboolean on_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 static void on_picture(void *ud)
 {
     want_redraw(ud);
+}
+
+/* ---- the overlay (fullscreen) ------------------------------------------- */
+
+static void pic_free(shm_pic *pic)
+{
+    if (pic->map)
+        munmap(pic->map, pic->size);
+    if (pic->path)
+        g_unlink(pic->path); /* mpv's own mapping, if any, stays valid */
+    g_free(pic->path);
+    *pic = (shm_pic){0};
+}
+
+/* The picture mapped with room for size bytes; false if it can't be. */
+static bool pic_ensure(shm_pic *pic, int index, size_t size)
+{
+    if (pic->map && pic->size == size)
+        return true;
+    pic_free(pic);
+    pic->path = g_strdup_printf("%s/kiplay-chat-%d-%d.bgra", g_get_user_runtime_dir(),
+                                (int)getpid(), index);
+    int fd = open(pic->path, O_RDWR | O_CREAT | O_TRUNC | O_CLOEXEC, 0600);
+    if (fd < 0 || ftruncate(fd, (off_t)size) < 0) {
+        kp_log_debug("chat overlay: %s: %s", pic->path, g_strerror(errno));
+        if (fd >= 0)
+            close(fd);
+        pic_free(pic);
+        return false;
+    }
+    void *map = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    close(fd);
+    if (map == MAP_FAILED) {
+        pic_free(pic);
+        return false;
+    }
+    pic->map = map;
+    pic->size = size;
+    return true;
+}
+
+static void pics_free(void)
+{
+    if (!the_panel)
+        return;
+    pic_free(&the_panel->pics[0]);
+    pic_free(&the_panel->pics[1]);
+}
+
+/* The panel's width on the video's window (the preference, at most half). */
+static int overlay_width(const panel *p, int window_w)
+{
+    return MIN(p->width, window_w / 2);
+}
+
+static void overlay_paint(panel *p)
+{
+    kp_backend *mpv = p->app->playing.mpv;
+    GtkWidget *video = p->app->video;
+    int ww = video->allocation.width, wh = video->allocation.height;
+    if (!mpv || ww < 2 || wh < 2)
+        return;
+    int pw = overlay_width(p, ww);
+    int stride = cairo_format_stride_for_width(CAIRO_FORMAT_ARGB32, pw);
+    shm_pic *pic = &p->pics[p->next_pic];
+    if (!pic_ensure(pic, p->next_pic, (size_t)stride * (size_t)wh))
+        return;
+    cairo_surface_t *surface = cairo_image_surface_create_for_data(pic->map, CAIRO_FORMAT_ARGB32,
+                                                                   pw, wh, stride);
+    cairo_t *cr = cairo_create(surface);
+    gtk_widget_ensure_style(p->area);
+    paint(p, cr, p->area->style, pw, wh);
+    cairo_destroy(cr);
+    cairo_surface_flush(surface);
+    cairo_surface_destroy(surface);
+    /* The margin too, every time: an mpv started again has lost both. */
+    kp_backend_set_margin_right(mpv, (double)pw / ww);
+    kp_backend_overlay(mpv, pic->path, ww - pw, 0, pw, wh, stride);
+    p->next_pic ^= 1;
+}
+
+/* The video's window changed size: the overlay follows it. */
+static void on_video_allocate(GtkWidget *w, GtkAllocation *a, gpointer data)
+{
+    (void)w;
+    (void)a;
+    panel *p = data;
+    if (p->overlay_on)
+        overlay_paint(p);
+}
+
+void kp_chat_overlay_update(kp_app *app)
+{
+    panel *p = the_panel;
+    if (!p)
+        return;
+    const kp_playing *pl = &app->playing;
+    bool want = app->fullscreen && kp_chat_wanted(app) && pl->mpv && pl->backend == pl->mpv &&
+                pl->has_video;
+    if (want) {
+        /* Here, not in kp_chat_init: the video area is made after it. */
+        if (!p->follows_video) {
+            g_signal_connect(app->video, "size-allocate", G_CALLBACK(on_video_allocate), p);
+            p->follows_video = true;
+        }
+        p->overlay_on = true;
+        if (p->redraw_timer) {
+            g_source_remove(p->redraw_timer);
+            p->redraw_timer = 0;
+        }
+        p->last_redraw_us = g_get_monotonic_time();
+        overlay_paint(p); /* now: the panel just left the window */
+    } else if (p->overlay_on) {
+        p->overlay_on = false;
+        if (pl->mpv) {
+            kp_backend_overlay(pl->mpv, NULL, 0, 0, 0, 0, 0);
+            kp_backend_set_margin_right(pl->mpv, 0);
+        }
+        pics_free();
+    }
 }
 
 /* ---- the file ------------------------------------------------------------- */
@@ -451,6 +608,7 @@ void kp_chat_init(kp_app *app)
     g_object_ref_sink(app->chat); /* layout.c takes it in and out of containers */
     app->chat_shown = kp_prefs_get_bool(app->prefs, "chat", "show", true);
     the_panel = p;
+    atexit(pics_free); /* no picture left in XDG_RUNTIME_DIR */
     kp_img_init(on_picture, p);
     kp_chat_prefs_changed(app);
 }

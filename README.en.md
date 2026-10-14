@@ -145,7 +145,7 @@ The recorded chat (`Title [ID].live_chat.json`, which yt-dlp saves with
 video's time and starting over at every seek: messages with the channel's
 emoji and avatars (downloaded once with `curl` into `~/.cache/kiplay/chat`, with a clear-cache button in Preferences → Chat),
 Super Chats and new members as colored cards, names in gold/blue/green for
-the channel, moderators and members. View → Chat (key `c`); Preferences →
+the channel, moderators and members. View → Chat (key `c`; in fullscreen mpv itself draws the chat right of the video); Preferences →
 Chat: width and a filter ("Super Chats and members only").
 
 In `[subtitles]`, `youtube_edge = strong` swaps YouTube's thin outline for a
