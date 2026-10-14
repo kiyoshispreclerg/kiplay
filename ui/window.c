@@ -504,6 +504,7 @@ int kp_window_run(const kp_window_opts *opts)
 
     app->controls = kp_controls_new(app);
     g_signal_connect(app->controls, "button-press-event", G_CALLBACK(on_controls_click), app);
+    kp_fsbar_init(app);
     app->status = gtk_label_new("");
     gtk_misc_set_alignment(GTK_MISC(app->status), 0.0, 0.5);
     gtk_misc_set_padding(GTK_MISC(app->status), 6, 2);

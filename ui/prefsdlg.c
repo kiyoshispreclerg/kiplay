@@ -228,6 +228,8 @@ static void interface_tab(dialog *d, GtkWidget *nb)
     d->controls_pos = choice(d, t, _("C_ontrols:"), "layout", NULL, kp_controls_pos_names,
                              controls_labels, kp_controls_pos_names[app->controls_pos]);
     gtk_combo_box_set_active(GTK_COMBO_BOX(d->controls_pos), app->controls_pos);
+    choice(d, t, _("Controls in _fullscreen:"), "layout", "fullscreen_controls",
+           kp_controls_pos_names, controls_labels, kp_controls_pos_names[KP_CONTROLS_BOTTOM]);
     d->show_video = check(d, t, _("_Always show the video area"), "layout", NULL, false);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(d->show_video), app->video_forced);
     note(t, _("Without it, the video area shows up only while a video plays."));

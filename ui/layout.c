@@ -60,6 +60,19 @@ static gboolean map_backend_windows_later(gpointer data)
     return G_SOURCE_REMOVE;
 }
 
+/* Controls right above or below the center (the paned, or the notebook
+ * alone). The status line is packed at the end and stays last. */
+static void pack_controls(kp_app *app)
+{
+    GtkWidget *center = app->paned ? app->paned : app->notebook;
+    gint pos = 0;
+    gtk_container_child_get(GTK_CONTAINER(app->body), center, "position", &pos, NULL);
+    gtk_box_pack_start(GTK_BOX(app->body), app->controls, FALSE, FALSE, 0);
+    gtk_box_reorder_child(GTK_BOX(app->body), app->controls,
+                          app->controls_pos == KP_CONTROLS_TOP ? pos : pos + 1);
+    gtk_widget_show(app->controls);
+}
+
 void kp_layout_apply(kp_app *app)
 {
     unsigned long xid_before = gtk_widget_get_realized(app->video)
@@ -137,13 +150,10 @@ void kp_layout_apply(kp_app *app)
         gtk_widget_show(center);
     }
 
-    /* Controls above or below the center; the status line stays last. */
-    gtk_box_pack_start(GTK_BOX(app->body), app->controls, FALSE, FALSE, 0);
-    gtk_box_reorder_child(GTK_BOX(app->body), app->controls,
-                          app->controls_pos == KP_CONTROLS_TOP ? 1 : 2);
-    gtk_box_reorder_child(GTK_BOX(app->body), center,
-                          app->controls_pos == KP_CONTROLS_TOP ? 2 : 1);
-    gtk_widget_set_visible(app->controls, !app->fullscreen);
+    if (app->fullscreen)
+        kp_fsbar_attach(app);
+    else
+        pack_controls(app);
     if (app->compact || app->fullscreen)
         gtk_widget_hide(app->notebook);
 
@@ -177,8 +187,8 @@ void kp_layout_update_video(kp_app *app)
     }
 }
 
-/* Fullscreen hides all but the video, compact mode all but the video
- * and the controls; the paned gives the video all the room when the
+/* Fullscreen hides all but the video (the controls float, fsbar.c),
+ * compact mode all but the video and the controls; the paned gives the video all the room when the
  * other side is hidden. */
 static void show_parts(kp_app *app)
 {
@@ -186,7 +196,6 @@ static void show_parts(kp_app *app)
     gtk_widget_set_visible(app->menubar, others);
     gtk_widget_set_visible(app->notebook, others);
     gtk_widget_set_visible(app->status, others);
-    gtk_widget_set_visible(app->controls, !app->fullscreen);
 }
 
 void kp_layout_set_fullscreen(kp_app *app, bool on)
@@ -194,7 +203,13 @@ void kp_layout_set_fullscreen(kp_app *app, bool on)
     if (on == app->fullscreen)
         return;
     app->fullscreen = on;
-    kp_layout_update_video(app);
+    if (!on)
+        kp_fsbar_detach(app);
+    kp_layout_update_video(app); /* may lay it all out again */
+    if (on)
+        kp_fsbar_attach(app);
+    else if (!gtk_widget_get_parent(app->controls))
+        pack_controls(app);
     show_parts(app);
     if (on)
         gtk_window_fullscreen(GTK_WINDOW(app->window));

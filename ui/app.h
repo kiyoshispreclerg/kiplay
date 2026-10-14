@@ -157,6 +157,13 @@ void kp_layout_set_fullscreen(kp_app *app, bool on);
  * without a video the window shrinks to the controls. */
 void kp_layout_set_compact(kp_app *app, bool on);
 
+/* fsbar.c: the controls floating over the fullscreen video, shown while
+ * the mouse moves. init once, with the window; attach moves app->controls
+ * into the floating bar (and shows it), detach takes it out. */
+void kp_fsbar_init(kp_app *app);
+void kp_fsbar_attach(kp_app *app);
+void kp_fsbar_detach(kp_app *app);
+
 /* playlists.c */
 void kp_playlists_init(kp_app *app);
 void kp_playlists_free(kp_app *app);
