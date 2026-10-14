@@ -48,6 +48,7 @@ static void usage(FILE *f)
                  "Kiplay is already open, they go to that window.\n"
                  "\n"
                  "  -e, --enqueue        add the files without playing them\n"
+                 "  -n, --new-playlist   put the files in a new playlist (folders too)\n"
                  "  -c, --config FILE    settings file (default ~/.config/kiplay/kiplay.ini)\n"
                  "      --convert FILE   write YouTube captions (srv3, json3) as ASS to the\n"
                  "                       standard output and exit\n"
@@ -113,7 +114,9 @@ int main(int argc, char **argv)
         } else if (strcmp(a, "--") == 0) {
             options_done = true;
         } else if (strcmp(a, "-e") == 0 || strcmp(a, "--enqueue") == 0) {
-            opts.enqueue = true;
+            opts.flags |= KP_OPEN_ENQUEUE;
+        } else if (strcmp(a, "-n") == 0 || strcmp(a, "--new-playlist") == 0) {
+            opts.flags |= KP_OPEN_NEW_PLAYLIST;
         } else if (strcmp(a, "-h") == 0 || strcmp(a, "--help") == 0) {
             usage(stdout);
             g_ptr_array_free(files, TRUE);
@@ -142,7 +145,7 @@ int main(int argc, char **argv)
     /* Already open: hand the files over and leave, before paying for GTK. */
     char dir[KP_PATH_MAX];
     char *sock = kp_config_path(dir, sizeof dir, "") ? kp_instance_socket_path(dir) : NULL;
-    if (sock && kp_instance_forward(sock, opts.files, opts.enqueue)) {
+    if (sock && kp_instance_forward(sock, opts.files, opts.flags)) {
         kp_log_debug("handed %u file(s) to the running kiplay", files->len - 1);
         g_free(sock);
         g_ptr_array_free(files, TRUE);

@@ -50,7 +50,7 @@ char *kp_instance_absolute(const char *location)
     return clean;
 }
 
-bool kp_instance_forward(const char *socket_path, char **locations, bool enqueue)
+bool kp_instance_forward(const char *socket_path, char **locations, unsigned flags)
 {
     GSocketClient *client = g_socket_client_new();
     GSocketAddress *addr = g_unix_socket_address_new(socket_path);
@@ -62,7 +62,8 @@ bool kp_instance_forward(const char *socket_path, char **locations, bool enqueue
     /* A running Kiplay that hangs must not hang this one too. */
     g_socket_set_timeout(g_socket_connection_get_socket(conn), 5);
     GString *req = g_string_new(PROTOCOL);
-    g_string_append(req, enqueue ? " enqueue\n" : " play\n");
+    g_string_append(req, flags & KP_OPEN_ENQUEUE ? " enqueue" : " play");
+    g_string_append(req, flags & KP_OPEN_NEW_PLAYLIST ? " new\n" : "\n");
     for (char **l = locations; l && *l; l++) {
         char *abs = kp_instance_absolute(*l);
         /* A newline in a name would split it: such names go as URIs. */
@@ -91,7 +92,8 @@ typedef struct {
     GSocketConnection *conn;
     GDataInputStream *data;
     GPtrArray *lines;
-    bool header, enqueue;
+    bool header;
+    unsigned flags;
 } request;
 
 static void request_done(request *r)
@@ -113,18 +115,32 @@ static void on_request_line(GObject *src, GAsyncResult *res, gpointer data)
     }
     if (!r->header) {
         r->header = true;
-        if (strcmp(line, PROTOCOL " play") != 0 && strcmp(line, PROTOCOL " enqueue") != 0) {
+        static const struct {
+            const char *header;
+            unsigned flags;
+        } known[] = {
+            {PROTOCOL " play", 0},
+            {PROTOCOL " enqueue", KP_OPEN_ENQUEUE},
+            {PROTOCOL " play new", KP_OPEN_NEW_PLAYLIST},
+            {PROTOCOL " enqueue new", KP_OPEN_ENQUEUE | KP_OPEN_NEW_PLAYLIST},
+        };
+        bool ok = false;
+        for (size_t k = 0; k < G_N_ELEMENTS(known); k++)
+            if (strcmp(line, known[k].header) == 0) {
+                r->flags = known[k].flags;
+                ok = true;
+            }
+        if (!ok) {
             kp_log_debug("instance: bad request \"%s\"", line);
             g_free(line);
             request_done(r);
             return;
         }
-        r->enqueue = g_str_has_suffix(line, "enqueue");
         g_free(line);
     } else if (!*line) {
         g_free(line);
         g_ptr_array_add(r->lines, NULL);
-        r->in->cb(r->in->ud, (char **)r->lines->pdata, r->enqueue);
+        r->in->cb(r->in->ud, (char **)r->lines->pdata, r->flags);
         request_done(r);
         return;
     } else if (r->lines->len < MAX_REQUEST_LINES) {

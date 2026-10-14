@@ -168,7 +168,8 @@ asan-run:
 install: $(BUILD)/kiplay $(BUILD)/kiplay-audio $(MO_FILES)
 	install -Dm755 $< $(DESTDIR)$(BINDIR)/kiplay
 	install -Dm755 $(BUILD)/kiplay-audio $(DESTDIR)$(BINDIR)/kiplay-audio
-	install -Dm644 data/kiplay.desktop $(DESTDIR)$(DATADIR)/applications/kiplay.desktop
+	$(foreach d,kiplay kiplay-enqueue kiplay-newlist,install -Dm644 data/$(d).desktop \
+		$(DESTDIR)$(DATADIR)/applications/$(d).desktop;)
 	install -Dm644 data/kiplay.svg $(DESTDIR)$(DATADIR)/icons/hicolor/scalable/apps/kiplay.svg
 	$(foreach l,$(if $(MO_FILES),$(LINGUAS)),install -Dm644 $(BUILD)/locale/$(l)/LC_MESSAGES/kiplay.mo \
 		$(DESTDIR)$(LOCALEDIR)/$(l)/LC_MESSAGES/kiplay.mo;)
@@ -177,6 +178,8 @@ uninstall:
 	rm -f $(DESTDIR)$(BINDIR)/kiplay $(DESTDIR)$(BINDIR)/kiplay-audio
 	for l in $(LINGUAS); do rm -f $(DESTDIR)$(LOCALEDIR)/$$l/LC_MESSAGES/kiplay.mo; done
 	rm -f $(DESTDIR)$(DATADIR)/applications/kiplay.desktop \
+	      $(DESTDIR)$(DATADIR)/applications/kiplay-enqueue.desktop \
+	      $(DESTDIR)$(DATADIR)/applications/kiplay-newlist.desktop \
 	      $(DESTDIR)$(DATADIR)/icons/hicolor/scalable/apps/kiplay.svg
 
 lint:

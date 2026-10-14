@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: kiplay\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-14 11:47-0300\n"
+"POT-Creation-Date: 2026-10-14 12:39-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -27,6 +27,7 @@ msgid ""
 "Kiplay is already open, they go to that window.\n"
 "\n"
 "  -e, --enqueue        add the files without playing them\n"
+"  -n, --new-playlist   put the files in a new playlist (folders too)\n"
 "  -c, --config FILE    settings file (default ~/.config/kiplay/kiplay.ini)\n"
 "      --convert FILE   write YouTube captions (srv3, json3) as ASS to the\n"
 "                       standard output and exit\n"
@@ -35,13 +36,13 @@ msgid ""
 "  -h, --help           print this help and exit\n"
 msgstr ""
 
-#: src/main.c:78
+#: src/main.c:79
 #, c-format
 msgid ""
 "Usage: kiplay --convert FILE.srv3|FILE.json3 [-s WIDTHxHEIGHT] [-g EDGE]\n"
 msgstr ""
 
-#: src/main.c:154
+#: src/main.c:157
 msgid "cannot open the display"
 msgstr ""
 
@@ -291,58 +292,58 @@ msgid_plural "%s — reading tags (%zu files left)"
 msgstr[0] ""
 msgstr[1] ""
 
-#: ui/playlists.c:563 ui/shortcuts.c:102
+#: ui/playlists.c:582 ui/shortcuts.c:102
 msgid "Add folder"
 msgstr ""
 
-#: ui/playlists.c:563 ui/shortcuts.c:101
+#: ui/playlists.c:582 ui/shortcuts.c:101
 msgid "Add files"
 msgstr ""
 
-#: ui/playlists.c:995
+#: ui/playlists.c:1024
 #, c-format
 msgid "Playlist %zu"
 msgstr ""
 
-#: ui/playlists.c:1010 ui/shortcuts.c:104
+#: ui/playlists.c:1035 ui/shortcuts.c:104
 msgid "Rename playlist"
 msgstr ""
 
-#: ui/playlists.c:1043
+#: ui/playlists.c:1068
 #, c-format
 msgid "Close the playlist \"%s\"?"
 msgstr ""
 
-#: ui/playlists.c:1046
+#: ui/playlists.c:1071
 #, c-format
 msgid "Its %zu track will be removed from the list (the file stays)."
 msgid_plural "Its %zu tracks will be removed from the list (the files stay)."
 msgstr[0] ""
 msgstr[1] ""
 
-#: ui/playlists.c:1077
+#: ui/playlists.c:1102
 msgid "Playlists (m3u, m3u8, pls)"
 msgstr ""
 
-#: ui/playlists.c:1087
+#: ui/playlists.c:1112
 msgid "Import playlist"
 msgstr ""
 
-#: ui/playlists.c:1108
+#: ui/playlists.c:1133
 #, c-format
 msgid "Cannot read %s"
 msgstr ""
 
-#: ui/playlists.c:1138
+#: ui/playlists.c:1163
 msgid "Export playlist"
 msgstr ""
 
-#: ui/playlists.c:1151
+#: ui/playlists.c:1176
 #, c-format
 msgid "Cannot write %s"
 msgstr ""
 
-#: ui/playlists.c:1202
+#: ui/playlists.c:1227
 msgid "Playlist 1"
 msgstr ""
 

@@ -547,8 +547,27 @@ static void add_locations(kp_app *app, page_t *pg, long at, char **uris, bool de
     g_object_unref(task);
 }
 
-void kp_playlists_open(kp_app *app, char **locations, bool play)
+static void new_page(kp_app *app, const char *name);
+
+void kp_playlists_open(kp_app *app, char **locations, bool play, bool new_playlist)
 {
+    if (new_playlist) {
+        /* One folder names the playlist after itself. */
+        char *name = NULL;
+        if (locations[0] && !locations[1] && g_path_is_absolute(locations[0]) &&
+            kp_dir_exists(locations[0])) {
+            name = g_path_get_basename(locations[0]);
+            if (!name[0] || !strcmp(name, G_DIR_SEPARATOR_S)) {
+                g_free(name);
+                name = NULL;
+            }
+        }
+        if (name)
+            new_page(app, name);
+        else
+            kp_playlists_new(app);
+        g_free(name);
+    }
     page_t *pg = current_page(app);
     if (pg)
         add_locations(app, pg, -1, locations, true, play);
@@ -990,15 +1009,21 @@ static void on_switch(GtkNotebook *nb, gpointer page, guint num, gpointer data)
     schedule_save(app);
 }
 
-void kp_playlists_new(kp_app *app)
+/* A new tab after the current one, selected. */
+static void new_page(kp_app *app, const char *name)
 {
-    char *name = g_strdup_printf(_("Playlist %zu"), kp_plset_count(app->playlists) + 1);
     int cur = gtk_notebook_get_current_page(GTK_NOTEBOOK(app->notebook));
     size_t at = kp_plset_insert(app->playlists, (size_t)(cur + 1), name);
-    g_free(name);
     add_page(app, at);
     gtk_notebook_set_current_page(GTK_NOTEBOOK(app->notebook), (int)at);
     schedule_save(app);
+}
+
+void kp_playlists_new(kp_app *app)
+{
+    char *name = g_strdup_printf(_("Playlist %zu"), kp_plset_count(app->playlists) + 1);
+    new_page(app, name);
+    g_free(name);
 }
 
 void kp_playlists_rename(kp_app *app)

@@ -441,10 +441,10 @@ static gboolean on_first_expose(GtkWidget *widget, GdkEventExpose *ev, gpointer 
     return FALSE;
 }
 
-static void on_instance_files(void *ud, char **locations, bool enqueue)
+static void on_instance_files(void *ud, char **locations, unsigned flags)
 {
     kp_desktop_present(ud);
-    kp_player_open(ud, locations, enqueue);
+    kp_player_open(ud, locations, flags);
 }
 
 int kp_window_run(const kp_window_opts *opts)
@@ -523,7 +523,7 @@ int kp_window_run(const kp_window_opts *opts)
         }
     }
     if (opts->files && opts->files[0])
-        kp_player_open(app, opts->files, opts->enqueue);
+        kp_player_open(app, opts->files, opts->flags);
 
     g_signal_connect(app->window, "key-press-event", G_CALLBACK(on_key), app);
     g_signal_connect(app->window, "configure-event", G_CALLBACK(on_configure), &w);

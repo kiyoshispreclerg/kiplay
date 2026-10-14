@@ -30,11 +30,14 @@ kiplay                      # abre a janela
 kiplay video.mkv musica.mp3 # adiciona à playlist da tela e toca o primeiro
 kiplay ~/Música/Album       # pastas entram inteiras, por nome
 kiplay -e *.mp3             # só adiciona (enfileira)
+kiplay -n ~/Música/Album    # numa playlist nova (aba nova)
 ```
 
 Com o Kiplay aberto, `kiplay ARQUIVO` manda o arquivo para a janela que
 já existe. Depois do `make install` ele aparece no "Abrir com" dos tipos
-de áudio e vídeo.
+de áudio e vídeo, e no menu do gerenciador de arquivos aparecem "Adicionar
+à playlist do Kiplay" (a playlist atual, sem tocar) e "Adicionar a nova
+playlist do Kiplay", esta também para pastas.
 
 | Tecla | Faz |
 |---|---|

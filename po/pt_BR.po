@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: kiplay\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-14 11:47-0300\n"
+"POT-Creation-Date: 2026-10-14 12:39-0300\n"
 "PO-Revision-Date: 2026-10-09 16:23-0300\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -27,6 +27,7 @@ msgid ""
 "Kiplay is already open, they go to that window.\n"
 "\n"
 "  -e, --enqueue        add the files without playing them\n"
+"  -n, --new-playlist   put the files in a new playlist (folders too)\n"
 "  -c, --config FILE    settings file (default ~/.config/kiplay/kiplay.ini)\n"
 "      --convert FILE   write YouTube captions (srv3, json3) as ASS to the\n"
 "                       standard output and exit\n"
@@ -40,6 +41,7 @@ msgstr ""
 "Kiplay já estiver aberto, vão para aquela janela.\n"
 "\n"
 "  -e, --enqueue        adiciona os arquivos sem tocar\n"
+"  -n, --new-playlist   põe os arquivos numa playlist nova (pastas também)\n"
 "  -c, --config ARQ     arquivo de configuração (padrão ~/.config/kiplay/"
 "kiplay.ini)\n"
 "      --convert ARQ    grava as legendas do YouTube (srv3, json3) como ASS "
@@ -49,7 +51,7 @@ msgstr ""
 "  -V, --version        mostra a versão e sai\n"
 "  -h, --help           mostra esta ajuda e sai\n"
 
-#: src/main.c:78
+#: src/main.c:79
 #, c-format
 msgid ""
 "Usage: kiplay --convert FILE.srv3|FILE.json3 [-s WIDTHxHEIGHT] [-g EDGE]\n"
@@ -57,7 +59,7 @@ msgstr ""
 "Uso: kiplay --convert ARQUIVO.srv3|ARQUIVO.json3 [-s LARGURAxALTURA] [-g "
 "CONTORNO]\n"
 
-#: src/main.c:154
+#: src/main.c:157
 msgid "cannot open the display"
 msgstr "não foi possível abrir a tela"
 
@@ -309,58 +311,58 @@ msgid_plural "%s — reading tags (%zu files left)"
 msgstr[0] "%s — lendo tags (falta %zu arquivo)"
 msgstr[1] "%s — lendo tags (faltam %zu arquivos)"
 
-#: ui/playlists.c:563 ui/shortcuts.c:102
+#: ui/playlists.c:582 ui/shortcuts.c:102
 msgid "Add folder"
 msgstr "Adicionar pasta"
 
-#: ui/playlists.c:563 ui/shortcuts.c:101
+#: ui/playlists.c:582 ui/shortcuts.c:101
 msgid "Add files"
 msgstr "Adicionar arquivos"
 
-#: ui/playlists.c:995
+#: ui/playlists.c:1024
 #, c-format
 msgid "Playlist %zu"
 msgstr "Playlist %zu"
 
-#: ui/playlists.c:1010 ui/shortcuts.c:104
+#: ui/playlists.c:1035 ui/shortcuts.c:104
 msgid "Rename playlist"
 msgstr "Renomear playlist"
 
-#: ui/playlists.c:1043
+#: ui/playlists.c:1068
 #, c-format
 msgid "Close the playlist \"%s\"?"
 msgstr "Fechar a playlist \"%s\"?"
 
-#: ui/playlists.c:1046
+#: ui/playlists.c:1071
 #, c-format
 msgid "Its %zu track will be removed from the list (the file stays)."
 msgid_plural "Its %zu tracks will be removed from the list (the files stay)."
 msgstr[0] "A %zu faixa sai da lista (o arquivo continua no disco)."
 msgstr[1] "As %zu faixas saem da lista (os arquivos continuam no disco)."
 
-#: ui/playlists.c:1077
+#: ui/playlists.c:1102
 msgid "Playlists (m3u, m3u8, pls)"
 msgstr "Playlists (m3u, m3u8, pls)"
 
-#: ui/playlists.c:1087
+#: ui/playlists.c:1112
 msgid "Import playlist"
 msgstr "Importar playlist"
 
-#: ui/playlists.c:1108
+#: ui/playlists.c:1133
 #, c-format
 msgid "Cannot read %s"
 msgstr "Não foi possível ler %s"
 
-#: ui/playlists.c:1138
+#: ui/playlists.c:1163
 msgid "Export playlist"
 msgstr "Exportar playlist"
 
-#: ui/playlists.c:1151
+#: ui/playlists.c:1176
 #, c-format
 msgid "Cannot write %s"
 msgstr "Não foi possível gravar %s"
 
-#: ui/playlists.c:1202
+#: ui/playlists.c:1227
 msgid "Playlist 1"
 msgstr "Playlist 1"
 
@@ -1033,7 +1035,10 @@ msgid ""
 "The chat comes from the file next to the video (Title [ID].live_chat.json, "
 "saved by yt-dlp with --sub-langs live_chat). Channel emoji and avatars are "
 "downloaded once with curl and kept in ~/.cache/kiplay/chat."
-msgstr "O chat vem do arquivo ao lado do vídeo (Título [ID].live_chat.json, gravado pelo yt-dlp com --sub-langs live_chat). Os emojis do canal e os avatares são baixados uma vez com o curl e ficam em ~/.cache/kiplay/chat."
+msgstr ""
+"O chat vem do arquivo ao lado do vídeo (Título [ID].live_chat.json, gravado "
+"pelo yt-dlp com --sub-langs live_chat). Os emojis do canal e os avatares são "
+"baixados uma vez com o curl e ficam em ~/.cache/kiplay/chat."
 
 #: ui/prefsdlg.c:325
 msgid "Shortcuts"

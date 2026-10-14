@@ -690,9 +690,9 @@ void kp_player_toggle_mute(kp_app *app)
     kp_player_message(app, app->playing.muted ? _("Muted") : _("Sound on"));
 }
 
-void kp_player_open(kp_app *app, char **locations, bool enqueue)
+void kp_player_open(kp_app *app, char **locations, unsigned flags)
 {
-    kp_playlists_open(app, locations, !enqueue);
+    kp_playlists_open(app, locations, !(flags & KP_OPEN_ENQUEUE), flags & KP_OPEN_NEW_PLAYLIST);
     gtk_window_present(GTK_WINDOW(app->window));
 }
 

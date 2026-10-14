@@ -7,6 +7,7 @@
 
 #include "backend.h"
 #include "filesettings.h"
+#include "instance.h"
 #include "plset.h"
 #include "prefs.h"
 #include "tagreader.h"
@@ -193,7 +194,7 @@ kp_playlist *kp_playlists_get(kp_app *app, int id);
 /* Files from the command line or another kiplay: added to the visible
  * playlist (ones already there are found, not repeated; folders are
  * walked, in the background) and, with play, the first one played. */
-void kp_playlists_open(kp_app *app, char **locations, bool play);
+void kp_playlists_open(kp_app *app, char **locations, bool play, bool new_playlist);
 /* Something changed in a playlist: write it soon. */
 void kp_playlists_changed(kp_app *app);
 /* Alt+Up/Down: the selected rows one row up (delta < 0) or down. */
@@ -225,8 +226,9 @@ void kp_player_prev(kp_app *app);
 void kp_player_seek(kp_app *app, double seconds);
 void kp_player_seek_relative(kp_app *app, double seconds);
 void kp_player_set_volume(kp_app *app, int volume);
-/* Adds the files and, unless enqueue, plays the first; raises the window. */
-void kp_player_open(kp_app *app, char **locations, bool enqueue);
+/* Adds the files (KP_OPEN_* flags: to a new playlist? without playing?) and,
+ * unless enqueued, plays the first; raises the window. */
+void kp_player_open(kp_app *app, char **locations, unsigned flags);
 /* The playlist or repeat/shuffle changed: hand the engine the right next
  * file for gapless. */
 void kp_player_requeue(kp_app *app);

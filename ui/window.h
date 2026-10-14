@@ -16,7 +16,7 @@ typedef struct {
     bool exit_after_map;
     /* Files to add (and play, unless enqueue) once the window is up. */
     char **files;
-    bool enqueue;
+    unsigned flags; /* KP_OPEN_* */
     /* The single-instance socket to listen on (kp_instance), or NULL. */
     const char *instance_socket;
     /* g_get_monotonic_time() when main started, for the -v startup time. */

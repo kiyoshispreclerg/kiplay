@@ -32,10 +32,14 @@ kiplay                      # opens the window
 kiplay video.mkv song.mp3   # adds to the playlist on screen and plays the first
 kiplay ~/Music/Album        # folders go in whole, by name
 kiplay -e *.mp3             # only adds (enqueues)
+kiplay -n ~/Music/Album     # into a new playlist (new tab)
 ```
 
 With Kiplay open, `kiplay FILE` sends the file to the existing window.
-After `make install` it shows up in "Open with" for audio and video types.
+After `make install` it shows up in "Open with" for audio and video types,
+and the file manager menu gets "Add to Kiplay playlist" (the current one,
+without playing) and "Add to new Kiplay playlist", the latter for folders
+too.
 
 | Key | Does |
 |---|---|
