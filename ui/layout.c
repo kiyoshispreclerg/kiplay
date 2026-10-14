@@ -60,6 +60,28 @@ static gboolean map_backend_windows_later(gpointer data)
     return G_SOURCE_REMOVE;
 }
 
+/* _NET_WM_BYPASS_COMPOSITOR = 2 ("don't bypass") while the fullscreen
+ * window holds the chat beside the video. A compositor that unredirects
+ * fullscreen windows hands the X server the whole window to scan out, but
+ * mpv's window then covers only part of the output: its frames are copied
+ * instead of flipped, next to the panel's own drawing, and they come out
+ * of time when an effect takes the output back. With the video alone mpv's
+ * window covers the output and flips cleanly, so the hint is removed. */
+static void update_bypass_hint(kp_app *app)
+{
+    GdkWindow *win = app->window ? app->window->window : NULL;
+    if (!win)
+        return;
+    GdkAtom atom = gdk_atom_intern_static_string("_NET_WM_BYPASS_COMPOSITOR");
+    if (app->fullscreen && chat_in_layout) {
+        gulong value = 2;
+        gdk_property_change(win, atom, gdk_atom_intern_static_string("CARDINAL"), 32,
+                            GDK_PROP_MODE_REPLACE, (const guchar *)&value, 1);
+    } else {
+        gdk_property_delete(win, atom);
+    }
+}
+
 /* Controls right above or below the center (the paned, or the notebook
  * alone). The status line is packed at the end and stays last. */
 static void pack_controls(kp_app *app)
@@ -157,6 +179,7 @@ void kp_layout_apply(kp_app *app)
     if (app->compact || app->fullscreen || !app->playlists_shown)
         gtk_widget_hide(app->notebook);
 
+    update_bypass_hint(app);
     if (xid_before && gtk_widget_get_realized(app->video))
         kp_log_debug("layout: video XID %lu -> %lu", xid_before,
                      (unsigned long)GDK_WINDOW_XID(app->video->window));
@@ -211,6 +234,7 @@ void kp_layout_set_fullscreen(kp_app *app, bool on)
     else if (!gtk_widget_get_parent(app->controls))
         pack_controls(app);
     show_parts(app);
+    update_bypass_hint(app);
     if (on)
         gtk_window_fullscreen(GTK_WINDOW(app->window));
     else
