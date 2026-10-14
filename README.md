@@ -13,17 +13,20 @@ possível do original:
   a tela (danmaku);
 - as legendas comuns (srt, ass, vtt...).
 
-**Estado:** em desenvolvimento, fase 2b: já é um player mínimo (vídeo
-pelo mpv, música pelo motor próprio `kiplay-audio` com gapless e música
-de console NSF/SPC/GBS/VGM, playlists em abas, layout configurável). As
-legendas do YouTube e o chat ainda não estão ligados ao programa. Veja o
-[plano](PLANO.md).
+**Estado:** em desenvolvimento, fase 3: já é um player de uso diário
+(vídeo pelo mpv, música pelo motor próprio `kiplay-audio` com gapless e
+música de console NSF/SPC/GBS/VGM; playlists em abas com tags, fila,
+busca, arrastar para reordenar, importar e exportar m3u/pls; layout
+configurável). As legendas do YouTube e o chat ainda não estão ligados ao
+programa. Veja o [plano](PLANO.md) e a [comparação com o
+Audacious](docs/BENCH.md).
 
 ## Uso
 
 ```sh
 kiplay                      # abre a janela
 kiplay video.mkv musica.mp3 # adiciona à playlist da tela e toca o primeiro
+kiplay ~/Música/Album       # pastas entram inteiras, por nome
 kiplay -e *.mp3             # só adiciona (enfileira)
 ```
 
@@ -39,8 +42,17 @@ de áudio e vídeo.
 | F, F11, duplo clique no vídeo | tela cheia (Esc sai) |
 | Enter, duplo clique na lista | toca a faixa |
 | Del | remove da playlist |
+| Q | põe na fila (ou tira); a fila toca antes do resto |
+| Ctrl+J | ir para arquivo: busca na playlist da tela |
+| Ctrl+M | parar após esta faixa |
+| Alt+↑ / Alt+↓, arrastar | move as faixas selecionadas |
+| Ctrl+O, Ctrl+Shift+O | adicionar arquivos, adicionar pasta |
 | Ctrl+T, F2, Ctrl+W | nova playlist, renomear, fechar |
 | Alt+1..9 | vai para a playlist |
+
+As colunas (número, artista, álbum, duração, caminho) ficam em Exibir →
+Colunas da playlist. As tags são lidas em segundo plano, num processo à
+parte, e guardadas na playlist.
 
 Configuração em `~/.config/kiplay/kiplay.ini`; por enquanto, o mpv se
 ajusta à mão:

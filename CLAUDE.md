@@ -8,8 +8,9 @@ e chat de live gravado (lateral e danmaku). Leia o `PLANO.md` antes de
 começar uma fase (arquitetura, estado, medições) e o `docs/FORMATOS.md`
 antes de mexer num leitor.
 
-Fase atual: 2b feita (motor de música `kiplay-audio`; vídeo pelo mpv).
-Próxima: 3 (playlists, com a comparação com o Audacious).
+Fase atual: 3 feita (playlists: lista virtual, tags em processo à parte,
+fila, busca, comparação com o Audacious em `docs/BENCH.md`). Próxima: 4
+(configuração).
 
 O usuário escreve em português (pt-BR) e quer as respostas em português.
 Comentários e identificadores no código, em inglês. A interface é
@@ -37,6 +38,9 @@ build/proto/embed [--sub X.ass] VIDEO        # mpv embutido no GTK2 (KP_MPV_AO=1
 build/proto/audio [-d null] [-m] ARQUIVO     # protótipo da fase 0 (o motor de verdade é o build/kiplay-audio)
 printf 'tick 1\nload 0 ARQ\n' | build/kiplay-audio -d null   # o motor à mão (protocolo em audio/cmd.h)
 tools/bench-audio.sh [-d null|default] [-s S] ARQ...       # motor × mpv: memória e CPU
+printf 'ARQ\n' | build/kiplay-audio --tags                   # o leitor de tags à mão
+tools/audpl2m3u8.py [--no-tags] DIR    # playlists do Audacious → DIR/kiplay (XDG_CONFIG_HOME de teste)
+PULSE_SINK=kpbench tools/bench-compare.sh -k DIR -a CÓPIA[:nome] CENÁRIOS.tsv   # Kiplay × Audacious
 ```
 
 - `testes/` tem os vídeos e legendas reais (fora do git). Não copie nada
@@ -77,6 +81,17 @@ tools/bench-audio.sh [-d null|default] [-s S] ARQ...       # motor × mpv: memó
   `pgrep -x`/`kill PID`.
 - Playlists do Audacious do usuário (`~/.config/audacious/playlists/`):
   só leitura, só para os testes de comparação. O Kiplay não as importa.
+  O Audacious de teste roda numa **cópia** de `~/.config/audacious`
+  (ele grava a configuração ao sair), com `dbus-launch` próprio (senão o
+  `audacious`/`audtool` falam com o do usuário). ~40% das entradas
+  apontam para arquivos que não existem mais.
+- Som de teste sem tocar nas caixas e no ritmo real: sink nulo
+  (`pactl load-module module-null-sink sink_name=kpbench`, descarregar
+  depois com `pactl unload-module N`) e `PULSE_SINK=kpbench` (vale para o
+  `kiplay-audio` pelo plugin ALSA e para o Audacious).
+- Xephyr para o usuário ver: `DISPLAY=:0 Xephyr :78 -screen 1280x800 -ac
+  -br &`. Sem gerenciador de janelas os menus não abrem com o clique do
+  xdotool: use F10 e as setas.
 - Mudar `VERSION` (ou outro `-D` de `config.mk`) não força recompilação:
   `make clean` antes de conferir.
 
@@ -86,22 +101,27 @@ tools/bench-audio.sh [-d null|default] [-s S] ARQ...       # motor × mpv: memó
 |---|---|
 | `src/main.c` | opções, gettext, abre a janela |
 | `src/log.c`, `src/util.c`, `src/ini.c`, `src/prefs.c` | vindos do kidisks: log, caminhos (`kp_pathf`), .ini editável no lugar, preferências (`~/.config/kiplay/kiplay.ini`) |
-| `src/playlist.c` | uma playlist: m3u8 com `#PLAYLIST:` e `#EXTINF`, strings num `GStringChunk`, `?N` de subfaixa mantido |
+| `src/playlist.c` | uma playlist: m3u8 com `#PLAYLIST:`, `#EXTINF`, `#EXTART`/`#EXTALB`; PLS; strings num `GStringChunk` (a string do local identifica a entrada), `?N` de subfaixa mantido |
+| `src/tagreader.c` | tags em segundo plano pelo `kiplay-audio --tags`: fila, janela de 8, tempo-limite, sobe e sai sozinho |
+| `src/media.c`, `src/search.c` | tipo de arquivo pela extensão (motor, pastas); palavras do Ctrl+J |
 | `src/plset.c` | todas as playlists: `<id>.m3u8` numa pasta, ordem como lista de ids |
 | `src/i18n.h` | `_()`, `N_()`, domínio `kiplay` |
 | `ui/app.h` | o que as partes da janela compartilham, posições do vídeo e dos controles |
 | `ui/window.c` | janela, menus, atalhos, preferências da janela, salvar ao fechar |
 | `ui/layout.c` | monta vídeo + abas + controles; move a área de vídeo sem trocar o XID |
-| `ui/playlists.c` | abas: nova, renomear, fechar, reordenar, adicionar (diálogo e arrastar), remover |
+| `ui/playlists.c` | abas (a lista de cada uma só nasce quando aparece), adicionar (pastas numa thread), remover, fila, arrastar, colunas, importar/exportar, pedidos de tags |
+| `ui/plmodel.c` | `GtkTreeModel` virtual sobre o `kp_playlist` (sem cópia; `GtkTreeDragSource` para o arrastar do GTK 2) |
+| `ui/jump.c` | Ctrl+J: busca na playlist visível, toca ou enfileira |
 | `ui/controls.c` | barra de controle: botões, barra de tempo (pula para o clique), volume |
 | `data/` | `.desktop` e ícone (achado em `../data` quando roda do `build/`) |
 | `po/` | `kiplay.pot`, `LINGUAS`, `POTFILES.in`, um `.po` por idioma |
 | `tools/fill_po.py`, `tools/lsan.supp` | traduções em lote; vazamentos conhecidos do GTK/fontconfig |
+| `tools/audpl2m3u8.py`, `tools/bench-compare.sh` | playlists do Audacious para teste; Kiplay × Audacious |
 | `src/backend.h`, `src/mpv.c` | o processo que toca: mpv `--idle` pelo JSON IPC, eventos neutros (`kp_event`), JSON sempre no locale C |
 | `src/lineio.c`, `src/child.c` | linhas com um processo sem bloquear (fila, escrita não bloqueante); processo iniciado e acompanhado |
 | `src/backend.c`, `src/backend_impl.h` | `kp_backend` como tabela de funções (mpv, kiplay-audio) |
 | `src/audioback.c` | o `kp_backend` do kiplay-audio (pipes, protocolo de texto) |
-| `audio/` | o `kiplay-audio`: `main.c` (threads, gapless, pausa), `dec.c` (libav → 48 kHz pela FIFO, libgme, busca), `out.c` (ALSA; `null` com relógio), `cmd.c` (protocolo). Sem GLib |
+| `audio/` | o `kiplay-audio`: `main.c` (threads, gapless, pausa), `dec.c` (libav → 48 kHz pela FIFO, libgme, busca), `out.c` (ALSA; `null` com relógio), `cmd.c` (protocolo), `tags.c` (modo `--tags`). Sem GLib |
 | `src/json.c` | caminhos `a.b[0]` no cJSON (vindo do kiremote); `vendor/cjson/` |
 | `src/instance.c` | instância única: socket unix por pasta de configuração, repasse de arquivos |
 | `ui/player.c` | o controlador: qual motor (extensão), o que toca, avanço, gapless, erros, quedas, mpv ocioso, área de vídeo, título |

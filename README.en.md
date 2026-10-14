@@ -14,17 +14,20 @@ close to the original as possible:
   it (danmaku);
 - ordinary subtitles (srt, ass, vtt...).
 
-**Status:** in development, phase 2b: already a minimal player (video
+**Status:** in development, phase 3: already an everyday player (video
 through mpv, music through its own `kiplay-audio` engine with gapless and
-NSF/SPC/GBS/VGM game music, tabbed playlists, configurable layout).
-YouTube captions and chat aren't wired into the program yet. See the
-[plan](PLANO.md) (in Portuguese).
+NSF/SPC/GBS/VGM game music; tabbed playlists with tags, a play queue,
+search, drag to reorder, m3u/pls import and export; configurable
+layout). YouTube captions and chat aren't wired into the program yet. See
+the [plan](PLANO.md) and the [comparison with Audacious](docs/BENCH.md)
+(both in Portuguese).
 
 ## Usage
 
 ```sh
 kiplay                      # opens the window
 kiplay video.mkv song.mp3   # adds to the playlist on screen and plays the first
+kiplay ~/Music/Album        # folders go in whole, by name
 kiplay -e *.mp3             # only adds (enqueues)
 ```
 
@@ -39,8 +42,17 @@ After `make install` it shows up in "Open with" for audio and video types.
 | F, F11, double click on the video | fullscreen (Esc leaves) |
 | Enter, double click on the list | plays the track |
 | Del | removes from the playlist |
+| Q | queues (or unqueues); the queue plays before the rest |
+| Ctrl+J | jump to file: search the playlist on screen |
+| Ctrl+M | stop after this track |
+| Alt+↑ / Alt+↓, drag | moves the selected tracks |
+| Ctrl+O, Ctrl+Shift+O | add files, add folder |
 | Ctrl+T, F2, Ctrl+W | new playlist, rename, close |
 | Alt+1..9 | goes to that playlist |
+
+The columns (number, artist, album, length, path) are under View →
+Playlist columns. Tags are read in the background, in a separate process,
+and kept in the playlist.
 
 Settings live in `~/.config/kiplay/kiplay.ini`; for now mpv is tuned by
 hand:

@@ -51,7 +51,7 @@ kiplay                (C11, GTK2; laço do GLib, sem threads na interface)
  │           └─ pipe + memória compartilhada ──► kiplay-audio (música)
  ├─ sidecars ─ acha legendas, chat, info.json, capa ao lado do arquivo
  ├─ conversores ─ srv3/json3 → ASS; live_chat.json → índice; chat → ASS danmaku
- └─ leitor de tags (thread de trabalho, cache em disco)
+ └─ leitor de tags ─ pipe ──► kiplay-audio --tags (sobe quando há o que ler)
 ```
 
 ### Princípios
@@ -63,9 +63,10 @@ kiplay                (C11, GTK2; laço do GLib, sem threads na interface)
   (`loadfile`), em vez de abrir um processo por faixa: troca de faixa sem
   custo de inicialização e com gapless.
 - Tudo o que chega do backend entra no laço do GLib (fd do socket num
-  `GIOChannel`); nada bloqueia a interface. A única thread é a do leitor de
-  tags (e a do indexador de chat, se a medição pedir), com resultados pelo
-  `g_idle_add`.
+  `GIOChannel`); nada bloqueia a interface. Threads só para o que toca o
+  disco em quantidade (percorrer uma pasta adicionada; o indexador de
+  chat, se a medição pedir), com o resultado de volta no laço; as tags
+  vêm de outro processo.
 - Nada de propriedade observada em alta frequência sem necessidade: a barra
   de tempo pede `time-pos` 4×/s por um timer (o `observe_property` do mpv
   manda o tempo a cada quadro: ~1,2% de CPU só para isso no protótipo); o
@@ -84,7 +85,7 @@ kiplay                (C11, GTK2; laço do GLib, sem threads na interface)
 | GTK2 (≥ 2.24), GLib/GIO | interface, laço, subprocessos (`GSubprocess`), GMarkup (srv3 é XML simples) |
 | pango, cairo | painel de chat, medir largura do texto no danmaku |
 | cJSON (embutido) | IPC do mpv, json3, live_chat.json, info.json |
-| libavformat (decidir na fase 3) | ler tags e duração para a playlist, numa thread |
+| libavformat | ler tags e duração para a playlist (no `kiplay-audio --tags`) |
 | libdbus-1 ou GDBus | MPRIS (servidor: o kikarinhas e o desktop leem a música tocando) |
 | mpv (≥ 0.34), mplayer, yt-dlp | só ao rodar, programas externos |
 
@@ -247,8 +248,8 @@ mpv não faz. A música fica no motor próprio por padrão.
 - Colunas configuráveis (n.º, título, artista, álbum, duração, caminho);
   lista virtual (`GtkTreeView` com modelo próprio, sem `GtkListStore` de
   10 mil linhas, se a medição pedir).
-- Tags lidas numa thread, com cache por caminho + mtime em
-  `~/.cache/kiplay/tags`; a lista aparece na hora e preenche depois.
+- Tags lidas em outro processo (`kiplay-audio --tags`) e guardadas no
+  próprio m3u8; a lista aparece na hora e preenche depois.
 - Fila (Q), aleatório, repetir (faixa, playlist), parar após a faixa,
   "pular para arquivo" com busca (Ctrl+J), arrastar arquivos e pastas,
   importar e exportar m3u/m3u8/pls.
@@ -517,17 +518,51 @@ identificadores em inglês; interface pelo gettext com msgids em inglês.
    encerrado. Medições em "Motor de áudio". Falta: MIDI (fluidsynth),
    ReplayGain, equalizador, crossfade, duração padrão da música de console
    configurável.
-3. **Playlists**: abas, m3u8, tags em thread com cache, fila, aleatório,
-   repetir, busca, arrastar e soltar, gapless. Decidir libavformat × leitor
-   próprio de tags pela medição.
-   **Teste de comparação com o Audacious** (aceite da fase): um script de
-   teste (`tools/audpl2m3u8.py`, não é função do Kiplay) converte as 21
-   playlists do Audacious do usuário (27.689 entradas, `?N` incluído) em
-   playlists do Kiplay, num `XDG_CONFIG_HOME` de teste. Os dois tocam a
-   mesma música da mesma playlist; comparar memória própria
-   (`Private_Dirty` de todos os processos de cada um: Kiplay +
-   `kiplay-audio` × Audacious) e CPU ao abrir, parado e tocando, e o tempo
-   para abrir com todas as playlists. Resultados em `docs/BENCH.md`.
+3. **Playlists** *(feita)*: lista virtual (`ui/plmodel.c`: um
+   `GtkTreeModel` que lê o `kp_playlist` sem copiar, em
+   `fixed-height-mode`) e a lista de cada aba criada só quando a aba
+   aparece; tags num processo à parte (`kiplay-audio --tags`,
+   `src/tagreader.c`) para o que é adicionado e para as linhas sem
+   informação que aparecem na tela; artista e álbum no m3u8
+   (`#EXTART`/`#EXTALB`); fila (Q), aleatório sem repetir até ouvir a
+   lista toda (Anterior volta pelo histórico), parar após a faixa
+   (Ctrl+M), ir para arquivo (Ctrl+J), colunas configuráveis, marcador na
+   aba que toca, arrastar para reordenar (várias linhas) e Alt+↑/↓,
+   arquivos e pastas soltos na posição, pastas percorridas numa thread,
+   importar e exportar m3u/m3u8/pls. Comparação com o Audacious do usuário
+   (20 playlists, 27.689 entradas) em `docs/BENCH.md`
+   (`tools/audpl2m3u8.py`, `tools/bench-compare.sh`). Medido: com todas
+   as playlists, **22,5 → 10,5 MB** e **690 → 99 ms** até a primeira
+   pintura só pela lista virtual e pelas listas sob demanda. Lições:
+   - **mpv 0.34 com `--wid`**: ele toma qualquer `MapNotify` da janela-pai
+     como sendo da própria janela; mover a área de vídeo
+     (`gtk_widget_reparent` desmapeia e mapeia) logo depois de o mpv
+     criar a janela dele deixava o vídeo preto para sempre. O Kiplay
+     mapeia as filhas da área depois de mostrá-la;
+   - no GTK 2 a `GtkTreeView` só arrasta linhas de um modelo que seja
+     `GtkTreeDragSource`, e com um modelo que não é `GtkTreeDragDest` é
+     preciso tratar `drag-drop` e `drag-data-received` (o padrão avisa e
+     não faz nada); um clique numa seleção múltipla a desfaz antes de o
+     arrasto começar: a seleção fica presa até soltar o botão;
+   - **leitor de tags: libavformat num processo**, não um leitor próprio
+     de ID3/Vorbis/MP4 na janela: lê tudo (inclusive música de console,
+     com "Jogo"/"Música"/autor e a duração por subfaixa) e um arquivo ruim
+     não derruba a janela. ~850 arquivos/s com o disco em cache, ~50/s
+     frio (é o disco). O `avformat_find_stream_info` só quando o
+     contêiner não diz a duração (abria o decodificador H.264 de um mp4:
+     +10 MB); MP3 com capa embutida leva o processo a ~16 MB, mas ele sai
+     5 s depois do último arquivo;
+   - **sem cache de tags à parte**: o m3u8 já é o cache (como o `.audpl`
+     do Audacious); um arquivo lido uma vez não é lido de novo;
+   - a busca embutida da `GtkTreeView` lê todas as linhas (e pediria as
+     tags de todas): desligada, o Ctrl+J faz o papel;
+   - a chave do `g_utf8_collate_key_for_filename` vem do `strxfrm`, que
+     usa `\x01` entre os níveis: não serve de separador;
+   - remover milhares de linhas uma a uma é O(n²) (`memmove` por linha):
+     `kp_playlist_remove_rows` faz numa passada;
+   - entradas seguidas por ponteiro (a string do local, única por
+     entrada no `GStringChunk`): a fila, o histórico e a faixa que toca
+     acham a entrada depois de reordenar, mesmo com arquivos repetidos.
 4. **Configuração**: preferências, opções por arquivo (retomar), atalhos,
    MPRIS, bandeja.
 5. **Sidecars e legendas do YouTube**: detecção, menu de legendas, srv3 e
@@ -566,8 +601,10 @@ identificadores em inglês; interface pelo gettext com msgids em inglês.
   pelo ffmpeg, + fluidsynth para MIDI); vídeo no mpv/MPlayer.
 - Sidecars pelo padrão `Titulo [ID].ext` do yt-dlp.
 - Danmaku entregue aos pedaços (script Lua no mpv; blocos como reserva).
+- Tags pela libavformat no `kiplay-audio --tags` (processo à parte que
+  sobe e sai sozinho); o m3u8 guarda o que foi lido.
 
 ## Decisões em aberto
 
-- Leitor de tags (fase 3, pela medição): libavformat ou leitor próprio de
-  ID3/Vorbis/MP4.
+- (nenhuma da fase 3: o leitor de tags ficou na libavformat, num
+  processo; ver a fase 3.)
