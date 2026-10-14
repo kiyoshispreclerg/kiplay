@@ -3,13 +3,15 @@
 
 /* The controls in fullscreen: the same transport bar (app->controls),
  * moved into a popup window along the bottom or top edge of the monitor
- * ([layout] fullscreen_controls). It shows when the mouse moves and goes
- * away, with the pointer, after HIDE_MS still outside it. GTK 2 has no
+ * ([layout] fullscreen_controls). It shows when the mouse moves near that
+ * edge (ZONE times the bar's height) and goes away, with the pointer,
+ * after HIDE_MS without movement and outside it. GTK 2 has no
  * overlay and the video is another process's X window, so a popup
  * (override-redirect, above the fullscreen window) is what can float on
  * top of it. The popup is created once and kept. */
 
 #define HIDE_MS 2000
+#define ZONE 3
 
 static GtkWidget *popup;
 static guint hide_timer;
@@ -52,29 +54,56 @@ static gboolean on_hide_timer(gpointer data)
     return G_SOURCE_REMOVE;
 }
 
-static void place(kp_app *app)
+static bool at_top(kp_app *app)
 {
-    GdkScreen *screen = gtk_window_get_screen(GTK_WINDOW(app->window));
-    int mon = app->window->window
-                  ? gdk_screen_get_monitor_at_window(screen, app->window->window)
-                  : 0;
-    GdkRectangle r;
-    gdk_screen_get_monitor_geometry(screen, mon, &r);
-    GtkRequisition req;
-    gtk_widget_size_request(popup, &req);
-    bool top = kp_prefs_get_choice(app->prefs, "layout", "fullscreen_controls",
-                                   kp_controls_pos_names, KP_CONTROLS_BOTTOM) == KP_CONTROLS_TOP;
-    gtk_window_resize(GTK_WINDOW(popup), r.width, req.height);
-    gtk_window_move(GTK_WINDOW(popup), r.x, top ? r.y : r.y + r.height - req.height);
+    return kp_prefs_get_choice(app->prefs, "layout", "fullscreen_controls",
+                               kp_controls_pos_names, KP_CONTROLS_BOTTOM) == KP_CONTROLS_TOP;
 }
 
-/* Shows the bar (if in fullscreen) and starts the countdown again. */
-static void show(kp_app *app)
+static GdkRectangle monitor_area(kp_app *app)
+{
+    GdkScreen *screen = gtk_window_get_screen(GTK_WINDOW(app->window));
+    int mon = app->window->window ? gdk_screen_get_monitor_at_window(screen, app->window->window)
+                                  : 0;
+    GdkRectangle r;
+    gdk_screen_get_monitor_geometry(screen, mon, &r);
+    return r;
+}
+
+static int bar_height(kp_app *app)
+{
+    GtkRequisition req;
+    gtk_widget_size_request(app->controls, &req);
+    return req.height;
+}
+
+static void place(kp_app *app)
+{
+    GdkRectangle r = monitor_area(app);
+    int h = bar_height(app);
+    gtk_window_resize(GTK_WINDOW(popup), r.width, h);
+    gtk_window_move(GTK_WINDOW(popup), r.x, at_top(app) ? r.y : r.y + r.height - h);
+}
+
+/* Whether the pointer (root coordinates) is in the strip along the bar's
+ * edge of the monitor, ZONE bars high. */
+static bool in_zone(kp_app *app, int x, int y)
+{
+    GdkRectangle r = monitor_area(app);
+    int h = ZONE * bar_height(app);
+    if (x < r.x || x >= r.x + r.width)
+        return false;
+    return at_top(app) ? y >= r.y && y < r.y + h : y >= r.y + r.height - h && y < r.y + r.height;
+}
+
+/* Movement: the cursor shows, and with the pointer near the bar's edge so
+ * does the bar; the countdown starts again. */
+static void show(kp_app *app, bool bar)
 {
     if (!app->fullscreen || !popup)
         return;
     set_cursor_hidden(app, false);
-    if (!gtk_widget_get_visible(popup)) {
+    if (bar && !gtk_widget_get_visible(popup)) {
         place(app);
         gtk_widget_show(popup);
         gdk_window_raise(popup->window);
@@ -93,7 +122,7 @@ static gboolean on_motion(GtkWidget *w, GdkEventMotion *ev, gpointer data)
         return FALSE;
     last_x = x;
     last_y = y;
-    show(data);
+    show(data, in_zone(data, x, y) || pointer_inside(popup));
     return FALSE;
 }
 
@@ -120,7 +149,7 @@ void kp_fsbar_attach(kp_app *app)
         gtk_container_remove(GTK_CONTAINER(parent), app->controls);
     gtk_container_add(GTK_CONTAINER(popup), app->controls);
     gtk_widget_show(app->controls);
-    show(app);
+    show(app, false);
 }
 
 void kp_fsbar_detach(kp_app *app)

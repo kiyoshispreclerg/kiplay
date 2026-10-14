@@ -49,7 +49,7 @@ too.
 | ← / → | back / forward 5 s (Shift: 1 min) |
 | Ctrl+← / Ctrl+→, < / > | previous / next track |
 | + / −, M | volume, mute |
-| F, F11, double click on the video | fullscreen (Esc leaves; the control bar shows when the mouse moves, at the bottom or top) |
+| F, F11, double click on the video | fullscreen (Esc leaves; the control bar shows when the mouse moves near its edge, at the bottom or top) |
 | Ctrl+C | compact mode: only the video and the controls |
 | # , J, V | next audio track, next subtitle, show/hide subtitles |
 | Ctrl++ / Ctrl+−, X / Z | audio delay, subtitle delay (100 ms) |
