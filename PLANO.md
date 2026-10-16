@@ -86,6 +86,8 @@ kiplay                (C11, GTK2; laço do GLib, sem threads na interface)
 | pango, cairo | painel de chat, medir largura do texto no danmaku |
 | cJSON (embutido) | IPC do mpv, json3, live_chat.json, info.json |
 | libavformat | ler tags e duração para a playlist (no `kiplay-audio --tags`) |
+| libpulse, ALSA | saída do `kiplay-audio` (PulseAudio/PipeWire direto; ALSA sem servidor) |
+| Game_Music_Emu (embutido, C++) | música de console no `kiplay-audio` (`vendor/gme`, YM2612 do Gens) |
 | libdbus-1 ou GDBus | MPRIS (servidor: o kikarinhas e o desktop leem a música tocando) |
 | mpv (≥ 0.34), mplayer, yt-dlp | só ao rodar, programas externos |
 
@@ -208,13 +210,11 @@ ritmo do dispositivo (buffer de 250 ms). A conversão para 48 kHz estéreo
 passa por uma FIFO: o resampler só é esvaziado no fim do arquivo
 (esvaziá-lo no meio estalaria). Detalhes que custaram:
 
-- **Música de console**: o demuxer `libgme` do ffmpeg 4.4 **não busca**
-  (a busca genérica lê o arquivo até o fim, e a música "acabava"); a busca
-  decodifica até o ponto (a emulação roda ~1000x o tempo real: 3 min em
-  0,14–0,38 s). Arquivos sem duração gravada terminam em 3 min com fade de
-  8 s (o libgme também termina sozinho quando a música acaba em
-  silêncio). Título "Jogo - Música" pelas tags `game`/`song`. Subfaixa
-  `?N` = `track_index` N−1.
+- **Música de console**: era pelo demuxer `libgme` do ffmpeg, que não
+  busca; desde o ajuste de desempenho é pelo GME embutido (ver abaixo).
+  Arquivos sem duração gravada terminam em 3 min com fade de 8 s (o GME
+  também termina sozinho quando a música acaba em silêncio). Título
+  "Jogo - Música". Subfaixa `?N` = música N do arquivo, como no Audacious.
 - **Gapless**: `queue` com o próximo arquivo; o motor emenda e avisa
   `next`; o tempo da faixa nova começa negativo (o fim da anterior ainda
   está no buffer) e só anda quando ela soa.
@@ -699,8 +699,10 @@ identificadores em inglês; interface pelo gettext com msgids em inglês.
 
 - Layout configurável: vídeo acima, ao lado ou escondido (só música);
   controles no topo ou no rodapé.
-- Música no `kiplay-audio`, processo à parte, com libavformat (+ libgme
-  pelo ffmpeg, + fluidsynth para MIDI); vídeo no mpv/MPlayer.
+- Música no `kiplay-audio`, processo à parte, com libavformat + GME
+  embutido (+ fluidsynth para MIDI, a fazer); vídeo no mpv/MPlayer.
+- Saída do `kiplay-audio` direto no PulseAudio (volume no servidor), ALSA
+  como reserva; escreve meio buffer de cada vez sem bloquear.
 - Sidecars pelo padrão `Titulo [ID].ext` do yt-dlp.
 - Danmaku entregue aos pedaços (script Lua no mpv; blocos como reserva).
 - Tags pela libavformat no `kiplay-audio --tags` (processo à parte que

@@ -7,6 +7,7 @@
 #include <string.h>
 
 #include "dec.h"
+#include "game.h"
 
 static const char *meta(const AVDictionary *d, const char *key)
 {
@@ -25,6 +26,26 @@ static char *pick(const AVDictionary *const dicts[], int n, const char *key)
     return NULL;
 }
 
+static char *dup_or_null(const char *s)
+{
+    return s ? strdup(s) : NULL;
+}
+
+/* Game music: the song, its game and who wrote it, as Audacious. */
+static bool read_game(const char *path, int subtune, ka_tags *t, char *err, int errsize)
+{
+    ka_game *g = ka_game_open(path, subtune, 0, err, errsize);
+    if (!g)
+        return false;
+    const char *song = ka_game_song(g), *game = ka_game_name(g);
+    t->title = dup_or_null(song ? song : game);
+    t->album = dup_or_null(song ? game : NULL);
+    t->artist = dup_or_null(ka_game_author(g));
+    t->duration = ka_game_duration(g);
+    ka_game_close(g);
+    return true;
+}
+
 bool ka_tags_read(const char *location, ka_tags *t, char *err, int errsize)
 {
     memset(t, 0, sizeof *t);
@@ -34,15 +55,13 @@ bool ka_tags_read(const char *location, ka_tags *t, char *err, int errsize)
         snprintf(err, (size_t)errsize, "out of memory");
         return false;
     }
-    AVDictionary *opts = NULL;
-    if (subtune > 0) {
-        char n[16];
-        snprintf(n, sizeof n, "%d", subtune - 1); /* libgme counts from 0 */
-        av_dict_set(&opts, "track_index", n, 0);
+    if (ka_game_is(path)) {
+        bool ok = read_game(path, subtune, t, err, errsize);
+        free(path);
+        return ok;
     }
     AVFormatContext *fmt = NULL;
-    int r = avformat_open_input(&fmt, path, NULL, &opts);
-    av_dict_free(&opts);
+    int r = avformat_open_input(&fmt, path, NULL, NULL);
     free(path);
     /* Most containers say how long they are when opened. The others (MP3
      * without a header, raw AAC) need a look at the first packets, which
@@ -69,27 +88,10 @@ bool ka_tags_read(const char *location, ka_tags *t, char *err, int errsize)
     t->title = pick(dicts, 2, "title");
     t->artist = pick(dicts, 2, "artist");
     t->album = pick(dicts, 2, "album");
-    if (!t->title) {
-        /* libgme's names: the song, its game and who wrote it. */
-        t->title = pick(dicts, 2, "song");
-        char *game = pick(dicts, 2, "game");
-        if (!t->title) {
-            t->title = game;
-            game = NULL;
-        }
-        if (game && !t->album)
-            t->album = game;
-        else
-            free(game);
-        if (!t->artist)
-            t->artist = pick(dicts, 2, "author");
-    }
     if (fmt->duration > 0)
         t->duration = (double)fmt->duration / AV_TIME_BASE;
     else if (st >= 0 && fmt->streams[st]->duration > 0)
         t->duration = (double)fmt->streams[st]->duration * av_q2d(fmt->streams[st]->time_base);
-    if (t->duration <= 0 && !strcmp(fmt->iformat->name, "libgme"))
-        t->duration = KA_GAME_LENGTH_S;
     avformat_close_input(&fmt);
     return true;
 }

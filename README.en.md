@@ -26,7 +26,8 @@ close to the original as possible:
 
 **Status:** in development, phase 6: already an everyday player (video
 through mpv, music through its own `kiplay-audio` engine with gapless and
-NSF/SPC/GBS/VGM game music; tabbed playlists with tags, a play queue,
+NSF/SPC/GBS/VGM game music, Master System FM included, with the names and
+lengths from the `.m3u` beside it; tabbed playlists with tags, a play queue,
 search, drag to reorder, m3u/pls import and export; configurable layout;
 tabbed preferences, editable shortcuts, resume where it stopped, audio
 and subtitle tracks, MPRIS, tray icon, compact mode; YouTube captions with
@@ -113,7 +114,8 @@ font_size = 48
 [playback]
 # auto: music on kiplay-audio (light, gapless); mpv: everything on mpv
 engine = auto
-# ALSA device for kiplay-audio
+# kiplay-audio's output: default (PulseAudio/PipeWire, or ALSA when there's
+# no server) or an ALSA device (hw:0, null...)
 device = default
 
 [files]
@@ -161,8 +163,11 @@ thick, blurred one that is easier to read; `auto = no` turns the search off.
 
 ## Building
 
-Needs GTK 2, GLib, ALSA and the FFmpeg libraries (libavformat, libavcodec,
-libswresample), with their `-dev` packages.
+Needs GTK 2, GLib, ALSA, libpulse, zlib, a C++ compiler and the FFmpeg
+libraries (libavformat, libavcodec, libswresample), with their `-dev`
+packages. `make PULSE=0` builds without PulseAudio (ALSA only). Game music
+uses a copy of [Game_Music_Emu](https://github.com/libgme/game-music-emu)
+in `vendor/gme` (LGPL-2.1-or-later).
 
 ```sh
 make

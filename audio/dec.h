@@ -5,9 +5,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-/* One file decoded to 16-bit stereo at KA_RATE (out.h), whatever it was:
- * everything libavformat opens, including game music through its libgme
- * demuxer (NSF, SPC, GBS, VGM...).
+/* One file decoded to 16-bit stereo, whatever it was: everything
+ * libavformat opens, and game music (NSF, SPC, GBS, VGM...) through game.h.
  *
  * A location may end in "?N" (Audacious's notation for song N of a
  * multi-song file, from 1) or be a file:// URI.
@@ -17,12 +16,9 @@
 
 typedef struct ka_dec ka_dec;
 
-/* Game music that doesn't say how long it is ends after this (with a
- * fade), as in Audacious; the tag reader reports the same length. */
-#define KA_GAME_LENGTH_S 180
-
-/* NULL with a message in err. */
-ka_dec *ka_dec_open(const char *location, char *err, int errsize);
+/* Converted to rate frames a second; 0 keeps the file's own rate (44.1 kHz
+ * for game music). NULL with a message in err. */
+ka_dec *ka_dec_open(const char *location, int rate, char *err, int errsize);
 void ka_dec_close(ka_dec *d);
 
 /* Up to max frames into out (interleaved stereo); 0 at the end (a
@@ -31,6 +27,8 @@ long ka_dec_read(ka_dec *d, int16_t *out, long max);
 /* To that second (from 0); the next read starts there, to the sample. */
 bool ka_dec_seek(ka_dec *d, double seconds);
 
+/* What ka_dec_read gives, frames a second. */
+int ka_dec_rate(const ka_dec *d);
 /* Seconds, <= 0 unknown. */
 double ka_dec_duration(const ka_dec *d);
 /* "Artist - Title", the title alone, or NULL. */

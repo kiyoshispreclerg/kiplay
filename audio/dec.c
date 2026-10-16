@@ -13,15 +13,14 @@
 #include <string.h>
 #include <sys/stat.h>
 
+#include "game.h"
 #include "out.h"
 
 struct ka_dec {
     char *path;
     int subtune;
-    /* libgme: no real seeking in ffmpeg 4 (it reads to the end looking for
-     * the time). Emulation runs ~1000x real time, so seeking decodes up to
-     * the target instead (from the start again when going back). */
-    bool emulated;
+    int rate;
+    ka_game *game; /* game music: none of the libav side below */
     AVFormatContext *fmt;
     AVCodecContext *codec;
     SwrContext *swr;
@@ -43,14 +42,10 @@ struct ka_dec {
     double seek_target;
     bool seeking;
     long skip;
-    /* Game music without a length loops forever: like Audacious, it ends
-     * after a default length, fading out over the last seconds. Frames
-     * handed out so far, to know where we are. */
-    bool synthetic_end;
-    long long played;
 };
 
-#define GAME_FADE_S 8
+/* Game music has no rate of its own: Audacious's default. */
+#define GAME_RATE 44100
 
 /* "%C3%BA" -> bytes, for file:// URIs. */
 static char *uri_to_path(const char *uri)
@@ -105,27 +100,9 @@ static const char *meta(const AVDictionary *d, const char *key)
     return e && e->value[0] ? e->value : NULL;
 }
 
-static void read_tags(ka_dec *d)
+/* "First - second", second alone, or nothing. */
+static void set_tags(ka_dec *d, const char *first, const char *second)
 {
-    const AVDictionary *dicts[] = {d->fmt->metadata, d->fmt->streams[d->stream]->metadata};
-    const char *title = NULL, *artist = NULL, *song = NULL, *game = NULL;
-    for (int i = 0; i < 2; i++) {
-        if (!title)
-            title = meta(dicts[i], "title");
-        if (!artist)
-            artist = meta(dicts[i], "artist");
-        /* libgme's names */
-        if (!song)
-            song = meta(dicts[i], "song");
-        if (!game)
-            game = meta(dicts[i], "game");
-    }
-    /* Music: "Artist - Title". Game music: "Game - Song", as Audacious. */
-    const char *first = artist, *second = title;
-    if (!title) {
-        first = song ? game : NULL;
-        second = song ? song : game;
-    }
     if (!second)
         return;
     size_t n = strlen(second) + (first ? strlen(first) + 3 : 0) + 1;
@@ -142,7 +119,20 @@ static void read_tags(ka_dec *d)
             *c = ' ';
 }
 
-/* The libav side, which a game-music seek closes and opens again. */
+/* Music: "Artist - Title". */
+static void read_tags(ka_dec *d)
+{
+    const AVDictionary *dicts[] = {d->fmt->metadata, d->fmt->streams[d->stream]->metadata};
+    const char *title = NULL, *artist = NULL;
+    for (int i = 0; i < 2; i++) {
+        if (!title)
+            title = meta(dicts[i], "title");
+        if (!artist)
+            artist = meta(dicts[i], "artist");
+    }
+    set_tags(d, artist, title);
+}
+
 static void close_av(ka_dec *d)
 {
     swr_free(&d->swr);
@@ -150,16 +140,15 @@ static void close_av(ka_dec *d)
     avformat_close_input(&d->fmt);
 }
 
+/* What the ALSA plug and the sound servers take without trouble. */
+static int usable_rate(int rate)
+{
+    return rate >= 8000 && rate <= 192000 ? rate : 48000;
+}
+
 static int open_av(ka_dec *d)
 {
-    AVDictionary *opts = NULL;
-    if (d->subtune > 0) {
-        char n[16];
-        snprintf(n, sizeof n, "%d", d->subtune - 1); /* libgme counts from 0 */
-        av_dict_set(&opts, "track_index", n, 0);
-    }
-    int r = avformat_open_input(&d->fmt, d->path, NULL, &opts);
-    av_dict_free(&opts);
+    int r = avformat_open_input(&d->fmt, d->path, NULL, NULL);
     if (r < 0)
         return r;
     r = avformat_find_stream_info(d->fmt, NULL);
@@ -180,17 +169,31 @@ static int open_av(ka_dec *d)
     r = avcodec_open2(d->codec, codec, NULL);
     if (r < 0)
         return r;
-    d->swr = ka_av_swr_alloc(d->codec, KA_RATE);
+    if (d->rate <= 0)
+        d->rate = usable_rate(d->codec->sample_rate);
+    d->swr = ka_av_swr_alloc(d->codec, d->rate);
     if (!d->swr)
         return AVERROR(ENOMEM);
-    d->emulated = !strcmp(d->fmt->iformat->name, "libgme");
-    d->demux_eof = d->decode_eof = d->flushed = d->seeking = false;
-    d->skip = 0;
-    d->played = 0;
     return swr_init(d->swr);
 }
 
-ka_dec *ka_dec_open(const char *location, char *err, int errsize)
+static ka_dec *open_game(ka_dec *d, char *err, int errsize)
+{
+    if (d->rate <= 0)
+        d->rate = GAME_RATE;
+    d->game = ka_game_open(d->path, d->subtune, d->rate, err, errsize);
+    if (!d->game) {
+        ka_dec_close(d);
+        return NULL;
+    }
+    d->duration = ka_game_duration(d->game);
+    /* "Game - Song", as Audacious. */
+    const char *song = ka_game_song(d->game), *game = ka_game_name(d->game);
+    set_tags(d, song ? game : NULL, song ? song : game);
+    return d;
+}
+
+ka_dec *ka_dec_open(const char *location, int rate, char *err, int errsize)
 {
     ka_dec *d = calloc(1, sizeof *d);
     if (d)
@@ -200,6 +203,9 @@ ka_dec *ka_dec_open(const char *location, char *err, int errsize)
         free(d);
         return NULL;
     }
+    d->rate = rate;
+    if (ka_game_is(d->path))
+        return open_game(d, err, errsize);
     int r = open_av(d);
     if (r < 0)
         goto fail;
@@ -215,10 +221,6 @@ ka_dec *ka_dec_open(const char *location, char *err, int errsize)
         d->duration = (double)d->fmt->duration / AV_TIME_BASE;
     else if (st->duration > 0)
         d->duration = (double)st->duration * av_q2d(st->time_base);
-    if (d->duration <= 0 && d->emulated) {
-        d->duration = KA_GAME_LENGTH_S;
-        d->synthetic_end = true;
-    }
     read_tags(d);
     return d;
 
@@ -238,9 +240,15 @@ void ka_dec_close(ka_dec *d)
     av_frame_free(&d->frame);
     av_packet_free(&d->pkt);
     close_av(d);
+    ka_game_close(d->game);
     free(d->tags);
     free(d->path);
     free(d);
+}
+
+int ka_dec_rate(const ka_dec *d)
+{
+    return d->rate;
 }
 
 double ka_dec_duration(const ka_dec *d)
@@ -294,7 +302,7 @@ static bool feed(ka_dec *d)
                     if (d->fmt->start_time != AV_NOPTS_VALUE)
                         at -= (double)d->fmt->start_time / AV_TIME_BASE;
                     if (d->seek_target > at)
-                        d->skip = (long)((d->seek_target - at) * KA_RATE);
+                        d->skip = (long)((d->seek_target - at) * d->rate);
                 }
                 d->seeking = false;
             }
@@ -324,27 +332,10 @@ static bool feed(ka_dec *d)
     }
 }
 
-/* The default ending of game music: a linear fade, then the end. */
-static long fade_out(ka_dec *d, int16_t *out, long n)
-{
-    long long end = (long long)KA_GAME_LENGTH_S * KA_RATE, fade = (long long)GAME_FADE_S * KA_RATE;
-    if (d->played >= end)
-        return 0;
-    if (d->played + n > end)
-        n = (long)(end - d->played);
-    for (long i = 0; i < n; i++) {
-        long long left = end - (d->played + i);
-        if (left < fade) {
-            int q = (int)(left * 32768 / fade);
-            out[2 * i] = (int16_t)((out[2 * i] * q) >> 15);
-            out[2 * i + 1] = (int16_t)((out[2 * i + 1] * q) >> 15);
-        }
-    }
-    return n;
-}
-
 long ka_dec_read(ka_dec *d, int16_t *out, long max)
 {
+    if (d->game)
+        return ka_game_read(d->game, out, max);
     while (av_audio_fifo_size(d->fifo) < max && !d->decode_eof)
         if (!feed(d))
             break;
@@ -354,40 +345,16 @@ long ka_dec_read(ka_dec *d, int16_t *out, long max)
     if (n == 0)
         return 0;
     void *planes[1] = {out};
-    long got = av_audio_fifo_read(d->fifo, planes, n);
-    if (got > 0 && d->synthetic_end)
-        got = fade_out(d, out, got);
-    if (got > 0)
-        d->played += got;
-    return got;
-}
-
-/* Game music: decode (and throw away) up to the target. */
-static bool seek_by_decoding(ka_dec *d, double seconds)
-{
-    long long target = (long long)(seconds * KA_RATE);
-    if (target < d->played) {
-        close_av(d);
-        av_audio_fifo_reset(d->fifo);
-        if (open_av(d) < 0)
-            return false;
-    }
-    static int16_t scratch[4096 * KA_CHANNELS];
-    while (d->played < target) {
-        long want = target - d->played < 4096 ? (long)(target - d->played) : 4096;
-        if (ka_dec_read(d, scratch, want) <= 0)
-            break;
-    }
-    return true;
+    return av_audio_fifo_read(d->fifo, planes, n);
 }
 
 bool ka_dec_seek(ka_dec *d, double seconds)
 {
     if (seconds < 0)
         seconds = 0;
-    if (d->emulated)
-        return seek_by_decoding(d, seconds);
-    /* In the audio stream's own time base: some demuxers (libgme) read the
+    if (d->game)
+        return ka_game_seek(d->game, seconds);
+    /* In the audio stream's own time base: some demuxers read the
      * timestamp in it whatever stream index is given. */
     AVStream *st = d->fmt->streams[d->stream];
     double start = d->fmt->start_time != AV_NOPTS_VALUE ? (double)d->fmt->start_time / AV_TIME_BASE : 0;
@@ -403,6 +370,5 @@ bool ka_dec_seek(ka_dec *d, double seconds)
     d->seek_target = seconds;
     d->seeking = true;
     d->skip = 0;
-    d->played = (long long)(seconds * KA_RATE);
     return true;
 }

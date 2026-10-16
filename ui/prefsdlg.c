@@ -267,8 +267,10 @@ static void audio_tab(dialog *d, GtkWidget *nb)
     static const char *const engine_labels[] = {N_("kiplay-audio (light, gapless)"),
                                                 N_("mpv, like the videos")};
     choice(d, t, _("Play music _with:"), "playback", "engine", engines, engine_labels, "auto");
-    GtkWidget *dev = entry(d, t, _("ALSA _device:"), "playback", "device", "default");
-    gtk_widget_set_tooltip_text(dev, _("For kiplay-audio: default, pulse, hw:1, plughw:0,0..."));
+    GtkWidget *dev = entry(d, t, _("Output _device:"), "playback", "device", "default");
+    gtk_widget_set_tooltip_text(dev, _("For kiplay-audio: default (PulseAudio or PipeWire; ALSA "
+                                       "when there is no sound server) or an ALSA device: hw:1, "
+                                       "plughw:0,0..."));
 
     t = section(p, _("Videos (mpv)"));
     static const char *const ao[] = {"", "pulse", "pipewire", "alsa", "jack", NULL};

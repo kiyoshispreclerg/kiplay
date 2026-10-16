@@ -31,7 +31,7 @@ make asan-run ARGS=--exit-after-map   # o programa com ASan (supressões em tool
 make pot             # recria po/kiplay.pot e mescla nos .po
 build/kiplay -v [-c X.ini] [ARQ...]   # -v: tempos, linhas do mpv (mpv<), eventos, XID do vídeo
 make lint            # cppcheck + funções proibidas (strcpy, strcat, sprintf, vsprintf, gets)
-make BUILD=build/clang CC=clang test   # também tem que passar com clang
+make BUILD=build/clang CC=clang test   # também tem que passar com clang (o C++ do GME fica no g++: o clang++ daqui não acha os cabeçalhos)
 build/proto/subconv [-s LxA] [-e fração] [-g contorno] X.srv3 > X.ass
 build/proto/embed [--sub X.ass] VIDEO        # mpv embutido no GTK2 (KP_MPV_AO=1: sem som)
 build/proto/audio [-d null] [-m] ARQUIVO     # protótipo da fase 0 (o motor de verdade é o build/kiplay-audio)
@@ -74,6 +74,10 @@ PULSE_SINK=kpbench tools/bench-compare.sh -k DIR -a CÓPIA[:nome] CENÁRIOS.tsv 
   `xdotool search --onlyvisible --name '^Kiplay$'` e `windowactivate`.
 - Títulos em japonês na playlist custam ~5–8 MB (fontes CJK no Pango):
   para medir o Kiplay em si, use arquivos de nome ASCII.
+- O `kiplay-audio` no `default` fala com o PulseAudio direto (o volume é
+  o do fluxo no servidor). No `module-null-sink` o relógio anda aos saltos
+  (ele toca em blocos): para conferir o tempo, use o dispositivo real com
+  `volume 0`.
 - Áudio em teste: dispositivo ALSA `null` (o `kiplay-audio` e o
   `proto/audio` marcam o ritmo pelo relógio), `--ao=null` no mpv; no
   Kiplay, `[playback] device = null` e `[mpv] extra = --ao=null`. Fora
@@ -92,7 +96,7 @@ PULSE_SINK=kpbench tools/bench-compare.sh -k DIR -a CÓPIA[:nome] CENÁRIOS.tsv 
 - Som de teste sem tocar nas caixas e no ritmo real: sink nulo
   (`pactl load-module module-null-sink sink_name=kpbench`, descarregar
   depois com `pactl unload-module N`) e `PULSE_SINK=kpbench` (vale para o
-  `kiplay-audio` pelo plugin ALSA e para o Audacious).
+  `kiplay-audio` e para o Audacious).
 - Xephyr para o usuário ver: `DISPLAY=:0 Xephyr :78 -screen 1280x800 -ac
   -br &`. Sem gerenciador de janelas os menus não abrem com o clique do
   xdotool: use F10 e as setas.
@@ -125,7 +129,8 @@ PULSE_SINK=kpbench tools/bench-compare.sh -k DIR -a CÓPIA[:nome] CENÁRIOS.tsv 
 | `src/lineio.c`, `src/child.c` | linhas com um processo sem bloquear (fila, escrita não bloqueante); processo iniciado e acompanhado |
 | `src/backend.c`, `src/backend_impl.h` | `kp_backend` como tabela de funções (mpv, kiplay-audio) |
 | `src/audioback.c` | o `kp_backend` do kiplay-audio (pipes, protocolo de texto) |
-| `audio/` | o `kiplay-audio`: `main.c` (threads, gapless, pausa), `dec.c` (libav → 48 kHz pela FIFO, libgme, busca), `out.c` (ALSA; `null` com relógio), `cmd.c` (protocolo), `tags.c` (modo `--tags`). Sem GLib |
+| `audio/` | o `kiplay-audio`: `main.c` (threads, gapless, pausa; escreve um período quando cabe e dorme até o próximo), `dec.c` (libav na taxa do arquivo pela FIFO, busca), `game.c` (música de console pelo GME de `vendor/gme`, `.m3u` ao lado), `out.c` (PulseAudio pelo `pulse.c` no `default`, senão ALSA; `null` com relógio), `cmd.c` (protocolo), `tags.c` (modo `--tags`). Sem GLib |
+| `vendor/gme/` | Game_Music_Emu 0.6.5 (C++, LGPL), só com o YM2612 do Gens; `Ym2413_Emu.cpp` é nosso (YM2413 sobre o `ext/emu2413`); símbolos escondidos (`-fvisibility=hidden`) para não cruzar com a libgme do sistema que a libavformat carrega |
 | `src/json.c` | caminhos `a.b[0]` no cJSON (vindo do kiremote); `vendor/cjson/` |
 | `src/instance.c` | instância única: socket unix por pasta de configuração, repasse de arquivos |
 | `ui/player.c` | o controlador: qual motor (extensão), o que toca, avanço, gapless, erros, quedas, mpv ocioso, área de vídeo, título |

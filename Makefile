@@ -52,11 +52,24 @@ APP_OBJ = $(patsubst %.c,$(BUILD)/%.o,$(APP_SRC))
 
 # kiplay-audio: the music engine, its own process. No GLib in it: libav,
 # ALSA and pthreads only, to stay small.
-AUDIO_SRC = audio/main.c audio/cmd.c audio/dec.c audio/out.c audio/tags.c
+AUDIO_SRC = audio/main.c audio/cmd.c audio/dec.c audio/game.c audio/out.c audio/pulse.c audio/tags.c
 AUDIO_OBJ = $(patsubst %.c,$(BUILD)/%.o,$(AUDIO_SRC))
-ENGINE_PKGS = alsa libavformat libavcodec libavutil libswresample
-ENGINE_CFLAGS = $(shell $(PKG_CONFIG) --cflags $(ENGINE_PKGS) | sed 's/-I/-isystem /g')
-ENGINE_LIBS = $(shell $(PKG_CONFIG) --libs $(ENGINE_PKGS)) -lpthread -lm
+ENGINE_PKGS = alsa libavformat libavcodec libavutil libswresample zlib $(if $(filter 1,$(PULSE)),libpulse)
+ENGINE_CFLAGS = $(shell $(PKG_CONFIG) --cflags $(ENGINE_PKGS) | sed 's/-I/-isystem /g') -isystem vendor/gme \
+                $(if $(filter 1,$(PULSE)),-DKA_HAVE_PULSE)
+ENGINE_LIBS = $(LIBGME) $(shell $(PKG_CONFIG) --libs $(ENGINE_PKGS)) -lpthread -lm
+
+# Game_Music_Emu (C++), ours: see audio/game.h. Hidden symbols, so that the
+# system's libgme, which libavformat loads, never meets them. The YM2612 is
+# Gens' (GME's default, Nuked, costs some 25 times the CPU). Its counters
+# rely on signed overflow wrapping around: -fwrapv makes that defined.
+GME_SRC = $(wildcard vendor/gme/*.cpp)
+GME_OBJ = $(patsubst %.cpp,$(BUILD)/%.o,$(GME_SRC)) $(BUILD)/vendor/gme/ext/emu2413.o
+LIBGME = $(BUILD)/libgme.a
+GME_FLAGS = -fvisibility=hidden -fwrapv -Ivendor/gme -DVGM_YM2612_GENS
+GME_CXXFLAGS = -std=c++11 -fno-exceptions -fno-rtti -fvisibility-inlines-hidden
+# Emulators shift negative samples on purpose: UBSan would stop there.
+GME_SANFLAGS = $(SANFLAGS) $(if $(SANFLAGS),-fno-sanitize=shift)
 
 # Phase 0 prototypes (proto/*.c, one program each).
 PROTOS = $(BUILD)/proto/subconv $(BUILD)/proto/embed $(BUILD)/proto/audio
@@ -94,8 +107,19 @@ pot update-po:
 $(BUILD)/kiplay: $(APP_OBJ) $(LIBKP)
 	$(CC) $(ALL_LDFLAGS) -o $@ $^ $(GTK_LIBS) $(LDLIBS)
 
-$(BUILD)/kiplay-audio: $(AUDIO_OBJ)
-	$(CC) $(ALL_LDFLAGS) -o $@ $^ $(ENGINE_LIBS)
+$(BUILD)/kiplay-audio: $(AUDIO_OBJ) $(LIBGME)
+	$(CXX) $(ALL_LDFLAGS) -o $@ $(AUDIO_OBJ) $(ENGINE_LIBS)
+
+$(LIBGME): $(GME_OBJ)
+	$(AR) rcs $@ $^
+
+$(BUILD)/vendor/gme/%.o: vendor/gme/%.cpp
+	@mkdir -p $(@D)
+	$(CXX) $(GME_FLAGS) $(GME_CXXFLAGS) $(OPTFLAGS) $(GME_SANFLAGS) $(CXXFLAGS) $(VENDOR_WARNFLAGS) -MMD -MP -c -o $@ $<
+
+$(BUILD)/vendor/gme/ext/emu2413.o: vendor/gme/ext/emu2413.c
+	@mkdir -p $(@D)
+	$(CC) $(GME_FLAGS) $(OPTFLAGS) $(GME_SANFLAGS) $(CFLAGS) $(VENDOR_WARNFLAGS) -MMD -MP -c -o $@ $<
 
 $(AUDIO_OBJ): $(BUILD)/%.o: %.c
 	@mkdir -p $(@D)
@@ -137,9 +161,10 @@ TEST_CPPFLAGS = -DKP_FIXTURES_DIR='"$(CURDIR)/tests/fixtures"' \
                 -DKP_AUDIO_BIN='"$(CURDIR)/$(BUILD)/kiplay-audio"'
 
 # test_audio also links the engine's own parts (they aren't in libkp).
-$(BUILD)/tests/test_audio: TEST_EXTRA = $(BUILD)/audio/cmd.o $(BUILD)/audio/dec.o $(BUILD)/audio/tags.o $(ENGINE_LIBS)
+TEST_AUDIO_OBJ = $(BUILD)/audio/cmd.o $(BUILD)/audio/dec.o $(BUILD)/audio/game.o $(BUILD)/audio/tags.o
+$(BUILD)/tests/test_audio: TEST_EXTRA = $(TEST_AUDIO_OBJ) $(ENGINE_LIBS) -lstdc++
 $(BUILD)/tests/test_audio: TEST_EXTRA_CFLAGS = -Iaudio $(ENGINE_CFLAGS)
-$(BUILD)/tests/test_audio: $(BUILD)/audio/cmd.o $(BUILD)/audio/dec.o $(BUILD)/audio/tags.o $(BUILD)/kiplay-audio
+$(BUILD)/tests/test_audio: $(TEST_AUDIO_OBJ) $(BUILD)/kiplay-audio
 
 $(BUILD)/tests/%: tests/unit/%.c tests/harness.h $(LIBKP)
 	@mkdir -p $(@D)

@@ -32,6 +32,10 @@ GTK_LIBS   = $(shell $(PKG_CONFIG) --libs $(GTK_PKGS))
 CPPFLAGS += -Isrc -Ivendor/cjson -DKP_VERSION='"$(VERSION)"'
 LDLIBS   += $(PKG_LIBS) -lm
 
+# kiplay-audio talks to PulseAudio (or PipeWire's pulse server) directly;
+# PULSE=0 builds it with ALSA only.
+PULSE ?= 1
+
 # Third-party code: our pedantic flags don't judge it.
 VENDOR_WARNFLAGS = -Wall -Wextra -Werror
 

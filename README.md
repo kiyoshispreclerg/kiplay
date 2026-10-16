@@ -25,7 +25,8 @@ possível do original:
 
 **Estado:** em desenvolvimento, fase 6: já é um player de uso diário
 (vídeo pelo mpv, música pelo motor próprio `kiplay-audio` com gapless e
-música de console NSF/SPC/GBS/VGM; playlists em abas com tags, fila,
+música de console NSF/SPC/GBS/VGM, inclusive o FM do Master System, com
+os nomes e durações do `.m3u` ao lado; playlists em abas com tags, fila,
 busca, arrastar para reordenar, importar e exportar m3u/pls; layout
 configurável; preferências em abas, atalhos editáveis, continuar de onde
 parou, faixas de áudio e legenda, MPRIS, bandeja, modo compacto; legendas
@@ -111,7 +112,8 @@ font_size = 48
 [playback]
 # auto: música no kiplay-audio (leve, gapless); mpv: tudo pelo mpv
 engine = auto
-# dispositivo ALSA do kiplay-audio
+# saída do kiplay-audio: default (PulseAudio/PipeWire, ou o ALSA se não
+# houver servidor) ou um dispositivo ALSA (hw:0, null...)
 device = default
 
 [files]
@@ -160,8 +162,11 @@ um grosso e borrado, mais fácil de ler; `auto = no` desliga a busca.
 
 ## Compilar
 
-Precisa de GTK 2, GLib, ALSA e das bibliotecas do FFmpeg (libavformat,
-libavcodec, libswresample), com os pacotes `-dev`.
+Precisa de GTK 2, GLib, ALSA, libpulse, zlib, um compilador de C++ e das
+bibliotecas do FFmpeg (libavformat, libavcodec, libswresample), com os
+pacotes `-dev`. `make PULSE=0` compila sem o PulseAudio (só ALSA). A música
+de console usa uma cópia do [Game_Music_Emu](https://github.com/libgme/game-music-emu)
+em `vendor/gme` (LGPL-2.1-or-later).
 
 ```sh
 make

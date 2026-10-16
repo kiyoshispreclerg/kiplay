@@ -11,6 +11,7 @@
 #include "backend.h"
 #include "cmd.h"
 #include "dec.h"
+#include "game.h"
 #include "tagreader.h"
 #include "tags.h"
 
@@ -207,6 +208,187 @@ TEST(reads_tags)
     g_free(dir);
 }
 
+/* ---- game music (synthetic files in each format's layout) --------------- */
+
+static void put32(unsigned char *p, unsigned v)
+{
+    for (int i = 0; i < 4; i++)
+        p[i] = (unsigned char)(v >> (8 * i));
+}
+
+/* A VGM 1.50 of secs seconds: a tone on the Master System's PSG, or (fm)
+ * on its YM2413. No loop. */
+static void write_vgm(const char *path, int secs, bool fm)
+{
+    unsigned char v[0x40 + 64] = "Vgm ";
+    unsigned n = 0x40;
+    put32(v + 0x08, 0x150);
+    put32(v + 0x0C, fm ? 0 : 3579545); /* SN76489 clock */
+    put32(v + 0x10, fm ? 3579545 : 0); /* YM2413 clock */
+    put32(v + 0x18, (unsigned)secs * 44100);
+    put32(v + 0x24, 60);
+    v[0x28] = 0x09; /* the PSG's noise feedback and width */
+    v[0x2A] = 16;
+    put32(v + 0x34, 0x40 - 0x34); /* the data, relative to here */
+    if (fm) {
+        static const unsigned char regs[][2] = {{0x30, 0x10}, {0x10, 0x20}, {0x20, 0x18}};
+        for (size_t i = 0; i < sizeof regs / sizeof regs[0]; i++) {
+            v[n++] = 0x51; /* instrument 1 at full volume, fnum 288 block 4, key on */
+            v[n++] = regs[i][0];
+            v[n++] = regs[i][1];
+        }
+    } else {
+        static const unsigned char psg[] = {0x8E, 0x0F, 0x90, 0xBF, 0xDF, 0xFF};
+        for (size_t i = 0; i < sizeof psg; i++) {
+            v[n++] = 0x50; /* ~440 Hz on channel 0, loud; the rest quiet */
+            v[n++] = psg[i];
+        }
+    }
+    for (int s = 0; s < secs; s++) {
+        v[n++] = 0x61; /* wait 44100 samples */
+        v[n++] = 0x44;
+        v[n++] = 0xAC;
+    }
+    v[n++] = 0x66; /* end */
+    put32(v + 0x04, n - 4);
+    g_file_set_contents(path, (const char *)v, n, NULL);
+}
+
+/* An NSF with three (silent) songs: a header and an RTS. */
+static void write_nsf(const char *path)
+{
+    unsigned char h[0x81] = "NESM\x1a\x01\x03\x01";
+    h[0x09] = h[0x0B] = h[0x0D] = 0x80; /* load, init and play at $8000 */
+    memcpy(h + 0x0E, "Jogo", 4);
+    h[0x6E] = 0x1A; /* NTSC speed 16666 us */
+    h[0x6F] = 0x41;
+    h[0x80] = 0x60; /* RTS */
+    g_file_set_contents(path, (const char *)h, sizeof h, NULL);
+}
+
+static double rms(const int16_t *s, long frames)
+{
+    double sum = 0;
+    for (long i = 0; i < frames * 2; i++)
+        sum += (double)s[i] * s[i];
+    return sqrt(sum / (double)(frames * 2));
+}
+
+TEST(plays_game_music)
+{
+    char *dir = g_dir_make_tmp("kp-test-XXXXXX", NULL);
+    char *psg = g_build_filename(dir, "psg.vgm", NULL);
+    char *fm = g_build_filename(dir, "fm.vgm", NULL);
+    write_vgm(psg, 3, false);
+    write_vgm(fm, 3, true);
+    char err[128];
+    static int16_t buf[44100 * 2];
+
+    ka_dec *d = ka_dec_open(psg, 0, err, sizeof err);
+    CHECK_MSG(d, "%s", err);
+    if (d) {
+        CHECK_INT_EQ(ka_dec_rate(d), 44100);
+        /* It just ends: no fade added. */
+        CHECK(fabs(ka_dec_duration(d) - 3) < 0.01);
+        CHECK_INT_EQ(ka_dec_read(d, buf, 22050), 22050);
+        CHECK(rms(buf + 11025 * 2, 11025) > 500);
+        /* A seek past the end ends it; one back plays again. */
+        CHECK(ka_dec_seek(d, 10));
+        CHECK_INT_EQ(ka_dec_read(d, buf, 1024), 0);
+        CHECK(ka_dec_seek(d, 1));
+        CHECK_INT_EQ(ka_dec_read(d, buf, 4410), 4410);
+        CHECK(rms(buf, 4410) > 500);
+        ka_dec_close(d);
+    }
+    /* Asked for another rate (gapless after a 48 kHz file). */
+    d = ka_dec_open(psg, 48000, err, sizeof err);
+    CHECK(d && ka_dec_rate(d) == 48000);
+    ka_dec_close(d);
+
+    /* The Master System's FM chip, which the system libgme can't play. */
+    d = ka_dec_open(fm, 0, err, sizeof err);
+    CHECK_MSG(d, "%s", err);
+    if (d) {
+        CHECK_INT_EQ(ka_dec_read(d, buf, 44100), 44100);
+        CHECK(rms(buf + 22050 * 2, 22050) > 200);
+        ka_dec_close(d);
+    }
+    g_remove(psg);
+    g_remove(fm);
+    g_rmdir(dir);
+    g_free(psg);
+    g_free(fm);
+    g_free(dir);
+}
+
+TEST(game_music_follows_its_m3u)
+{
+    char *dir = g_dir_make_tmp("kp-test-XXXXXX", NULL);
+    char *nsf = g_build_filename(dir, "jogo.nsf", NULL);
+    char *m3u = g_build_filename(dir, "jogo.m3u", NULL);
+    write_nsf(nsf);
+    char err[128];
+    ka_tags t;
+
+    /* No playlist: the file's three songs, of unknown length. */
+    char *loc = g_strdup_printf("%s?3", nsf);
+    CHECK_MSG(ka_tags_read(loc, &t, err, sizeof err), "%s", err);
+    CHECK_STR_EQ(t.title, "Jogo");
+    CHECK(fabs(t.duration - KA_GAME_LENGTH_S) < 0.01);
+    ka_tags_clear(&t);
+    g_free(loc);
+
+    /* The rip's playlist names songs and says how long they are (with the
+     * fade); song N is still the file's N-th, as in Audacious. */
+    static const char list[] = "# Jogo\n"
+                               "jogo.nsf::NSF,3,Abertura\\, parte 1,0:01:00,,0:00:05\n"
+                               "outro.nsf::NSF,1,De outro arquivo,0:00:10,,\n"
+                               "jogo.nsf::NSF,1,Chefe,0:00:30,,0:00:02\n";
+    g_file_set_contents(m3u, list, -1, NULL);
+    loc = g_strdup_printf("%s?3", nsf);
+    CHECK_MSG(ka_tags_read(loc, &t, err, sizeof err), "%s", err);
+    CHECK_STR_EQ(t.title, "Abertura, parte 1");
+    CHECK_STR_EQ(t.album, "Jogo");
+    CHECK(fabs(t.duration - 65) < 0.01);
+    ka_tags_clear(&t);
+    g_free(loc);
+    loc = g_strdup_printf("%s?1", nsf);
+    CHECK(ka_tags_read(loc, &t, err, sizeof err));
+    CHECK_STR_EQ(t.title, "Chefe");
+    CHECK(fabs(t.duration - 32) < 0.01);
+    ka_tags_clear(&t);
+    g_free(loc);
+    /* Not in the list: the file's own. */
+    loc = g_strdup_printf("%s?2", nsf);
+    CHECK(ka_tags_read(loc, &t, err, sizeof err));
+    CHECK_STR_EQ(t.title, "Jogo");
+    CHECK(fabs(t.duration - KA_GAME_LENGTH_S) < 0.01);
+    ka_tags_clear(&t);
+    g_free(loc);
+    loc = g_strdup_printf("%s?4", nsf);
+    CHECK(!ka_tags_read(loc, &t, err, sizeof err));
+    g_free(loc);
+
+    /* A list that counts from 0 (some rips do): song 1 is its "0". */
+    g_file_set_contents(m3u,
+                        "jogo.nsf::NSF,0,Primeira,0:00:10,,0:0:00\n"
+                        "jogo.nsf::NSF,1,Segunda,0:00:20,,0:0:00\n",
+                        -1, NULL);
+    loc = g_strdup_printf("%s?1", nsf);
+    CHECK(ka_tags_read(loc, &t, err, sizeof err));
+    CHECK_STR_EQ(t.title, "Primeira");
+    CHECK(fabs(t.duration - 10) < 0.01);
+    ka_tags_clear(&t);
+    g_free(loc);
+
+    g_remove(nsf);
+    g_remove(m3u);
+    g_rmdir(dir);
+    g_free(nsf);
+    g_free(m3u);
+    g_free(dir);
+}
+
 typedef struct {
     GMainLoop *loop;
     int n, wanted;
@@ -378,6 +560,8 @@ int main(void)
     RUN(parses_commands);
     RUN(splits_subtunes);
     RUN(reads_tags);
+    RUN(plays_game_music);
+    RUN(game_music_follows_its_m3u);
     RUN(tag_reader_in_background);
     RUN(plays_through_the_engine);
     return harness_report();

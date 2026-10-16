@@ -5,12 +5,14 @@
  * (Kiplay sees the pipe close and starts it again).
  *
  * Two threads: this one reads commands from stdin; the engine thread
- * decodes and writes to ALSA, paced by the device. Requests go from one to
- * the other through `shared` under its mutex; events go to stdout, one
- * line each (cmd.h has the protocol).
+ * decodes and writes to the sound device (out.h) a period at a time,
+ * sleeping until the next one fits or a request comes. Requests go from
+ * one to the other through `shared` under its mutex; events go to stdout,
+ * one line each (cmd.h has the protocol).
  *
- *   kiplay-audio [-d ALSA_DEVICE]
+ *   kiplay-audio [-d default|ALSA_DEVICE]
  *   kiplay-audio --tags     reads tags instead (tags.h), for the playlist */
+#include <errno.h>
 #include <libavformat/avformat.h>
 #include <math.h>
 #include <pthread.h>
@@ -27,9 +29,12 @@
 #include "out.h"
 #include "tags.h"
 
-/* ~21 ms per write: commands are seen at least this often while playing. */
-#define CHUNK 1024
+/* At most this many frames per write (a period is usually less). */
+#define CHUNK 16384
 #define TICK_NS 250000000LL
+/* Never sleep less than this waiting for room (the device's own estimate
+ * can be a little early). */
+#define MIN_WAIT_NS 10000000LL
 /* The device is let go after this long without sound. */
 #define IDLE_CLOSE_S 3
 
@@ -83,6 +88,7 @@ typedef struct {
     long long written;  /* frames written since base (negative: the
                            previous file's tail is still in the buffer) */
     int volume;
+    bool device_volume; /* the device applies it (else we scale) */
     long long last_tick_ns, idle_since_ns;
 } engine;
 
@@ -95,8 +101,10 @@ static long long now_ns(void)
 
 static double position(engine *e)
 {
-    long long heard = e->written - (e->out ? ka_out_delay(e->out) : 0);
-    double p = e->base + (double)heard / KA_RATE;
+    if (!e->out)
+        return e->base < 0 ? 0 : e->base;
+    long long heard = e->written - ka_out_delay(e->out);
+    double p = e->base + (double)heard / ka_out_rate(e->out);
     return p < 0 ? 0 : p;
 }
 
@@ -120,15 +128,20 @@ static void announce(engine *e)
         event("tags %s", tags);
 }
 
-static bool ensure_out(engine *e)
+/* The device at that rate (opened again if it was at another). */
+static bool ensure_out(engine *e, int rate)
 {
-    if (e->out)
+    if (e->out && ka_out_rate(e->out) == rate)
         return true;
+    ka_out_close(e->out);
     char err[256];
-    e->out = ka_out_open(device, err, sizeof err);
-    if (!e->out)
+    e->out = ka_out_open(device, rate, err, sizeof err);
+    if (!e->out) {
         event("ended error %s", err);
-    return e->out != NULL;
+        return false;
+    }
+    e->device_volume = ka_out_set_volume(e->out, e->volume);
+    return true;
 }
 
 static void close_dec(engine *e)
@@ -142,12 +155,14 @@ static void do_load(engine *e, const char *path, double start)
 {
     close_dec(e);
     char err[256];
-    e->dec = ka_dec_open(path, err, sizeof err);
+    /* At the file's own rate: converting costs us, and the sound server
+     * would often convert it back. */
+    e->dec = ka_dec_open(path, 0, err, sizeof err);
     if (!e->dec) {
         event("ended error %s", err);
         return;
     }
-    if (!ensure_out(e)) {
+    if (!ensure_out(e, ka_dec_rate(e->dec))) {
         close_dec(e);
         return;
     }
@@ -206,7 +221,8 @@ static void finished(engine *e)
 {
     if (e->queued && *e->queued) {
         char err[256];
-        ka_dec *next = ka_dec_open(e->queued, err, sizeof err);
+        /* Gapless: at the rate the device already plays. */
+        ka_dec *next = ka_dec_open(e->queued, e->out ? ka_out_rate(e->out) : 0, err, sizeof err);
         free(e->queued);
         e->queued = NULL;
         if (next) {
@@ -229,31 +245,85 @@ static void finished(engine *e)
     event("ended ok");
 }
 
+/* One write of decoded sound, if there's room for it. */
+static void play_some(engine *e, int16_t *buf)
+{
+    long room = ka_out_room(e->out);
+    long want = ka_out_period(e->out);
+    if (want > CHUNK)
+        want = CHUNK;
+    if (room >= 0 && room < want)
+        return;
+    long n = room < 0 ? -1 : ka_dec_read(e->dec, buf, want);
+    if (n == 0) {
+        finished(e);
+        return;
+    }
+    if (n > 0 && !e->device_volume)
+        apply_volume(buf, n, e->volume);
+    if (n < 0 || !ka_out_write(e->out, buf, n)) {
+        event("ended error the sound device went away");
+        close_dec(e);
+        ka_out_close(e->out);
+        e->out = NULL;
+        return;
+    }
+    e->written += n;
+}
+
+/* How long the engine may sleep: until there's room for a write while
+ * playing, until the next tick, or a while when idle. */
+static long long sleep_ns(engine *e, bool ticking)
+{
+    long long ns = TICK_NS;
+    if (!e->dec) {
+        /* Nothing loaded: only a command, or letting the device go. */
+        if (!e->out)
+            return 3600 * 1000000000LL;
+        ns = e->idle_since_ns + IDLE_CLOSE_S * 1000000000LL - now_ns();
+        return ns > 0 ? ns : 1;
+    }
+    if (e->playing && !e->paused) {
+        long want = ka_out_period(e->out);
+        ns = ka_out_wait_ns(e->out, want > CHUNK ? CHUNK : want);
+        if (ns == 0)
+            return 0;
+        if (ns < MIN_WAIT_NS)
+            ns = MIN_WAIT_NS;
+    }
+    if (ticking && e->dec) {
+        long long tick = e->last_tick_ns + TICK_NS - now_ns();
+        if (tick < ns)
+            ns = tick;
+    }
+    return ns;
+}
+
+static bool requested(const engine *e)
+{
+    return shared.quit || shared.load || shared.queue || shared.stop || shared.pause >= 0 ||
+           shared.seek || shared.volume != e->volume;
+}
+
 static void *engine_thread(void *arg)
 {
     (void)arg;
     engine e = {.volume = 100};
     static int16_t buf[CHUNK * KA_CHANNELS];
     for (;;) {
+        if (!e.dec && e.out && now_ns() - e.idle_since_ns > IDLE_CLOSE_S * 1000000000LL) {
+            ka_out_close(e.out);
+            e.out = NULL;
+        }
         pthread_mutex_lock(&shared.lock);
-        /* Nothing to play: sleep until a request (or time to free the
-         * device, or a tick while paused). */
-        while (!shared.quit && !shared.load && !shared.queue && !shared.stop &&
-               shared.pause < 0 && !shared.seek && shared.volume == e.volume &&
-               (!e.playing || e.paused)) {
+        long long ns;
+        while (!requested(&e) && (ns = sleep_ns(&e, shared.ticking)) > 0) {
             struct timespec t;
             clock_gettime(CLOCK_REALTIME, &t);
-            t.tv_nsec += TICK_NS;
-            if (t.tv_nsec >= 1000000000L) {
-                t.tv_sec++;
-                t.tv_nsec -= 1000000000L;
-            }
-            pthread_cond_timedwait(&shared.wake, &shared.lock, &t);
-            if (!e.dec && e.out && now_ns() - e.idle_since_ns > IDLE_CLOSE_S * 1000000000LL) {
-                ka_out_close(e.out);
-                e.out = NULL;
-            }
-            if (e.paused)
+            long long at = t.tv_nsec + ns;
+            t.tv_sec += (time_t)(at / 1000000000LL);
+            t.tv_nsec = (long)(at % 1000000000LL);
+            if (pthread_cond_timedwait(&shared.wake, &shared.lock, &t) == ETIMEDOUT)
                 break;
         }
         bool quit = shared.quit, stop = shared.stop, seek = shared.seek, rel = shared.seek_rel;
@@ -261,6 +331,7 @@ static void *engine_thread(void *arg)
         char *load = shared.load, *queue = shared.queue;
         double start = shared.load_start, to = shared.seek_to;
         int pause = shared.pause;
+        bool volume_changed = shared.volume != e.volume;
         e.volume = shared.volume;
         shared.load = shared.queue = NULL;
         shared.stop = shared.seek = false;
@@ -272,6 +343,8 @@ static void *engine_thread(void *arg)
             free(queue);
             break;
         }
+        if (volume_changed && e.out)
+            e.device_volume = ka_out_set_volume(e.out, e.volume);
         if (queue) {
             free(e.queued);
             e.queued = queue;
@@ -293,22 +366,8 @@ static void *engine_thread(void *arg)
         if (pause >= 0)
             do_pause(&e, pause != 0);
 
-        if (e.playing && !e.paused) {
-            long n = ka_dec_read(e.dec, buf, CHUNK);
-            if (n > 0) {
-                apply_volume(buf, n, e.volume);
-                if (!ka_out_write(e.out, buf, n)) {
-                    event("ended error the sound device went away");
-                    close_dec(&e);
-                    ka_out_close(e.out);
-                    e.out = NULL;
-                    continue;
-                }
-                e.written += n;
-            } else {
-                finished(&e);
-            }
-        }
+        if (e.playing && !e.paused)
+            play_some(&e, buf);
         if (ticking && e.dec && now_ns() - e.last_tick_ns >= TICK_NS) {
             e.last_tick_ns = now_ns();
             event("time %.3f", position(&e));
@@ -382,7 +441,7 @@ int main(int argc, char **argv)
             av_log_set_level(AV_LOG_QUIET);
             return ka_tags_serve();
         } else {
-            fprintf(stderr, "usage: kiplay-audio [-d ALSA_DEVICE] | --tags\n");
+            fprintf(stderr, "usage: kiplay-audio [-d default|ALSA_DEVICE] | --tags\n");
             return 2;
         }
     }
