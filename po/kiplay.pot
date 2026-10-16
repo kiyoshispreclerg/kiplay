@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: kiplay\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 07:50-0300\n"
+"POT-Creation-Date: 2026-10-16 07:54-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -85,7 +85,7 @@ msgid ""
 "and recorded live chat."
 msgstr ""
 
-#: ui/window.c:197 ui/prefsdlg.c:437
+#: ui/window.c:197 ui/prefsdlg.c:443
 #, c-format
 msgid "could not save the settings: %s"
 msgstr ""
@@ -230,7 +230,7 @@ msgstr ""
 msgid "Leave _fullscreen"
 msgstr ""
 
-#: ui/window.c:300 ui/tracks.c:403
+#: ui/window.c:300 ui/tracks.c:407
 msgid "_Fullscreen"
 msgstr ""
 
@@ -442,7 +442,7 @@ msgstr ""
 msgid "Install mpv, or set its path in kiplay.ini ([mpv] program = ...)."
 msgstr ""
 
-#: ui/player.c:471
+#: ui/player.c:471 ui/subdl.c:108
 #, c-format
 msgid "cannot read the captions %s: %s"
 msgstr ""
@@ -614,7 +614,7 @@ msgstr ""
 msgid "Move selection down"
 msgstr ""
 
-#: ui/shortcuts.c:116 ui/prefsdlg.c:447
+#: ui/shortcuts.c:116 ui/prefsdlg.c:453
 msgid "Preferences"
 msgstr ""
 
@@ -674,93 +674,181 @@ msgstr ""
 msgid "_Audio track"
 msgstr ""
 
-#: ui/tracks.c:169 ui/tracks.c:420
+#: ui/tracks.c:169 ui/tracks.c:424
 msgid "_Subtitles"
 msgstr ""
 
-#: ui/tracks.c:252
+#: ui/tracks.c:178
+msgid "_Download subtitles from YouTube..."
+msgstr ""
+
+#: ui/tracks.c:256
 #, c-format
 msgid "Subtitles: %s"
 msgstr ""
 
-#: ui/tracks.c:252
+#: ui/tracks.c:256
 #, c-format
 msgid "Audio: %s"
 msgstr ""
 
-#: ui/tracks.c:253
+#: ui/tracks.c:257
 msgid "none"
 msgstr ""
 
-#: ui/tracks.c:265
+#: ui/tracks.c:269
 msgid "Subtitles hidden"
 msgstr ""
 
-#: ui/tracks.c:274
+#: ui/tracks.c:278
 msgid "Subtitles shown"
 msgstr ""
 
-#: ui/tracks.c:288
+#: ui/tracks.c:292
 #, c-format
 msgid "Subtitle delay: %d ms"
 msgstr ""
 
-#: ui/tracks.c:289
+#: ui/tracks.c:293
 #, c-format
 msgid "Audio delay: %d ms"
 msgstr ""
 
-#: ui/tracks.c:302
+#: ui/tracks.c:306
 #, c-format
 msgid "Aspect ratio: %s"
 msgstr ""
 
-#: ui/tracks.c:302
+#: ui/tracks.c:306
 msgid "auto"
 msgstr ""
 
-#: ui/tracks.c:385
+#: ui/tracks.c:389
 msgid "_Video"
 msgstr ""
 
-#: ui/tracks.c:386 ui/tracks.c:409 ui/tracks.c:421
+#: ui/tracks.c:390 ui/tracks.c:413 ui/tracks.c:425
 msgid "_Track"
 msgstr ""
 
-#: ui/tracks.c:387
+#: ui/tracks.c:391
 msgid "_Aspect ratio"
 msgstr ""
 
-#: ui/tracks.c:394
+#: ui/tracks.c:398
 msgid "_Auto"
 msgstr ""
 
-#: ui/tracks.c:401
+#: ui/tracks.c:405
 msgid "_Next aspect ratio"
 msgstr ""
 
-#: ui/tracks.c:408
+#: ui/tracks.c:412
 msgid "_Audio"
 msgstr ""
 
-#: ui/tracks.c:411 ui/tracks.c:424
+#: ui/tracks.c:415 ui/tracks.c:433
 msgid "Delay +100 ms"
 msgstr ""
 
-#: ui/tracks.c:412 ui/tracks.c:425
+#: ui/tracks.c:416 ui/tracks.c:434
 msgid "Delay -100 ms"
 msgstr ""
 
-#: ui/tracks.c:413 ui/tracks.c:426
+#: ui/tracks.c:417 ui/tracks.c:435
 msgid "_No delay"
 msgstr ""
 
-#: ui/tracks.c:415
+#: ui/tracks.c:419
 msgid "_Mute"
 msgstr ""
 
-#: ui/tracks.c:422
+#: ui/tracks.c:426
 msgid "_Show / hide"
+msgstr ""
+
+#: ui/tracks.c:429
+msgid "_Download from YouTube..."
+msgstr ""
+
+#: ui/subdl.c:88
+msgid "Could not download the subtitles."
+msgstr ""
+
+#: ui/subdl.c:119
+msgid "Subtitles downloaded"
+msgstr ""
+
+#: ui/subdl.c:120
+msgid "Those subtitles were already downloaded"
+msgstr ""
+
+#: ui/subdl.c:145
+msgid "Download subtitles from YouTube"
+msgstr ""
+
+#: ui/subdl.c:147
+msgid "_Download"
+msgstr ""
+
+#: ui/subdl.c:151
+msgid "Languages available for this video:"
+msgstr ""
+
+#: ui/subdl.c:158
+#, c-format
+msgid "%s (automatic)"
+msgstr ""
+
+#: ui/subdl.c:200
+msgid "This does not look like an available YouTube video."
+msgstr ""
+
+#: ui/subdl.c:205
+msgid "This video has no subtitles on YouTube."
+msgstr ""
+
+#: ui/subdl.c:219
+msgid "Downloading subtitles..."
+msgstr ""
+
+#: ui/subdl.c:231
+msgid "Cannot look for subtitles for this file."
+msgstr ""
+
+#: ui/subdl.c:232
+msgid ""
+"The file name has to end with the video's YouTube ID in square brackets, "
+"such as \"Title [dQw4w9WgXcQ].mp4\"."
+msgstr ""
+
+#: ui/subdl.c:240
+msgid "yt-dlp is not available."
+msgstr ""
+
+#: ui/subdl.c:250
+msgid "Looking for subtitles on YouTube..."
+msgstr ""
+
+#: src/ytdlp.c:27
+msgid "yt-dlp was not found. Set its path in Preferences > Advanced."
+msgstr ""
+
+#: src/ytdlp.c:35
+#, c-format
+msgid "Cannot run yt-dlp at %s. Check its path in Preferences > Advanced."
+msgstr ""
+
+#: src/ytdlp.c:61
+msgid "yt-dlp did not return a video."
+msgstr ""
+
+#: src/ytdlp.c:149
+msgid "yt-dlp took too long."
+msgstr ""
+
+#: src/ytdlp.c:155
+msgid "yt-dlp failed."
 msgstr ""
 
 #: ui/prefsdlg.c:195
@@ -1121,6 +1209,24 @@ msgstr ""
 msgid ""
 "Kiplay controls mpv's window, keys and on-screen controls; options that "
 "change those can break it."
+msgstr ""
+
+#: ui/prefsdlg.c:371
+msgid "yt-dlp"
+msgstr ""
+
+#: ui/prefsdlg.c:372
+msgid "P_rogram:"
+msgstr ""
+
+#: ui/prefsdlg.c:373
+msgid "Full path of the yt-dlp binary; empty looks for yt-dlp in PATH"
+msgstr ""
+
+#: ui/prefsdlg.c:375
+msgid ""
+"Used to download a YouTube video's subtitles when its file name ends with "
+"the video ID in square brackets."
 msgstr ""
 
 #: ui/desktop.c:174

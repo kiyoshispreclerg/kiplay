@@ -368,6 +368,12 @@ static void advanced_tab(dialog *d, GtkWidget *nb)
                                 _("Passed to mpv as typed, e.g. --deband --scale=ewa_lanczos"));
     note(t, _("Kiplay controls mpv's window, keys and on-screen controls; options that change "
               "those can break it."));
+    t = section(p, _("yt-dlp"));
+    GtkWidget *ytdlp = entry(d, t, _("P_rogram:"), "tools", "ytdlp", "");
+    gtk_widget_set_tooltip_text(ytdlp, _("Full path of the yt-dlp binary; empty looks for "
+                                         "yt-dlp in PATH"));
+    note(t, _("Used to download a YouTube video's subtitles when its file name ends with the "
+              "video ID in square brackets."));
 }
 
 /* ---- applying ------------------------------------------------------------ */

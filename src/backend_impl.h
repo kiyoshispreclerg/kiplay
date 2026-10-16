@@ -23,6 +23,7 @@ typedef struct {
     void (*set_ticking)(kp_backend *b, bool on);
     /* Optional (KP_CAP_TRACKS): */
     void (*set_track)(kp_backend *b, kp_track_type type, int id);
+    void (*add_sub)(kp_backend *b, const kp_sub_file *file, bool select);
     void (*set_delay)(kp_backend *b, kp_track_type type, double seconds);
     void (*set_aspect)(kp_backend *b, const char *aspect);
     void (*show_text)(kp_backend *b, const char *text);

@@ -292,6 +292,12 @@ void kp_tracks_toggle_subs(kp_app *app);
 void kp_tracks_delay(kp_app *app, kp_track_type type, double delta);
 void kp_tracks_cycle_aspect(kp_app *app);
 
+/* subdl.c: subtitles of a YouTube video (named "Title [ID].ext") fetched
+ * with yt-dlp, which is set in Preferences > Advanced. */
+void kp_subdl_start(kp_app *app);
+/* The playing file is a local video with an ID in its name. */
+bool kp_subdl_possible(kp_app *app);
+
 /* shortcuts.c: the keyboard commands (Preferences > Shortcuts). */
 void kp_shortcuts_load(kp_app *app);
 /* Runs the command bound to that key; false if none. */

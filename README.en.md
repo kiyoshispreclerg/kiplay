@@ -80,6 +80,14 @@ Shortcuts are changed in Options → Preferences → Shortcuts (up to two
 keys per command). A right click on the video or the control bar opens a
 menu with the essentials (handy in compact mode and fullscreen), including the audio and subtitle tracks of the video. A right click on a playlist row: play, queue, cut/copy/paste, remove and open the file's folder.
 
+**YouTube subtitles:** if a video's name ends with its ID in square brackets
+(`Title [dQw4w9WgXcQ].mp4`, as yt-dlp writes it), the Subtitles menu and the
+right click on the video offer "Download subtitles from YouTube...": Kiplay
+asks yt-dlp whether the video exists and which languages it has (the uploaded
+ones and the automatic captions in the video's language), downloads the chosen
+ones next to the file (in the styled format) and loads them at once. The
+yt-dlp path is in Options → Preferences → Advanced (`[tools] ytdlp`).
+
 Kiplay remembers, for each video, where it stopped, the audio and
 subtitle tracks chosen, the delays and the aspect ratio (in
 `~/.local/share/kiplay/files/`), and goes on from there next time.
@@ -104,6 +112,10 @@ program = mpv
 use_config = false
 # extra options, as in SMPlayer
 extra = --deband
+
+[tools]
+# yt-dlp (the Linux binary), to download YouTube subtitles; empty: looked up in PATH
+ytdlp = ~/Downloads/yt-dlp_linux
 
 [video]
 hwdec = auto-safe

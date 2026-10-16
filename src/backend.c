@@ -82,6 +82,12 @@ void kp_backend_set_track(kp_backend *b, kp_track_type type, int id)
         b->ops->set_track(b, type, id);
 }
 
+void kp_backend_add_sub(kp_backend *b, const kp_sub_file *file, bool select)
+{
+    if (b->ops->add_sub)
+        b->ops->add_sub(b, file, select);
+}
+
 void kp_backend_set_delay(kp_backend *b, kp_track_type type, double seconds)
 {
     if (b->ops->set_delay)

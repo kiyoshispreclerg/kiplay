@@ -10,6 +10,8 @@ ui/jump.c
 src/tagreader.c
 ui/shortcuts.c
 ui/tracks.c
+ui/subdl.c
+src/ytdlp.c
 ui/prefsdlg.c
 ui/desktop.c
 ui/chatpanel.c

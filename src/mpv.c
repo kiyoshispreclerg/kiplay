@@ -600,6 +600,16 @@ static void set_track(kp_backend *b, kp_track_type type, int id)
     set_property((mpv *)b, names[type], id > 0 ? cJSON_CreateNumber(id) : cJSON_CreateString("no"));
 }
 
+static void add_sub(kp_backend *b, const kp_sub_file *f, bool select)
+{
+    cJSON *cmd = command("sub-add");
+    cJSON_AddItemToArray(args_of(cmd), cJSON_CreateString(f->path));
+    cJSON_AddItemToArray(args_of(cmd), cJSON_CreateString(select ? "select" : "cached"));
+    cJSON_AddItemToArray(args_of(cmd), cJSON_CreateString(f->title ? f->title : ""));
+    cJSON_AddItemToArray(args_of(cmd), cJSON_CreateString(f->lang ? f->lang : ""));
+    send_json((mpv *)b, cmd);
+}
+
 static void set_delay(kp_backend *b, kp_track_type type, double seconds)
 {
     set_property((mpv *)b, type == KP_TRACK_SUB ? "sub-delay" : "audio-delay",
@@ -668,6 +678,7 @@ static const kp_backend_ops mpv_ops = {
     .set_volume = set_volume,
     .set_ticking = set_ticking,
     .set_track = set_track,
+    .add_sub = add_sub,
     .set_delay = set_delay,
     .set_aspect = set_aspect,
     .show_text = show_text,

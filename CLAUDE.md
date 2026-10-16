@@ -145,6 +145,7 @@ PULSE_SINK=kpbench tools/bench-compare.sh -k DIR -a CÓPIA[:nome] CENÁRIOS.tsv 
 | `src/srv3.c`, `src/json3.c` | leitores de srv3 (GMarkup) e json3 (cJSON) |
 | `src/chatlog.c` | `live_chat.json`: índice por tempo (mmap, thread) e decodificação sob demanda das mensagens |
 | `ui/chatpanel.c`, `ui/imgcache.c` | painel do chat ao lado do vídeo (Pango/Cairo); imagens por URL via `curl` filho, cache em `~/.cache/kiplay/chat` |
+| `src/ytdlp.c`, `ui/subdl.c` | legendas do YouTube pelo yt-dlp (`[tools] ytdlp`): lista os idiomas (`-J`), baixa ao lado do vídeo, `sub-add` no mpv; diálogo e menus |
 | `src/sidecar.c` | arquivos ao lado do vídeo (legendas, chat), conversão para ASS em `~/.cache/kiplay/subs` |
 | `src/ytsub_ass.c` | kp_ytsub → ASS: `\an`+`\pos`, cores, bordas; caixa (layer 0) e texto (layer 1) |
 | `proto/subconv.c` | srv3 → ASS na linha de comando |

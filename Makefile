@@ -28,7 +28,8 @@ LIB_SRC = src/log.c \
       src/json3.c \
       src/sidecar.c \
       src/chatlog.c \
-      src/ytsub_ass.c
+      src/ytsub_ass.c \
+      src/ytdlp.c
 VENDOR_SRC = vendor/cjson/cJSON.c
 LIBKP = $(BUILD)/libkp.a
 
@@ -44,6 +45,7 @@ APP_SRC = src/main.c \
       ui/player.c \
       ui/shortcuts.c \
       ui/tracks.c \
+      ui/subdl.c \
       ui/prefsdlg.c \
       ui/desktop.c \
       ui/imgcache.c \

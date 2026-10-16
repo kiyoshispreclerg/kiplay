@@ -175,6 +175,10 @@ void kp_tracks_context_items(kp_app *app, GtkWidget *menu)
         gtk_widget_set_sensitive(top, tracks_backend(app) != NULL);
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), top);
     }
+    GtkWidget *dl = gtk_menu_item_new_with_mnemonic(_("_Download subtitles from YouTube..."));
+    g_signal_connect_swapped(dl, "activate", G_CALLBACK(kp_subdl_start), app);
+    gtk_widget_set_sensitive(dl, kp_subdl_possible(app));
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), dl);
 }
 
 void kp_tracks_update(kp_app *app, const kp_track *t, int n)
@@ -420,6 +424,11 @@ void kp_tracks_menus(kp_app *app, GtkWidget *bar)
     m = top_menu(bar, _("_Subtitles"));
     track_submenu(m, _("_Track"), KP_TRACK_SUB);
     item(m, _("_Show / hide"), kp_tracks_toggle_subs, app, "toggle_subtitles");
+    separator(m);
+    separator(m);
+    GtkWidget *dl = gtk_menu_item_new_with_mnemonic(_("_Download from YouTube..."));
+    g_signal_connect_swapped(dl, "activate", G_CALLBACK(kp_subdl_start), app);
+    gtk_menu_shell_append(GTK_MENU_SHELL(m), dl);
     separator(m);
     item(m, _("Delay +100 ms"), sub_later, app, "sub_delay_up");
     item(m, _("Delay -100 ms"), sub_sooner, app, "sub_delay_down");

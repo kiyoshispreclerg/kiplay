@@ -135,6 +135,9 @@ void kp_backend_set_volume(kp_backend *b, int volume);        /* 0..100 */
 void kp_backend_set_ticking(kp_backend *b, bool on);
 /* KP_CAP_TRACKS (no-ops otherwise). id 0 = none (subtitles). */
 void kp_backend_set_track(kp_backend *b, kp_track_type type, int id);
+/* Loads a subtitle file into the playing file (KP_CAP_TRACKS); select: and
+ * shows it. */
+void kp_backend_add_sub(kp_backend *b, const kp_sub_file *file, bool select);
 /* Audio or subtitle delay, seconds (positive: later). */
 void kp_backend_set_delay(kp_backend *b, kp_track_type type, double seconds);
 /* "16:9", "4:3"...; NULL or "" = the file's own. */

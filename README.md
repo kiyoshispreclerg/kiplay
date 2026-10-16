@@ -78,6 +78,14 @@ Os atalhos se trocam em Opções → Preferências → Atalhos (até duas teclas
 por comando). Clique direito no vídeo ou na barra de controle abre um menu
 com o essencial (útil no modo compacto e na tela cheia), inclusive as faixas de áudio e legendas do vídeo. Clique direito numa faixa da playlist: tocar, pôr na fila, recortar/copiar/colar, remover e abrir a pasta do arquivo.
 
+**Legendas do YouTube:** se o nome do vídeo termina com o ID entre colchetes
+(`Título [dQw4w9WgXcQ].mp4`, como o yt-dlp grava), o menu Legendas e o clique
+direito no vídeo oferecem "Baixar legendas do YouTube...": o Kiplay pergunta
+ao yt-dlp se o vídeo existe e quais idiomas tem (as enviadas e a automática no
+idioma do vídeo), baixa as escolhidas ao lado do arquivo (no formato com estilo)
+e já as carrega. O caminho do yt-dlp fica em Opções → Preferências → Avançado
+(`[tools] ytdlp`).
+
 O Kiplay lembra de cada vídeo onde ele parou, as faixas de áudio e
 legenda escolhidas, os atrasos e a proporção (em
 `~/.local/share/kiplay/files/`), e continua dali da próxima vez. Em
@@ -102,6 +110,10 @@ program = mpv
 use_config = false
 # opções extras, como no SMPlayer
 extra = --deband
+
+[tools]
+# yt-dlp (binário do Linux) para baixar legendas do YouTube; vazio: procura no PATH
+ytdlp = ~/Downloads/yt-dlp_linux
 
 [video]
 hwdec = auto-safe
