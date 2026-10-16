@@ -662,6 +662,223 @@ void kp_playlists_toggle_queue(kp_app *app)
     kp_playlists_queue_changed(app);
 }
 
+/* ---- clipboard, context menu --------------------------------------------- */
+
+enum { CLIP_TEXT, CLIP_URIS };
+
+static const GtkTargetEntry clip_targets[] = {
+    {(char *)"text/uri-list", 0, CLIP_URIS},
+    {(char *)"UTF8_STRING", 0, CLIP_TEXT},
+    {(char *)"text/plain", 0, CLIP_TEXT},
+};
+
+/* What the clipboard holds is the locations (a strv) of the copied rows:
+ * as text, one per line, and as a text/uri-list, which file managers
+ * understand too. */
+static void clip_get(GtkClipboard *cb, GtkSelectionData *sel, guint info, gpointer owner)
+{
+    (void)cb;
+    char **locs = owner;
+    GString *out = g_string_new("");
+    for (char **l = locs; *l; l++) {
+        if (info == CLIP_URIS && (*l)[0] == '/') {
+            char *uri = g_filename_to_uri(*l, NULL, NULL);
+            g_string_append(out, uri ? uri : *l);
+            g_free(uri);
+        } else {
+            g_string_append(out, *l);
+        }
+        g_string_append(out, info == CLIP_URIS ? "\r\n" : "\n");
+    }
+    gtk_selection_data_set(sel, gtk_selection_data_get_target(sel), 8, (const guchar *)out->str,
+                           (gint)out->len);
+    g_string_free(out, TRUE);
+}
+
+static void clip_clear(GtkClipboard *cb, gpointer owner)
+{
+    (void)cb;
+    g_strfreev(owner);
+}
+
+/* The selected rows' locations onto the clipboard; false if none. */
+static bool copy_selected(kp_app *app, page_t *pg)
+{
+    size_t n;
+    size_t *rows = selected_rows(pg, &n);
+    if (!n) {
+        g_free(rows);
+        return false;
+    }
+    kp_playlist *pl = list_of(pg);
+    char **locs = g_new0(char *, n + 1);
+    for (size_t i = 0; i < n; i++)
+        locs[i] = g_strdup(kp_playlist_get(pl, rows[i])->location);
+    g_free(rows);
+    GtkClipboard *cb = gtk_widget_get_clipboard(app->window, GDK_SELECTION_CLIPBOARD);
+    if (!gtk_clipboard_set_with_data(cb, clip_targets, G_N_ELEMENTS(clip_targets), clip_get,
+                                     clip_clear, locs)) {
+        g_strfreev(locs);
+        return false;
+    }
+    return true;
+}
+
+void kp_playlists_copy(kp_app *app)
+{
+    page_t *pg = current_page(app);
+    if (pg)
+        copy_selected(app, pg);
+}
+
+void kp_playlists_cut(kp_app *app)
+{
+    page_t *pg = current_page(app);
+    if (pg && copy_selected(app, pg))
+        kp_playlists_remove_selected(app);
+}
+
+typedef struct {
+    kp_app *app;
+    int id;
+    long at;
+} paste_ctx;
+
+/* Lines that look like a location: a path or something://. */
+static char **location_lines(const char *text)
+{
+    char **lines = g_strsplit_set(text, "\r\n", -1);
+    GPtrArray *out = g_ptr_array_new();
+    for (char **l = lines; *l; l++) {
+        char *s = g_strstrip(*l);
+        if (s[0] == '/' || strstr(s, "://"))
+            g_ptr_array_add(out, g_strdup(s));
+    }
+    g_ptr_array_add(out, NULL);
+    g_strfreev(lines);
+    return (char **)g_ptr_array_free(out, FALSE);
+}
+
+static void paste_add(paste_ctx *ctx, char **locs)
+{
+    page_t *pg = page_for(ctx->app, ctx->id);
+    if (pg && locs && *locs)
+        add_locations(ctx->app, pg, ctx->at, locs, false, false);
+    g_strfreev(locs);
+    g_free(ctx);
+}
+
+static void paste_text(GtkClipboard *cb, const gchar *text, gpointer data)
+{
+    (void)cb;
+    paste_add(data, text ? location_lines(text) : NULL);
+}
+
+static void paste_uris(GtkClipboard *cb, gchar **uris, gpointer data)
+{
+    if (uris && *uris)
+        paste_add(data, g_strdupv(uris));
+    else
+        gtk_clipboard_request_text(cb, paste_text, data);
+}
+
+/* After the last selected row, else at the end. */
+void kp_playlists_paste(kp_app *app)
+{
+    page_t *pg = current_page(app);
+    if (!pg)
+        return;
+    size_t n;
+    size_t *rows = selected_rows(pg, &n);
+    paste_ctx *ctx = g_new(paste_ctx, 1);
+    *ctx = (paste_ctx){app, pg->id, n ? (long)rows[n - 1] + 1 : -1};
+    g_free(rows);
+    gtk_clipboard_request_uris(gtk_widget_get_clipboard(app->window, GDK_SELECTION_CLIPBOARD),
+                               paste_uris, ctx);
+}
+
+void kp_playlists_play_selected(kp_app *app)
+{
+    long index;
+    int id = kp_playlists_selection(app, &index);
+    if (id >= 0 && index >= 0)
+        kp_player_play_at(app, id, index);
+}
+
+/* The folder of the first selected file, in the file manager. */
+void kp_playlists_open_folder(kp_app *app)
+{
+    long index;
+    int id = kp_playlists_selection(app, &index);
+    kp_playlist *pl = id >= 0 && index >= 0 ? kp_playlists_get(app, id) : NULL;
+    if (!pl)
+        return;
+    char *path = kp_media_location(kp_playlist_get(pl, (size_t)index)->location);
+    char *file = g_str_has_prefix(path, "file://") ? g_filename_from_uri(path, NULL, NULL)
+                                                   : g_strdup(path);
+    char *q = file ? strrchr(file, '?') : NULL;
+    if (q && !g_file_test(file, G_FILE_TEST_EXISTS))
+        *q = '\0';
+    if (file && file[0] == '/') {
+        char *dir = g_path_get_dirname(file);
+        char *uri = g_filename_to_uri(dir, NULL, NULL);
+        GError *err = NULL;
+        if (uri && !g_app_info_launch_default_for_uri(uri, NULL, &err)) {
+            kp_log_warn(_("could not open the folder: %s"), err ? err->message : "?");
+            g_clear_error(&err);
+        }
+        g_free(uri);
+        g_free(dir);
+    }
+    g_free(file);
+    g_free(path);
+}
+
+static GtkWidget *row_menu_item(GtkWidget *menu, const char *label, void (*cb)(kp_app *),
+                                kp_app *app, const char *action, bool enabled)
+{
+    GtkWidget *it = gtk_menu_item_new_with_mnemonic(label);
+    g_signal_connect_swapped(it, "activate", G_CALLBACK(cb), app);
+    if (action)
+        kp_shortcuts_attach(it, action);
+    gtk_widget_set_sensitive(it, enabled);
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), it);
+    return it;
+}
+
+static void row_menu_separator(GtkWidget *menu)
+{
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), gtk_separator_menu_item_new());
+}
+
+/* Right click on rows: acts on the selection (which first becomes the row
+ * clicked, unless that one is already selected). */
+static void row_menu(kp_app *app, page_t *pg, GdkEventButton *ev)
+{
+    size_t n;
+    size_t *rows = selected_rows(pg, &n);
+    bool local = false;
+    if (n) {
+        const char *loc = kp_playlist_get(list_of(pg), rows[0])->location;
+        local = loc[0] == '/' || g_str_has_prefix(loc, "file://");
+    }
+    g_free(rows);
+    GtkWidget *m = gtk_menu_new();
+    row_menu_item(m, _("_Play"), kp_playlists_play_selected, app, NULL, n > 0);
+    row_menu_item(m, _("_Queue / unqueue"), kp_playlists_toggle_queue, app, "queue", n > 0);
+    row_menu_separator(m);
+    row_menu_item(m, _("Cu_t"), kp_playlists_cut, app, "cut", n > 0);
+    row_menu_item(m, _("_Copy"), kp_playlists_copy, app, "copy", n > 0);
+    row_menu_item(m, _("_Paste"), kp_playlists_paste, app, "paste", true);
+    row_menu_item(m, _("Remove _selected"), kp_playlists_remove_selected, app, "remove", n > 0);
+    row_menu_separator(m);
+    row_menu_item(m, _("Open containing _folder"), kp_playlists_open_folder, app, NULL,
+                  n > 0 && local);
+    gtk_widget_show_all(m);
+    g_signal_connect(m, "selection-done", G_CALLBACK(gtk_widget_destroy), NULL);
+    gtk_menu_popup(GTK_MENU(m), NULL, NULL, NULL, NULL, ev->button, ev->time);
+}
+
 /* Moves the selection to before row "to" (count: the end). */
 static void move_selection(kp_app *app, page_t *pg, size_t to)
 {
@@ -706,6 +923,20 @@ static gboolean select_allowed(GtkTreeSelection *sel, GtkTreeModel *m, GtkTreePa
 static gboolean on_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
     page_t *pg = data;
+    if (ev->type == GDK_BUTTON_PRESS && ev->button == 3) {
+        kp_app *app = g_object_get_data(G_OBJECT(w), "kp-app");
+        GtkTreePath *path;
+        GtkTreeSelection *sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(w));
+        if (gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(w), (int)ev->x, (int)ev->y, &path,
+                                          NULL, NULL, NULL)) {
+            if (!gtk_tree_selection_path_is_selected(sel, path))
+                gtk_tree_view_set_cursor(GTK_TREE_VIEW(w), path, NULL, FALSE);
+            gtk_tree_path_free(path);
+        }
+        gtk_widget_grab_focus(w);
+        row_menu(app, pg, ev);
+        return TRUE;
+    }
     if (ev->type != GDK_BUTTON_PRESS || ev->button != 1 ||
         (ev->state & (GDK_SHIFT_MASK | GDK_CONTROL_MASK)))
         return FALSE;

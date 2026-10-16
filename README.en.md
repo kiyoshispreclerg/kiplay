@@ -67,6 +67,7 @@ too.
 | Enter, double click on the list | plays the track |
 | Del | removes from the playlist |
 | Q | queues (or unqueues); the queue plays before the rest |
+| Ctrl+X, Ctrl+Ins, Ctrl+V | cut, copy and paste files in the playlist (Shift+Del and Shift+Ins too) |
 | Ctrl+J | jump to file: search the playlist on screen |
 | Ctrl+M, Ctrl+R, Ctrl+S | stop after this track, repeat, shuffle |
 | Alt+↑ / Alt+↓, drag | moves the selected tracks |
@@ -77,7 +78,7 @@ too.
 
 Shortcuts are changed in Options → Preferences → Shortcuts (up to two
 keys per command). A right click on the video or the control bar opens a
-menu with the essentials (handy in compact mode and fullscreen).
+menu with the essentials (handy in compact mode and fullscreen). A right click on a playlist row: play, queue, cut/copy/paste, remove and open the file's folder.
 
 Kiplay remembers, for each video, where it stopped, the audio and
 subtitle tracks chosen, the delays and the aspect ratio (in

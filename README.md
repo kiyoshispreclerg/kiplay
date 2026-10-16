@@ -65,6 +65,7 @@ playlist do Kiplay", esta também para pastas.
 | Enter, duplo clique na lista | toca a faixa |
 | Del | remove da playlist |
 | Q | põe na fila (ou tira); a fila toca antes do resto |
+| Ctrl+X, Ctrl+Ins, Ctrl+V | recortar, copiar e colar arquivos na playlist (Shift+Del e Shift+Ins também) |
 | Ctrl+J | ir para arquivo: busca na playlist da tela |
 | Ctrl+M, Ctrl+R, Ctrl+S | parar após esta faixa, repetir, aleatório |
 | Alt+↑ / Alt+↓, arrastar | move as faixas selecionadas |
@@ -75,7 +76,7 @@ playlist do Kiplay", esta também para pastas.
 
 Os atalhos se trocam em Opções → Preferências → Atalhos (até duas teclas
 por comando). Clique direito no vídeo ou na barra de controle abre um menu
-com o essencial (útil no modo compacto e na tela cheia).
+com o essencial (útil no modo compacto e na tela cheia). Clique direito numa faixa da playlist: tocar, pôr na fila, recortar/copiar/colar, remover e abrir a pasta do arquivo.
 
 O Kiplay lembra de cada vídeo onde ele parou, as faixas de áudio e
 legenda escolhidas, os atrasos e a proporção (em

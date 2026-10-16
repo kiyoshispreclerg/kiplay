@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: kiplay\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-15 20:29-0300\n"
+"POT-Creation-Date: 2026-10-16 07:49-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -106,7 +106,7 @@ msgstr ""
 msgid "_Import playlist..."
 msgstr ""
 
-#: ui/window.c:216 ui/playlists.c:937
+#: ui/window.c:216 ui/playlists.c:1168
 msgid "_Export playlist..."
 msgstr ""
 
@@ -122,7 +122,7 @@ msgstr ""
 msgid "_New"
 msgstr ""
 
-#: ui/window.c:222 ui/playlists.c:936
+#: ui/window.c:222 ui/playlists.c:1167
 msgid "_Rename..."
 msgstr ""
 
@@ -134,11 +134,11 @@ msgstr ""
 msgid "_Jump to file..."
 msgstr ""
 
-#: ui/window.c:226
+#: ui/window.c:226 ui/playlists.c:868
 msgid "_Queue / unqueue"
 msgstr ""
 
-#: ui/window.c:227
+#: ui/window.c:227 ui/playlists.c:873
 msgid "Remove _selected"
 msgstr ""
 
@@ -312,58 +312,83 @@ msgstr ""
 msgid "Add files"
 msgstr ""
 
-#: ui/playlists.c:941
+#: ui/playlists.c:827
+#, c-format
+msgid "could not open the folder: %s"
+msgstr ""
+
+#: ui/playlists.c:867
+msgid "_Play"
+msgstr ""
+
+#: ui/playlists.c:870
+msgid "Cu_t"
+msgstr ""
+
+#: ui/playlists.c:871
+msgid "_Copy"
+msgstr ""
+
+#: ui/playlists.c:872
+msgid "_Paste"
+msgstr ""
+
+#: ui/playlists.c:875
+msgid "Open containing _folder"
+msgstr ""
+
+#: ui/playlists.c:1172
 msgid "Re_move"
 msgstr ""
 
-#: ui/playlists.c:1052 ui/playlists.c:1093
+#: ui/playlists.c:1283 ui/playlists.c:1324
 #, c-format
 msgid "Playlist %zu"
 msgstr ""
 
-#: ui/playlists.c:1104 ui/shortcuts.c:106
+#: ui/playlists.c:1335 ui/shortcuts.c:106
 msgid "Rename playlist"
 msgstr ""
 
-#: ui/playlists.c:1137
+#: ui/playlists.c:1368
 #, c-format
 msgid "Close the playlist \"%s\"?"
 msgstr ""
 
-#: ui/playlists.c:1140
+#: ui/playlists.c:1371
 #, c-format
 msgid "Its %zu track will be removed from the list (the file stays)."
 msgid_plural "Its %zu tracks will be removed from the list (the files stay)."
 msgstr[0] ""
 msgstr[1] ""
 
-#: ui/playlists.c:1176
+#: ui/playlists.c:1407
 msgid "Playlists (m3u, m3u8, pls)"
 msgstr ""
 
-#: ui/playlists.c:1186
+#: ui/playlists.c:1417
 msgid "Import playlist"
 msgstr ""
 
-#: ui/playlists.c:1207
+#: ui/playlists.c:1438
 #, c-format
 msgid "Cannot read %s"
 msgstr ""
 
-#: ui/playlists.c:1236
+#: ui/playlists.c:1467
 msgid "Export playlist"
 msgstr ""
 
-#: ui/playlists.c:1249
+#: ui/playlists.c:1480
 #, c-format
 msgid "Cannot write %s"
 msgstr ""
 
-#: ui/playlists.c:1300
+#: ui/playlists.c:1531
 msgid "Playlist 1"
 msgstr ""
 
-#: ui/playlists.c:1307 ui/shortcuts.c:105
+#: ui/playlists.c:1538 ui/shortcuts.c:105
 msgid "New playlist"
 msgstr ""
 
@@ -570,50 +595,62 @@ msgid "Remove selected"
 msgstr ""
 
 #: ui/shortcuts.c:111
-msgid "Move selection up"
+msgid "Cut selected"
 msgstr ""
 
 #: ui/shortcuts.c:112
-msgid "Move selection down"
+msgid "Copy selected"
 msgstr ""
 
-#: ui/shortcuts.c:113 ui/prefsdlg.c:447
-msgid "Preferences"
+#: ui/shortcuts.c:113
+msgid "Paste"
 msgstr ""
 
 #: ui/shortcuts.c:114
+msgid "Move selection up"
+msgstr ""
+
+#: ui/shortcuts.c:115
+msgid "Move selection down"
+msgstr ""
+
+#: ui/shortcuts.c:116 ui/prefsdlg.c:447
+msgid "Preferences"
+msgstr ""
+
+#: ui/shortcuts.c:117
 msgid "Quit"
 msgstr ""
 
-#: ui/shortcuts.c:144
+#: ui/shortcuts.c:147
 #, c-format
 msgid "unknown key in [shortcuts]: %s"
 msgstr ""
 
-#: ui/shortcuts.c:335
+#: ui/shortcuts.c:338
 #, c-format
 msgid "%s was taken from \"%s\"."
 msgstr ""
 
-#: ui/shortcuts.c:411
+#: ui/shortcuts.c:414
 msgid ""
 "Click a key to change it; Backspace removes it. The media keys and Alt+1..9 "
 "(tabs) always work."
 msgstr ""
 
-#: ui/shortcuts.c:422
+#: ui/shortcuts.c:425
 msgid "Command"
 msgstr ""
 
-#: ui/shortcuts.c:425
+#: ui/shortcuts.c:428
 msgid "Key"
 msgstr ""
 
-#: ui/shortcuts.c:426
+#: ui/shortcuts.c:429
 msgid "Alternative"
 msgstr ""
 
-#: ui/shortcuts.c:439
+#: ui/shortcuts.c:442
 msgid "Restore _defaults"
 msgstr ""
 

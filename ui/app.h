@@ -183,6 +183,15 @@ void kp_playlists_import(kp_app *app);
 void kp_playlists_export(kp_app *app);
 /* Q: the selected rows into the queue, or out if all are already in. */
 void kp_playlists_toggle_queue(kp_app *app);
+/* The selected rows' files to the clipboard (cut: and out of the playlist);
+ * paste puts the clipboard's files (ours, or a file manager's) after the
+ * selection. */
+void kp_playlists_copy(kp_app *app);
+void kp_playlists_cut(kp_app *app);
+void kp_playlists_paste(kp_app *app);
+void kp_playlists_play_selected(kp_app *app);
+/* The first selected file's folder, in the file manager. */
+void kp_playlists_open_folder(kp_app *app);
 /* Shows these columns (KP_COLUMN_* bits) in every tab. */
 void kp_playlists_set_columns(kp_app *app, unsigned columns);
 /* The visible playlist and its id (NULL if none). */
