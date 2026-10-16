@@ -295,6 +295,8 @@ static void context_menu(kp_app *app, GdkEventButton *ev)
     command(m, _("P_revious"), G_CALLBACK(kp_player_prev), app, "previous");
     command(m, _("_Next"), G_CALLBACK(kp_player_next), app, "next");
     separator(m);
+    kp_tracks_context_items(app, m);
+    separator(m);
     command(m, app->fullscreen ? _("Leave _fullscreen") : _("_Fullscreen"),
             G_CALLBACK(toggle_fullscreen), app, "fullscreen");
     command(m, app->compact ? _("Leave c_ompact mode") : _("C_ompact mode"),

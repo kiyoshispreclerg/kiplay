@@ -76,7 +76,7 @@ playlist do Kiplay", esta também para pastas.
 
 Os atalhos se trocam em Opções → Preferências → Atalhos (até duas teclas
 por comando). Clique direito no vídeo ou na barra de controle abre um menu
-com o essencial (útil no modo compacto e na tela cheia). Clique direito numa faixa da playlist: tocar, pôr na fila, recortar/copiar/colar, remover e abrir a pasta do arquivo.
+com o essencial (útil no modo compacto e na tela cheia), inclusive as faixas de áudio e legendas do vídeo. Clique direito numa faixa da playlist: tocar, pôr na fila, recortar/copiar/colar, remover e abrir a pasta do arquivo.
 
 O Kiplay lembra de cada vídeo onde ele parou, as faixas de áudio e
 legenda escolhidas, os atrasos e a proporção (em

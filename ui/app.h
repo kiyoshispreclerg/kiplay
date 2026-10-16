@@ -278,6 +278,9 @@ void kp_tracks_menus(kp_app *app, GtkWidget *bar);
 void kp_tracks_free(void);
 /* The engine's track list (n 0: none). */
 void kp_tracks_update(kp_app *app, const kp_track *tracks, int n);
+/* Appends the Audio track and Subtitles submenus (a snapshot of the
+ * playing file's tracks) to a context menu. */
+void kp_tracks_context_items(kp_app *app, GtkWidget *menu);
 /* The engine or its state changed: the menus follow (what is greyed). */
 void kp_tracks_refresh(kp_app *app);
 /* Another file (or none): no tracks yet; the aspect from app->playing.file. */

@@ -124,14 +124,10 @@ static GtkWidget *radio(GSList **group, const char *label, kp_track_type type, i
     return it;
 }
 
-static void rebuild(kp_app *app, kp_track_type type)
+/* The radio items for the tracks of one type in menu. */
+static void fill(kp_app *app, GtkWidget *menu, kp_track_type type)
 {
-    GtkWidget *menu = track_menus[type];
-    GList *children = gtk_container_get_children(GTK_CONTAINER(menu));
-    for (GList *l = children; l; l = l->next)
-        gtk_widget_destroy(l->data);
-    g_list_free(children);
-
+    bool was = updating;
     updating = true;
     GSList *group = NULL;
     int n = 0, sel = selected(type);
@@ -152,7 +148,33 @@ static void rebuild(kp_app *app, kp_track_type type)
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), none);
     }
     gtk_widget_show_all(menu);
-    updating = false;
+    updating = was;
+}
+
+static void rebuild(kp_app *app, kp_track_type type)
+{
+    GtkWidget *menu = track_menus[type];
+    GList *children = gtk_container_get_children(GTK_CONTAINER(menu));
+    for (GList *l = children; l; l = l->next)
+        gtk_widget_destroy(l->data);
+    g_list_free(children);
+    fill(app, menu, type);
+}
+
+void kp_tracks_context_items(kp_app *app, GtkWidget *menu)
+{
+    static const struct {
+        kp_track_type type;
+        const char *label;
+    } kinds[] = {{KP_TRACK_AUDIO, N_("_Audio track")}, {KP_TRACK_SUB, N_("_Subtitles")}};
+    for (size_t i = 0; i < G_N_ELEMENTS(kinds); i++) {
+        GtkWidget *top = gtk_menu_item_new_with_mnemonic(_(kinds[i].label));
+        GtkWidget *sub = gtk_menu_new();
+        fill(app, sub, kinds[i].type);
+        gtk_menu_item_set_submenu(GTK_MENU_ITEM(top), sub);
+        gtk_widget_set_sensitive(top, tracks_backend(app) != NULL);
+        gtk_menu_shell_append(GTK_MENU_SHELL(menu), top);
+    }
 }
 
 void kp_tracks_update(kp_app *app, const kp_track *t, int n)

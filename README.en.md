@@ -78,7 +78,7 @@ too.
 
 Shortcuts are changed in Options → Preferences → Shortcuts (up to two
 keys per command). A right click on the video or the control bar opens a
-menu with the essentials (handy in compact mode and fullscreen). A right click on a playlist row: play, queue, cut/copy/paste, remove and open the file's folder.
+menu with the essentials (handy in compact mode and fullscreen), including the audio and subtitle tracks of the video. A right click on a playlist row: play, queue, cut/copy/paste, remove and open the file's folder.
 
 Kiplay remembers, for each video, where it stopped, the audio and
 subtitle tracks chosen, the delays and the aspect ratio (in

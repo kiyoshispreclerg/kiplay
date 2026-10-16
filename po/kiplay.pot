@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: kiplay\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 07:49-0300\n"
+"POT-Creation-Date: 2026-10-16 07:50-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -110,7 +110,7 @@ msgstr ""
 msgid "_Export playlist..."
 msgstr ""
 
-#: ui/window.c:218 ui/window.c:307 ui/desktop.c:176
+#: ui/window.c:218 ui/window.c:309 ui/desktop.c:176
 msgid "_Quit"
 msgstr ""
 
@@ -174,7 +174,7 @@ msgstr ""
 msgid "_Video area"
 msgstr ""
 
-#: ui/window.c:247 ui/window.c:300
+#: ui/window.c:247 ui/window.c:302
 msgid "C_ompact mode"
 msgstr ""
 
@@ -214,7 +214,7 @@ msgstr ""
 msgid "_Options"
 msgstr ""
 
-#: ui/window.c:281 ui/window.c:306
+#: ui/window.c:281 ui/window.c:308
 msgid "_Preferences..."
 msgstr ""
 
@@ -226,31 +226,31 @@ msgstr ""
 msgid "_About"
 msgstr ""
 
-#: ui/window.c:298
+#: ui/window.c:300
 msgid "Leave _fullscreen"
 msgstr ""
 
-#: ui/window.c:298 ui/tracks.c:381
+#: ui/window.c:300 ui/tracks.c:403
 msgid "_Fullscreen"
 msgstr ""
 
-#: ui/window.c:300
+#: ui/window.c:302
 msgid "Leave c_ompact mode"
 msgstr ""
 
-#: ui/window.c:303
+#: ui/window.c:305
 msgid "Hide c_hat"
 msgstr ""
 
-#: ui/window.c:303
+#: ui/window.c:305
 msgid "Show c_hat"
 msgstr ""
 
-#: ui/window.c:474
+#: ui/window.c:476
 msgid "out of memory"
 msgstr ""
 
-#: ui/window.c:479
+#: ui/window.c:481
 msgid "cannot find the settings folder (is $HOME set?)"
 msgstr ""
 
@@ -662,100 +662,104 @@ msgstr ""
 msgid "(file)"
 msgstr ""
 
-#: ui/tracks.c:140 ui/prefsdlg.c:293
+#: ui/tracks.c:136 ui/prefsdlg.c:293
 msgid "None"
 msgstr ""
 
-#: ui/tracks.c:150
+#: ui/tracks.c:146
 msgid "No tracks"
 msgstr ""
 
-#: ui/tracks.c:230
+#: ui/tracks.c:169
+msgid "_Audio track"
+msgstr ""
+
+#: ui/tracks.c:169 ui/tracks.c:420
+msgid "_Subtitles"
+msgstr ""
+
+#: ui/tracks.c:252
 #, c-format
 msgid "Subtitles: %s"
 msgstr ""
 
-#: ui/tracks.c:230
+#: ui/tracks.c:252
 #, c-format
 msgid "Audio: %s"
 msgstr ""
 
-#: ui/tracks.c:231
+#: ui/tracks.c:253
 msgid "none"
 msgstr ""
 
-#: ui/tracks.c:243
+#: ui/tracks.c:265
 msgid "Subtitles hidden"
 msgstr ""
 
-#: ui/tracks.c:252
+#: ui/tracks.c:274
 msgid "Subtitles shown"
 msgstr ""
 
-#: ui/tracks.c:266
+#: ui/tracks.c:288
 #, c-format
 msgid "Subtitle delay: %d ms"
 msgstr ""
 
-#: ui/tracks.c:267
+#: ui/tracks.c:289
 #, c-format
 msgid "Audio delay: %d ms"
 msgstr ""
 
-#: ui/tracks.c:280
+#: ui/tracks.c:302
 #, c-format
 msgid "Aspect ratio: %s"
 msgstr ""
 
-#: ui/tracks.c:280
+#: ui/tracks.c:302
 msgid "auto"
 msgstr ""
 
-#: ui/tracks.c:363
+#: ui/tracks.c:385
 msgid "_Video"
 msgstr ""
 
-#: ui/tracks.c:364 ui/tracks.c:387 ui/tracks.c:399
+#: ui/tracks.c:386 ui/tracks.c:409 ui/tracks.c:421
 msgid "_Track"
 msgstr ""
 
-#: ui/tracks.c:365
+#: ui/tracks.c:387
 msgid "_Aspect ratio"
 msgstr ""
 
-#: ui/tracks.c:372
+#: ui/tracks.c:394
 msgid "_Auto"
 msgstr ""
 
-#: ui/tracks.c:379
+#: ui/tracks.c:401
 msgid "_Next aspect ratio"
 msgstr ""
 
-#: ui/tracks.c:386
+#: ui/tracks.c:408
 msgid "_Audio"
 msgstr ""
 
-#: ui/tracks.c:389 ui/tracks.c:402
+#: ui/tracks.c:411 ui/tracks.c:424
 msgid "Delay +100 ms"
 msgstr ""
 
-#: ui/tracks.c:390 ui/tracks.c:403
+#: ui/tracks.c:412 ui/tracks.c:425
 msgid "Delay -100 ms"
 msgstr ""
 
-#: ui/tracks.c:391 ui/tracks.c:404
+#: ui/tracks.c:413 ui/tracks.c:426
 msgid "_No delay"
 msgstr ""
 
-#: ui/tracks.c:393
+#: ui/tracks.c:415
 msgid "_Mute"
 msgstr ""
 
-#: ui/tracks.c:398
-msgid "_Subtitles"
-msgstr ""
-
-#: ui/tracks.c:400
+#: ui/tracks.c:422
 msgid "_Show / hide"
 msgstr ""
 
