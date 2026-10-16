@@ -33,8 +33,14 @@ CPPFLAGS += -Isrc -Ivendor/cjson -DKP_VERSION='"$(VERSION)"'
 LDLIBS   += $(PKG_LIBS) -lm
 
 # kiplay-audio talks to PulseAudio (or PipeWire's pulse server) directly;
-# PULSE=0 builds it with ALSA only.
-PULSE ?= 1
+# PULSE=0 builds it with ALSA only. Left unset, it is used when libpulse's
+# development files are found, and skipped (with a hint) when they are not.
+ifeq ($(origin PULSE),undefined)
+PULSE := $(if $(shell $(PKG_CONFIG) --exists libpulse && echo y),1,0)
+ifeq ($(PULSE),0)
+$(info note: libpulse development files not found; building kiplay-audio with ALSA only (install libpulse-dev / pulseaudio-libs-devel to get PulseAudio))
+endif
+endif
 
 # Third-party code: our pedantic flags don't judge it.
 VENDOR_WARNFLAGS = -Wall -Wextra -Werror

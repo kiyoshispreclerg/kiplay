@@ -175,9 +175,11 @@ um grosso e borrado, mais fácil de ler; `auto = no` desliga a busca.
 
 ## Compilar
 
-Precisa de GTK 2, GLib, ALSA, libpulse, zlib, um compilador de C++ e das
+Precisa de GTK 2, GLib, ALSA, zlib, um compilador de C++ e das
 bibliotecas do FFmpeg (libavformat, libavcodec, libswresample), com os
-pacotes `-dev`. `make PULSE=0` compila sem o PulseAudio (só ALSA). A música
+pacotes `-dev`. O libpulse (`libpulse-dev`) é opcional, mas recomendado: o
+`make` o usa se achar os cabeçalhos; senão avisa e compila só com ALSA
+(`make PULSE=0` força isso, `make PULSE=1` exige o PulseAudio). A música
 de console usa uma cópia do [Game_Music_Emu](https://github.com/libgme/game-music-emu)
 em `vendor/gme` (LGPL-2.1-or-later).
 

@@ -176,9 +176,11 @@ thick, blurred one that is easier to read; `auto = no` turns the search off.
 
 ## Building
 
-Needs GTK 2, GLib, ALSA, libpulse, zlib, a C++ compiler and the FFmpeg
+Needs GTK 2, GLib, ALSA, zlib, a C++ compiler and the FFmpeg
 libraries (libavformat, libavcodec, libswresample), with their `-dev`
-packages. `make PULSE=0` builds without PulseAudio (ALSA only). Game music
+packages. libpulse (`libpulse-dev`) is optional but recommended: `make` uses
+it when the headers are found; otherwise it prints a note and builds with
+ALSA only (`make PULSE=0` forces that, `make PULSE=1` requires PulseAudio). Game music
 uses a copy of [Game_Music_Emu](https://github.com/libgme/game-music-emu)
 in `vendor/gme` (LGPL-2.1-or-later).
 

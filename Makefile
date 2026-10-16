@@ -54,7 +54,8 @@ APP_OBJ = $(patsubst %.c,$(BUILD)/%.o,$(APP_SRC))
 
 # kiplay-audio: the music engine, its own process. No GLib in it: libav,
 # ALSA and pthreads only, to stay small.
-AUDIO_SRC = audio/main.c audio/cmd.c audio/dec.c audio/game.c audio/out.c audio/pulse.c audio/tags.c
+AUDIO_SRC = audio/main.c audio/cmd.c audio/dec.c audio/game.c audio/out.c audio/tags.c
+AUDIO_SRC += $(if $(filter 1,$(PULSE)),audio/pulse.c)
 AUDIO_OBJ = $(patsubst %.c,$(BUILD)/%.o,$(AUDIO_SRC))
 ENGINE_PKGS = alsa libavformat libavcodec libavutil libswresample zlib $(if $(filter 1,$(PULSE)),libpulse)
 ENGINE_CFLAGS = $(shell $(PKG_CONFIG) --cflags $(ENGINE_PKGS) | sed 's/-I/-isystem /g') -isystem vendor/gme \
