@@ -209,6 +209,8 @@ void kp_playlists_update_status(kp_app *app);
 int kp_playlists_selection(kp_app *app, long *index);
 /* Bold for the playing row (index -1 = none), in the tab with that id. */
 void kp_playlists_mark_playing(kp_app *app, int id, long index);
+/* Scrolls that tab so the playing row is in the middle (a new file began). */
+void kp_playlists_scroll_to_playing(kp_app *app, int id, long index);
 /* Redraws one row after its entry changed (title, length). */
 void kp_playlists_refresh_row(kp_app *app, int id, long index);
 /* The kp_playlist with that id, or NULL. */

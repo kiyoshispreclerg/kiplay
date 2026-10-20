@@ -535,6 +535,7 @@ static void play_entry(kp_app *app, int id, long index, bool remember_it)
     app->playing.index = index;
     now_playing(app, e);
     kp_playlists_mark_playing(app, id, index);
+    kp_playlists_scroll_to_playing(app, id, index);
     kp_prefs_set_int(app->prefs, "playback", "playlist", id);
     kp_prefs_set_int(app->prefs, "playback", "index", (int)index);
     load_file_settings(app, e->location);
@@ -856,6 +857,7 @@ static void took_next(kp_app *app)
     p->queued = -1;
     now_playing(app, e);
     kp_playlists_mark_playing(app, p->playlist_id, p->index);
+    kp_playlists_scroll_to_playing(app, p->playlist_id, p->index);
     kp_prefs_set_int(app->prefs, "playback", "playlist", p->playlist_id);
     kp_prefs_set_int(app->prefs, "playback", "index", (int)p->index);
     /* Gapless only joins music on kiplay-audio: it started from the top,

@@ -165,4 +165,4 @@ que os testes linkam. Código que precisa do GTK vai em `ui/`.
   o outro.
 - Licença GPL-3.0-or-later; `SPDX-License-Identifier` no topo de cada
   arquivo.
-- Commits em português, terminando com a linha Co-Authored-By.
+- Commits em inglês, terminando com a linha Co-Authored-By.

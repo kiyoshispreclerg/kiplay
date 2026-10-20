@@ -274,6 +274,18 @@ void kp_playlists_mark_playing(kp_app *app, int id, long index)
     }
 }
 
+void kp_playlists_scroll_to_playing(kp_app *app, int id, long index)
+{
+    page_t *pg = page_for(app, id);
+    /* A list nobody has opened has no view yet: it starts at the top
+     * and nothing is lost. */
+    if (!pg || !pg->view || index < 0 || (size_t)index >= kp_playlist_count(list_of(pg)))
+        return;
+    GtkTreePath *p = gtk_tree_path_new_from_indices((int)index, -1);
+    gtk_tree_view_scroll_to_cell(GTK_TREE_VIEW(pg->view), p, NULL, TRUE, 0.5f, 0.0f);
+    gtk_tree_path_free(p);
+}
+
 void kp_playlists_refresh_row(kp_app *app, int id, long index)
 {
     page_t *pg = page_for(app, id);
