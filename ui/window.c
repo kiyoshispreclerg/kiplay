@@ -187,6 +187,7 @@ static void close_window(kp_window *w)
     kp_desktop_free(app);
     kp_player_free(app);
     kp_tracks_free();
+    kp_search_panel_close(app);
     kp_playlists_save(app);
     kp_playlists_free(app);
     kp_layout_save(app);
@@ -223,6 +224,7 @@ static GtkWidget *menu_bar(kp_app *app)
     command(m, _("_Close"), G_CALLBACK(kp_playlists_close), app, "close_playlist");
     separator(m);
     command(m, _("_Jump to file..."), G_CALLBACK(kp_jump_dialog), app, "jump");
+    command(m, _("_Search panel"), G_CALLBACK(kp_search_panel_toggle), app, "search");
     command(m, _("_Queue / unqueue"), G_CALLBACK(kp_playlists_toggle_queue), app, "queue");
     command(m, _("Remove _selected"), G_CALLBACK(kp_playlists_remove_selected), app, "remove");
 
@@ -565,7 +567,7 @@ int kp_window_run(const kp_window_opts *opts)
     g_source_remove(sig_int);
     g_source_remove(sig_term);
     g_object_unref(app->video);
-    g_object_unref(app->notebook);
+    g_object_unref(app->side);
     g_object_unref(app->controls);
     g_array_free(app->queue, TRUE);
     kp_plset_free(app->playlists);

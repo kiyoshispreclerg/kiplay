@@ -67,6 +67,7 @@ playlist do Kiplay", esta também para pastas.
 | Q | põe na fila (ou tira); a fila toca antes do resto |
 | Ctrl+X, Ctrl+Ins, Ctrl+V | recortar, copiar e colar arquivos na playlist (Shift+Del e Shift+Ins também) |
 | Ctrl+J | ir para arquivo: busca na playlist da tela |
+| Ctrl+F | painel de busca ao lado das playlists: faixas de todas as playlists; duplo clique toca e mostra a aba; Esc fecha |
 | Ctrl+M, Ctrl+R, Ctrl+S | parar após esta faixa, repetir, aleatório |
 | Alt+↑ / Alt+↓, arrastar | move as faixas selecionadas |
 | Ctrl+O, Ctrl+Shift+O | adicionar arquivos, adicionar pasta |

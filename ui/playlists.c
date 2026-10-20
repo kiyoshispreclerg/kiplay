@@ -68,6 +68,7 @@ static void schedule_save(kp_app *app)
 
 void kp_playlists_changed(kp_app *app)
 {
+    kp_search_panel_changed(app);
     schedule_save(app);
 }
 
@@ -351,6 +352,13 @@ static void select_rows(page_t *pg, long first, long n)
     gtk_tree_selection_select_range(sel, a, b);
     gtk_tree_path_free(a);
     gtk_tree_path_free(b);
+}
+
+void kp_playlists_focus(kp_app *app)
+{
+    page_t *pg = current_page(app);
+    if (pg && pg->view)
+        gtk_widget_grab_focus(pg->view);
 }
 
 void kp_playlists_select(kp_app *app, int id, long index)
@@ -1538,7 +1546,11 @@ void kp_playlists_init(kp_app *app)
     g_free(engine);
     app->notebook = gtk_notebook_new();
     gtk_notebook_set_scrollable(GTK_NOTEBOOK(app->notebook), TRUE);
-    g_object_ref_sink(app->notebook); /* layout.c moves it around */
+    gtk_widget_show(app->notebook);
+    /* layout.c moves this box around; the search panel joins the notebook in it. */
+    app->side = gtk_hbox_new(FALSE, 0);
+    g_object_ref_sink(app->side);
+    gtk_box_pack_start(GTK_BOX(app->side), app->notebook, TRUE, TRUE, 0);
     if (kp_plset_count(app->playlists) == 0) {
         kp_plset_insert(app->playlists, 0, _("Playlist 1"));
         schedule_save(app);

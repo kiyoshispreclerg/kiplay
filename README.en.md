@@ -69,6 +69,7 @@ too.
 | Q | queues (or unqueues); the queue plays before the rest |
 | Ctrl+X, Ctrl+Ins, Ctrl+V | cut, copy and paste files in the playlist (Shift+Del and Shift+Ins too) |
 | Ctrl+J | jump to file: search the playlist on screen |
+| Ctrl+F | search panel beside the playlists: tracks of all playlists; double click plays and shows its tab; Esc closes |
 | Ctrl+M, Ctrl+R, Ctrl+S | stop after this track, repeat, shuffle |
 | Alt+↑ / Alt+↓, drag | moves the selected tracks |
 | Ctrl+O, Ctrl+Shift+O | add files, add folder |

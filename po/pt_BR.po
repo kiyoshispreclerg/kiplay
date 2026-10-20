@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: kiplay\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-20 17:59-0300\n"
+"POT-Creation-Date: 2026-10-20 19:41-0300\n"
 "PO-Revision-Date: 2026-10-09 16:23-0300\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -104,181 +104,185 @@ msgstr ""
 "Reprodutor leve de áudio e vídeo para o KiDesktop, com as legendas "
 "estilizadas do YouTube e o chat de lives gravadas."
 
-#: ui/window.c:197 ui/prefsdlg.c:448
+#: ui/window.c:198 ui/prefsdlg.c:448
 #, c-format
 msgid "could not save the settings: %s"
 msgstr "não foi possível salvar a configuração: %s"
 
-#: ui/window.c:211
+#: ui/window.c:212
 msgid "_File"
 msgstr "_Arquivo"
 
-#: ui/window.c:212
+#: ui/window.c:213
 msgid "_Add files..."
 msgstr "_Adicionar arquivos..."
 
-#: ui/window.c:213
+#: ui/window.c:214
 msgid "Add _folder..."
 msgstr "Adicionar _pasta..."
 
-#: ui/window.c:215
+#: ui/window.c:216
 msgid "_Import playlist..."
 msgstr "_Importar playlist..."
 
-#: ui/window.c:216 ui/playlists.c:1180
+#: ui/window.c:217 ui/playlists.c:1188
 msgid "_Export playlist..."
 msgstr "_Exportar playlist..."
 
-#: ui/window.c:218 ui/window.c:311 ui/desktop.c:176
+#: ui/window.c:219 ui/window.c:313 ui/desktop.c:176
 msgid "_Quit"
 msgstr "_Sair"
 
-#: ui/window.c:220
+#: ui/window.c:221
 msgid "_Playlist"
 msgstr "_Playlist"
 
-#: ui/window.c:221
+#: ui/window.c:222
 msgid "_New"
 msgstr "_Nova"
 
-#: ui/window.c:222 ui/playlists.c:1179
+#: ui/window.c:223 ui/playlists.c:1187
 msgid "_Rename..."
 msgstr "_Renomear..."
 
-#: ui/window.c:223
+#: ui/window.c:224
 msgid "_Close"
 msgstr "_Fechar"
 
-#: ui/window.c:225
+#: ui/window.c:226
 msgid "_Jump to file..."
 msgstr "_Ir para arquivo..."
 
-#: ui/window.c:226 ui/playlists.c:880
+#: ui/window.c:227
+msgid "_Search panel"
+msgstr "_Painel de busca"
+
+#: ui/window.c:228 ui/playlists.c:888
 msgid "_Queue / unqueue"
 msgstr "Pôr na _fila / tirar"
 
-#: ui/window.c:227 ui/playlists.c:885
+#: ui/window.c:229 ui/playlists.c:893
 msgid "Remove _selected"
 msgstr "Remover _selecionadas"
 
-#: ui/window.c:229
+#: ui/window.c:231
 msgid "Play_back"
 msgstr "_Reprodução"
 
-#: ui/window.c:230 ui/window.c:295 ui/desktop.c:169
+#: ui/window.c:232 ui/window.c:297 ui/desktop.c:169
 msgid "_Play / Pause"
 msgstr "_Tocar / Pausar"
 
-#: ui/window.c:231 ui/window.c:296 ui/desktop.c:170
+#: ui/window.c:233 ui/window.c:298 ui/desktop.c:170
 msgid "_Stop"
 msgstr "_Parar"
 
-#: ui/window.c:232 ui/window.c:297 ui/desktop.c:171
+#: ui/window.c:234 ui/window.c:299 ui/desktop.c:171
 msgid "P_revious"
 msgstr "_Anterior"
 
-#: ui/window.c:233 ui/window.c:298 ui/desktop.c:172
+#: ui/window.c:235 ui/window.c:300 ui/desktop.c:172
 msgid "_Next"
 msgstr "_Próxima"
 
-#: ui/window.c:234
+#: ui/window.c:236
 msgid "Next _frame"
 msgstr "Próximo _quadro"
 
-#: ui/window.c:235
+#: ui/window.c:237
 #, fuzzy
 msgid "Previous f_rame"
 msgstr "Anterior"
 
-#: ui/window.c:236
+#: ui/window.c:238
 msgid "Stop _after this track"
 msgstr "_Parar após esta faixa"
 
-#: ui/window.c:243
+#: ui/window.c:245
 msgid "_View"
 msgstr "_Exibir"
 
-#: ui/window.c:244
+#: ui/window.c:246
 msgid "_Video area"
 msgstr "Área de _vídeo"
 
-#: ui/window.c:249 ui/window.c:304
+#: ui/window.c:251 ui/window.c:306
 msgid "C_ompact mode"
 msgstr "Modo c_ompacto"
 
-#: ui/window.c:253
+#: ui/window.c:255
 msgid "_Playlists"
 msgstr "_Playlists"
 
-#: ui/window.c:258
+#: ui/window.c:260
 msgid "_Chat"
 msgstr "_Chat"
 
-#: ui/window.c:265
+#: ui/window.c:267
 msgid "Video _above the playlists"
 msgstr "Vídeo _acima das playlists"
 
-#: ui/window.c:266
+#: ui/window.c:268
 msgid "Video on the _left"
 msgstr "Vídeo à _esquerda"
 
-#: ui/window.c:267
+#: ui/window.c:269
 msgid "Video on the _right"
 msgstr "Vídeo à _direita"
 
-#: ui/window.c:271
+#: ui/window.c:273
 msgid "Controls at the _bottom"
 msgstr "Controles no _rodapé"
 
-#: ui/window.c:272
+#: ui/window.c:274
 msgid "Controls at the _top"
 msgstr "Controles no _topo"
 
-#: ui/window.c:276
+#: ui/window.c:278
 msgid "Playlist _columns"
 msgstr "_Colunas da playlist"
 
-#: ui/window.c:282
+#: ui/window.c:284
 msgid "_Options"
 msgstr "_Opções"
 
-#: ui/window.c:283 ui/window.c:310
+#: ui/window.c:285 ui/window.c:312
 msgid "_Preferences..."
 msgstr "_Preferências..."
 
-#: ui/window.c:285
+#: ui/window.c:287
 msgid "_Help"
 msgstr "Aj_uda"
 
-#: ui/window.c:286
+#: ui/window.c:288
 msgid "_About"
 msgstr "_Sobre"
 
-#: ui/window.c:302
+#: ui/window.c:304
 msgid "Leave _fullscreen"
 msgstr "Sair da tela _cheia"
 
-#: ui/window.c:302 ui/tracks.c:407
+#: ui/window.c:304 ui/tracks.c:407
 msgid "_Fullscreen"
 msgstr "Tela _cheia"
 
-#: ui/window.c:304
+#: ui/window.c:306
 msgid "Leave c_ompact mode"
 msgstr "Sair do modo c_ompacto"
 
-#: ui/window.c:307
+#: ui/window.c:309
 msgid "Hide c_hat"
 msgstr "Ocultar c_hat"
 
-#: ui/window.c:307
+#: ui/window.c:309
 msgid "Show c_hat"
 msgstr "Mostrar c_hat"
 
-#: ui/window.c:478
+#: ui/window.c:480
 msgid "out of memory"
 msgstr "memória insuficiente"
 
-#: ui/window.c:483
+#: ui/window.c:485
 msgid "cannot find the settings folder (is $HOME set?)"
 msgstr "não achei a pasta de configuração ($HOME está definido?)"
 
@@ -302,121 +306,121 @@ msgstr "Duração"
 msgid "Path"
 msgstr "Caminho"
 
-#: ui/playlists.c:145
+#: ui/playlists.c:146
 #, c-format
 msgid "could not save the playlists: %s"
 msgstr "não foi possível salvar as playlists: %s"
 
-#: ui/playlists.c:169
+#: ui/playlists.c:170
 msgid "Empty playlist"
 msgstr "Playlist vazia"
 
-#: ui/playlists.c:171
+#: ui/playlists.c:172
 #, c-format
 msgid "%zu track"
 msgid_plural "%zu tracks"
 msgstr[0] "%zu faixa"
 msgstr[1] "%zu faixas"
 
-#: ui/playlists.c:172
+#: ui/playlists.c:173
 #, c-format
 msgid "%zu track, %s"
 msgid_plural "%zu tracks, %s"
 msgstr[0] "%zu faixa, %s"
 msgstr[1] "%zu faixas, %s"
 
-#: ui/playlists.c:175
+#: ui/playlists.c:176
 #, c-format
 msgid "%s — reading tags (%zu file left)"
 msgid_plural "%s — reading tags (%zu files left)"
 msgstr[0] "%s — lendo tags (falta %zu arquivo)"
 msgstr[1] "%s — lendo tags (faltam %zu arquivos)"
 
-#: ui/playlists.c:594 ui/shortcuts.c:106
+#: ui/playlists.c:602 ui/shortcuts.c:106
 msgid "Add folder"
 msgstr "Adicionar pasta"
 
-#: ui/playlists.c:594 ui/shortcuts.c:105
+#: ui/playlists.c:602 ui/shortcuts.c:105
 msgid "Add files"
 msgstr "Adicionar arquivos"
 
-#: ui/playlists.c:839
+#: ui/playlists.c:847
 #, c-format
 msgid "could not open the folder: %s"
 msgstr "não foi possível abrir a pasta: %s"
 
-#: ui/playlists.c:879
+#: ui/playlists.c:887
 msgid "_Play"
 msgstr "_Tocar"
 
-#: ui/playlists.c:882
+#: ui/playlists.c:890
 msgid "Cu_t"
 msgstr "Reco_rtar"
 
-#: ui/playlists.c:883
+#: ui/playlists.c:891
 msgid "_Copy"
 msgstr "_Copiar"
 
-#: ui/playlists.c:884
+#: ui/playlists.c:892
 msgid "_Paste"
 msgstr "C_olar"
 
-#: ui/playlists.c:887
+#: ui/playlists.c:895
 msgid "Open containing _folder"
 msgstr "Abrir _pasta do arquivo"
 
-#: ui/playlists.c:1184
+#: ui/playlists.c:1192
 msgid "Re_move"
 msgstr "_Remover"
 
-#: ui/playlists.c:1295 ui/playlists.c:1336
+#: ui/playlists.c:1303 ui/playlists.c:1344
 #, c-format
 msgid "Playlist %zu"
 msgstr "Playlist %zu"
 
-#: ui/playlists.c:1347 ui/shortcuts.c:108
+#: ui/playlists.c:1355 ui/shortcuts.c:108
 msgid "Rename playlist"
 msgstr "Renomear playlist"
 
-#: ui/playlists.c:1380
+#: ui/playlists.c:1388
 #, c-format
 msgid "Close the playlist \"%s\"?"
 msgstr "Fechar a playlist \"%s\"?"
 
-#: ui/playlists.c:1383
+#: ui/playlists.c:1391
 #, c-format
 msgid "Its %zu track will be removed from the list (the file stays)."
 msgid_plural "Its %zu tracks will be removed from the list (the files stay)."
 msgstr[0] "A %zu faixa sai da lista (o arquivo continua no disco)."
 msgstr[1] "As %zu faixas saem da lista (os arquivos continuam no disco)."
 
-#: ui/playlists.c:1419
+#: ui/playlists.c:1427
 msgid "Playlists (m3u, m3u8, pls)"
 msgstr "Playlists (m3u, m3u8, pls)"
 
-#: ui/playlists.c:1429
+#: ui/playlists.c:1437
 msgid "Import playlist"
 msgstr "Importar playlist"
 
-#: ui/playlists.c:1450
+#: ui/playlists.c:1458
 #, c-format
 msgid "Cannot read %s"
 msgstr "Não foi possível ler %s"
 
-#: ui/playlists.c:1479
+#: ui/playlists.c:1487
 msgid "Export playlist"
 msgstr "Exportar playlist"
 
-#: ui/playlists.c:1492
+#: ui/playlists.c:1500
 #, c-format
 msgid "Cannot write %s"
 msgstr "Não foi possível gravar %s"
 
-#: ui/playlists.c:1543
+#: ui/playlists.c:1555
 msgid "Playlist 1"
 msgstr "Playlist 1"
 
-#: ui/playlists.c:1550 ui/shortcuts.c:107
+#: ui/playlists.c:1562 ui/shortcuts.c:107
 msgid "New playlist"
 msgstr "Nova playlist"
 
@@ -505,20 +509,25 @@ msgstr "o programa que toca parou (%s)"
 msgid "The player program keeps stopping; giving up for now."
 msgstr "O programa que toca continua parando; desisti por enquanto."
 
-#: ui/jump.c:62
+#: ui/jump.c:62 ui/searchpanel.c:119
 #, c-format
 msgid "%zu file"
 msgid_plural "%zu files"
 msgstr[0] "%zu arquivo"
 msgstr[1] "%zu arquivos"
 
-#: ui/jump.c:139 ui/shortcuts.c:110
+#: ui/jump.c:139 ui/shortcuts.c:111
 msgid "Jump to file"
 msgstr "Ir para arquivo"
 
 #: ui/jump.c:141
 msgid "_Queue"
 msgstr "_Fila"
+
+#: ui/searchpanel.c:121
+#, c-format
+msgid "%s (first %zu shown)"
+msgstr "%s (mostrando os primeiros %zu)"
 
 #: src/tagreader.c:155
 #, c-format
@@ -626,53 +635,57 @@ msgstr "Chat"
 msgid "Close playlist"
 msgstr "Fechar playlist"
 
-#: ui/shortcuts.c:111
+#: ui/shortcuts.c:110
+msgid "Search panel"
+msgstr "Painel de busca"
+
+#: ui/shortcuts.c:112
 msgid "Queue / unqueue"
 msgstr "Pôr na fila / tirar"
 
-#: ui/shortcuts.c:112
+#: ui/shortcuts.c:113
 msgid "Remove selected"
 msgstr "Remover selecionadas"
 
-#: ui/shortcuts.c:113
+#: ui/shortcuts.c:114
 msgid "Cut selected"
 msgstr "Recortar selecionadas"
 
-#: ui/shortcuts.c:114
+#: ui/shortcuts.c:115
 msgid "Copy selected"
 msgstr "Copiar selecionadas"
 
-#: ui/shortcuts.c:115
+#: ui/shortcuts.c:116
 msgid "Paste"
 msgstr "Colar"
 
-#: ui/shortcuts.c:116
+#: ui/shortcuts.c:117
 msgid "Move selection up"
 msgstr "Subir as selecionadas"
 
-#: ui/shortcuts.c:117
+#: ui/shortcuts.c:118
 msgid "Move selection down"
 msgstr "Descer as selecionadas"
 
-#: ui/shortcuts.c:118 ui/prefsdlg.c:458
+#: ui/shortcuts.c:119 ui/prefsdlg.c:458
 msgid "Preferences"
 msgstr "Preferências"
 
-#: ui/shortcuts.c:119
+#: ui/shortcuts.c:120
 msgid "Quit"
 msgstr "Sair"
 
-#: ui/shortcuts.c:149
+#: ui/shortcuts.c:150
 #, c-format
 msgid "unknown key in [shortcuts]: %s"
 msgstr "tecla desconhecida em [shortcuts]: %s"
 
-#: ui/shortcuts.c:340
+#: ui/shortcuts.c:341
 #, c-format
 msgid "%s was taken from \"%s\"."
 msgstr "%s saiu de “%s”."
 
-#: ui/shortcuts.c:416
+#: ui/shortcuts.c:417
 msgid ""
 "Click a key to change it; Backspace removes it. The media keys and Alt+1..9 "
 "(tabs) always work."
@@ -680,19 +693,19 @@ msgstr ""
 "Clique numa tecla para trocá-la; Backspace a remove. As teclas de mídia e "
 "Alt+1..9 (abas) sempre funcionam."
 
-#: ui/shortcuts.c:427
+#: ui/shortcuts.c:428
 msgid "Command"
 msgstr "Comando"
 
-#: ui/shortcuts.c:430
+#: ui/shortcuts.c:431
 msgid "Key"
 msgstr "Tecla"
 
-#: ui/shortcuts.c:431
+#: ui/shortcuts.c:432
 msgid "Alternative"
 msgstr "Alternativa"
 
-#: ui/shortcuts.c:444
+#: ui/shortcuts.c:445
 msgid "Restore _defaults"
 msgstr "Restaurar _padrões"
 

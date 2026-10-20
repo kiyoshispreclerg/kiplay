@@ -107,6 +107,7 @@ static const action actions[] = {
     {"new_playlist", N_("New playlist"), "<Control>t", kp_playlists_new, false},
     {"rename_playlist", N_("Rename playlist"), "F2", kp_playlists_rename, false},
     {"close_playlist", N_("Close playlist"), "<Control>w", kp_playlists_close, false},
+    {"search", N_("Search panel"), "<Control>f", kp_search_panel_toggle, false},
     {"jump", N_("Jump to file"), "<Control>j", kp_jump_dialog, false},
     {"queue", N_("Queue / unqueue"), "q", kp_playlists_toggle_queue, true},
     {"remove", N_("Remove selected"), "Delete", kp_playlists_remove_selected, true},

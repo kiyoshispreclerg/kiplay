@@ -104,6 +104,8 @@ typedef struct {
     GtkWidget *body;     /* vbox under the menu bar */
     GtkWidget *video;    /* black drawing area; its X window is the backend's --wid */
     GtkWidget *notebook; /* one page per playlist */
+    GtkWidget *side;     /* what layout.c places for the playlists: the notebook,
+                          * and the search panel beside it while open */
     GtkWidget *controls; /* the transport bar */
     GtkWidget *paned;    /* holds video + notebook while the video shows */
     GtkWidget *status;   /* label at the bottom */
@@ -200,6 +202,8 @@ void kp_playlists_open_folder(kp_app *app);
 void kp_playlists_set_columns(kp_app *app, unsigned columns);
 /* The visible playlist and its id (NULL if none). */
 kp_playlist *kp_playlists_visible(kp_app *app, int *id);
+/* The visible playlist gets the keyboard focus. */
+void kp_playlists_focus(kp_app *app);
 /* Shows the tab with that id and selects the row, scrolled into view. */
 void kp_playlists_select(kp_app *app, int id, long index);
 /* The queue changed: redraw the numbers. */
@@ -365,6 +369,14 @@ void kp_desktop_present(kp_app *app);
 /* window.c */
 /* Saves everything and closes the window (Quit). */
 void kp_window_quit(kp_app *app);
+
+/* searchpanel.c: the search panel beside the playlists (Ctrl+F). It
+ * exists only while open. */
+void kp_search_panel_toggle(kp_app *app);
+/* A playlist changed: the open panel searches again (no-op if closed). */
+void kp_search_panel_changed(kp_app *app);
+/* The window is going: drops the panel without touching the layout. */
+void kp_search_panel_close(kp_app *app);
 
 /* jump.c: Ctrl+J, find a file in the visible playlist and play or queue it. */
 void kp_jump_dialog(kp_app *app);

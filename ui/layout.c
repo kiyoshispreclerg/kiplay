@@ -33,7 +33,7 @@ void kp_layout_save(kp_app *app)
 {
     /* With the playlists hidden (fullscreen, compact mode) the divider is
      * wherever GTK left it, not where the user put it. */
-    if (app->paned && gtk_widget_get_visible(app->notebook))
+    if (app->paned && gtk_widget_get_visible(app->side))
         kp_prefs_set_int(app->prefs, "layout", paned_key(app),
                          gtk_paned_get_position(GTK_PANED(app->paned)));
 }
@@ -71,7 +71,7 @@ static gboolean map_backend_windows_later(gpointer data)
  * alone). The status line is packed at the end and stays last. */
 static void pack_controls(kp_app *app)
 {
-    GtkWidget *center = app->paned ? app->paned : app->notebook;
+    GtkWidget *center = app->paned ? app->paned : app->side;
     gint pos = 0;
     gtk_container_child_get(GTK_CONTAINER(app->body), center, "position", &pos, NULL);
     gtk_box_pack_start(GTK_BOX(app->body), app->controls, FALSE, FALSE, 0);
@@ -115,7 +115,7 @@ void kp_layout_apply(kp_app *app)
     else if (parent != holder)
         gtk_widget_reparent(app->video, holder);
 
-    detach(app->notebook);
+    detach(app->side);
     detach(app->controls);
     if (app->chat)
         detach(app->chat);
@@ -124,7 +124,7 @@ void kp_layout_apply(kp_app *app)
         app->paned = NULL;
     }
 
-    GtkWidget *center = app->notebook;
+    GtkWidget *center = app->side;
     if (app->show_video) {
         app->paned = app->video_pos == KP_VIDEO_ABOVE ? gtk_vpaned_new() : gtk_hpaned_new();
         g_signal_connect_after(app->paned, "size-allocate", G_CALLBACK(on_paned_allocate), app);
@@ -134,9 +134,9 @@ void kp_layout_apply(kp_app *app)
         GtkWidget *placeholder = with_chat ? gtk_hbox_new(FALSE, 0) : gtk_event_box_new();
         if (video_first) {
             gtk_paned_pack1(GTK_PANED(app->paned), placeholder, TRUE, FALSE);
-            gtk_paned_pack2(GTK_PANED(app->paned), app->notebook, FALSE, FALSE);
+            gtk_paned_pack2(GTK_PANED(app->paned), app->side, FALSE, FALSE);
         } else {
-            gtk_paned_pack1(GTK_PANED(app->paned), app->notebook, FALSE, FALSE);
+            gtk_paned_pack1(GTK_PANED(app->paned), app->side, FALSE, FALSE);
             gtk_paned_pack2(GTK_PANED(app->paned), placeholder, TRUE, FALSE);
         }
         int def = app->video_pos == KP_VIDEO_ABOVE ? 320 : 560;
@@ -181,7 +181,7 @@ void kp_layout_apply(kp_app *app)
     else
         pack_controls(app);
     if (app->compact || app->fullscreen || !app->playlists_shown)
-        gtk_widget_hide(app->notebook);
+        gtk_widget_hide(app->side);
 
     kp_chat_overlay_update(app);
     if (xid_before && gtk_widget_get_realized(app->video))
@@ -223,7 +223,7 @@ static void show_parts(kp_app *app)
 {
     bool others = !app->fullscreen && !app->compact;
     gtk_widget_set_visible(app->menubar, others);
-    gtk_widget_set_visible(app->notebook, others && app->playlists_shown);
+    gtk_widget_set_visible(app->side, others && app->playlists_shown);
     gtk_widget_set_visible(app->status, others);
     if (chat_in_layout)
         gtk_widget_set_visible(app->chat, !app->fullscreen);

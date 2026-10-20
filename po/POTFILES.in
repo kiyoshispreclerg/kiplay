@@ -7,6 +7,7 @@ ui/controls.c
 ui/layout.c
 ui/player.c
 ui/jump.c
+ui/searchpanel.c
 src/tagreader.c
 ui/shortcuts.c
 ui/tracks.c
