@@ -135,6 +135,7 @@ static void update_buttons(kp_app *app)
     gtk_widget_set_visible(app->play_btn, !playing);
     gtk_widget_set_visible(app->pause_btn, playing);
     kp_desktop_update(app);
+    kp_fsbar_video_changed(app);
 }
 
 /* The playlist entry learns its length and, if the tag reader found no

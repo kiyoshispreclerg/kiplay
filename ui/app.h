@@ -169,6 +169,9 @@ void kp_layout_set_compact(kp_app *app, bool on);
 void kp_fsbar_init(kp_app *app);
 void kp_fsbar_attach(kp_app *app);
 void kp_fsbar_detach(kp_app *app);
+/* Windowed or not, the mouse cursor hides at rest over a playing video;
+ * call when whether one plays may have changed. */
+void kp_fsbar_video_changed(kp_app *app);
 
 /* playlists.c */
 void kp_playlists_init(kp_app *app);

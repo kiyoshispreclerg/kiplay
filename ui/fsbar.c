@@ -8,7 +8,11 @@
  * after HIDE_MS without movement and outside it. GTK 2 has no
  * overlay and the video is another process's X window, so a popup
  * (override-redirect, above the fullscreen window) is what can float on
- * top of it. The popup is created once and kept. */
+ * top of it. The popup is created once and kept.
+ *
+ * The same countdown hides the mouse cursor over the video, in a window
+ * too: while a video plays and the pointer rests on the video area. Any
+ * movement brings it back. */
 
 #define HIDE_MS 2000
 #define ZONE 3
@@ -39,9 +43,20 @@ static void set_cursor_hidden(kp_app *app, bool hidden)
     gdk_window_set_cursor(app->window->window, hidden ? blank : NULL);
 }
 
+static bool video_playing(kp_app *app)
+{
+    return app->playing.loaded && app->playing.has_video;
+}
+
 static gboolean on_hide_timer(gpointer data)
 {
     kp_app *app = data;
+    if (!app->fullscreen) {
+        hide_timer = 0;
+        if (video_playing(app) && pointer_inside(app->video))
+            set_cursor_hidden(app, true);
+        return G_SOURCE_REMOVE;
+    }
     GtkWidget *vol = gtk_scale_button_get_popup(GTK_SCALE_BUTTON(app->volume));
     /* Kept while it is being used: pointer on it, seek bar held, volume
      * slider open. */
@@ -96,6 +111,20 @@ static bool in_zone(kp_app *app, int x, int y)
     return at_top(app) ? y >= r.y && y < r.y + h : y >= r.y + r.height - h && y < r.y + r.height;
 }
 
+static void stop_timer(void)
+{
+    if (hide_timer) {
+        g_source_remove(hide_timer);
+        hide_timer = 0;
+    }
+}
+
+static void restart_timer(kp_app *app)
+{
+    stop_timer();
+    hide_timer = g_timeout_add(HIDE_MS, on_hide_timer, app);
+}
+
 /* Movement: the cursor shows, and with the pointer near the bar's edge so
  * does the bar; the countdown starts again. */
 static void show(kp_app *app, bool bar)
@@ -108,9 +137,18 @@ static void show(kp_app *app, bool bar)
         gtk_widget_show(popup);
         gdk_window_raise(popup->window);
     }
-    if (hide_timer)
-        g_source_remove(hide_timer);
-    hide_timer = g_timeout_add(HIDE_MS, on_hide_timer, app);
+    restart_timer(app);
+}
+
+/* Windowed: the cursor shows, and hides after HIDE_MS at rest on a playing
+ * video. */
+static void windowed_motion(kp_app *app)
+{
+    set_cursor_hidden(app, false);
+    if (video_playing(app) && pointer_inside(app->video))
+        restart_timer(app);
+    else
+        stop_timer();
 }
 
 static gboolean on_motion(GtkWidget *w, GdkEventMotion *ev, gpointer data)
@@ -122,8 +160,21 @@ static gboolean on_motion(GtkWidget *w, GdkEventMotion *ev, gpointer data)
         return FALSE;
     last_x = x;
     last_y = y;
-    show(data, in_zone(data, x, y) || pointer_inside(popup));
+    kp_app *app = data;
+    if (app->fullscreen)
+        show(app, in_zone(app, x, y) || pointer_inside(popup));
+    else
+        windowed_motion(app);
     return FALSE;
+}
+
+void kp_fsbar_video_changed(kp_app *app)
+{
+    /* A video that ends or stops leaves no reason to hide the cursor. */
+    if (app->fullscreen || video_playing(app))
+        return;
+    stop_timer();
+    set_cursor_hidden(app, false);
 }
 
 void kp_fsbar_init(kp_app *app)
@@ -154,10 +205,7 @@ void kp_fsbar_attach(kp_app *app)
 
 void kp_fsbar_detach(kp_app *app)
 {
-    if (hide_timer) {
-        g_source_remove(hide_timer);
-        hide_timer = 0;
-    }
+    stop_timer();
     set_cursor_hidden(app, false);
     if (!popup)
         return;
