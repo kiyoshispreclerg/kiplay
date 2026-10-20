@@ -660,6 +660,17 @@ void kp_player_seek_relative(kp_app *app, double seconds)
     kp_desktop_seeked(app, to < 0 ? 0 : to);
 }
 
+static void step_frame(kp_app *app, bool back)
+{
+    kp_backend *b = app->playing.backend;
+    if (!app->playing.loaded || !b || !(kp_backend_caps(b) & KP_CAP_VIDEO))
+        return;
+    kp_backend_step_frame(b, back);
+}
+
+void kp_player_frame_forward(kp_app *app) { step_frame(app, false); }
+void kp_player_frame_back(kp_app *app) { step_frame(app, true); }
+
 /* What the engines get: the setting, or 0 while muted. */
 static void send_volume(kp_app *app)
 {

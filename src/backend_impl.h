@@ -22,6 +22,7 @@ typedef struct {
     void (*set_volume)(kp_backend *b, int volume);
     void (*set_ticking)(kp_backend *b, bool on);
     /* Optional (KP_CAP_TRACKS): */
+    void (*step_frame)(kp_backend *b, bool back);
     void (*set_track)(kp_backend *b, kp_track_type type, int id);
     void (*add_sub)(kp_backend *b, const kp_sub_file *file, bool select);
     void (*set_delay)(kp_backend *b, kp_track_type type, double seconds);

@@ -231,6 +231,8 @@ static GtkWidget *menu_bar(kp_app *app)
     command(m, _("_Stop"), G_CALLBACK(kp_player_stop), app, "stop");
     command(m, _("P_revious"), G_CALLBACK(kp_player_prev), app, "previous");
     command(m, _("_Next"), G_CALLBACK(kp_player_next), app, "next");
+    command(m, _("Next _frame"), G_CALLBACK(kp_player_frame_forward), app, "frame_forward");
+    command(m, _("Previous f_rame"), G_CALLBACK(kp_player_frame_back), app, "frame_backward");
     app->stop_after_item = gtk_check_menu_item_new_with_mnemonic(_("Stop _after this track"));
     g_signal_connect(app->stop_after_item, "toggled", G_CALLBACK(on_stop_after), app);
     kp_shortcuts_attach(app->stop_after_item, "stop_after");

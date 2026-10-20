@@ -79,6 +79,8 @@ static const action actions[] = {
     {"seek_backward", N_("Back 5 s"), "Left", seek_back, false},
     {"seek_forward_long", N_("Forward 1 min"), "<Shift>Right", seek_fwd_long, false},
     {"seek_backward_long", N_("Back 1 min"), "<Shift>Left", seek_back_long, false},
+    {"frame_forward", N_("Next frame"), "period", kp_player_frame_forward, false},
+    {"frame_backward", N_("Previous frame"), "comma", kp_player_frame_back, false},
     {"stop_after", N_("Stop after this track"), "<Control>m", stop_after, false},
     {"repeat", N_("Repeat"), "<Control>r", repeat, false},
     {"shuffle", N_("Shuffle"), "<Control>s", shuffle, false},

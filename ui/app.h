@@ -249,6 +249,9 @@ void kp_player_next(kp_app *app);
 void kp_player_prev(kp_app *app);
 void kp_player_seek(kp_app *app, double seconds);
 void kp_player_seek_relative(kp_app *app, double seconds);
+/* One frame on (or back), paused; only for a playing video. */
+void kp_player_frame_forward(kp_app *app);
+void kp_player_frame_back(kp_app *app);
 void kp_player_set_volume(kp_app *app, int volume);
 /* Adds the files (KP_OPEN_* flags: to a new playlist? without playing?) and,
  * unless enqueued, plays the first; raises the window. */

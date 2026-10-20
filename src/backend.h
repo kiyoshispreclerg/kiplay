@@ -131,6 +131,9 @@ void kp_backend_set_pause(kp_backend *b, bool paused);
 void kp_backend_seek(kp_backend *b, double seconds);          /* absolute */
 void kp_backend_seek_relative(kp_backend *b, double seconds);
 void kp_backend_set_volume(kp_backend *b, int volume);        /* 0..100 */
+/* One video frame forward or back, leaving it paused (KP_CAP_VIDEO; no-op
+ * otherwise). */
+void kp_backend_step_frame(kp_backend *b, bool back);
 /* Asks for the time 4x a second while true (only while playing and shown). */
 void kp_backend_set_ticking(kp_backend *b, bool on);
 /* KP_CAP_TRACKS (no-ops otherwise). id 0 = none (subtitles). */

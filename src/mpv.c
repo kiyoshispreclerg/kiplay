@@ -587,6 +587,11 @@ static void seek(kp_backend *b, double seconds, bool relative)
     send_json((mpv *)b, cmd);
 }
 
+static void step_frame(kp_backend *b, bool back)
+{
+    send_json((mpv *)b, command(back ? "frame-back-step" : "frame-step"));
+}
+
 static void set_volume(kp_backend *b, int volume)
 {
     mpv *m = (mpv *)b;
@@ -677,6 +682,7 @@ static const kp_backend_ops mpv_ops = {
     .seek = seek,
     .set_volume = set_volume,
     .set_ticking = set_ticking,
+    .step_frame = step_frame,
     .set_track = set_track,
     .add_sub = add_sub,
     .set_delay = set_delay,

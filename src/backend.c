@@ -66,6 +66,12 @@ void kp_backend_seek_relative(kp_backend *b, double seconds)
     b->ops->seek(b, seconds, true);
 }
 
+void kp_backend_step_frame(kp_backend *b, bool back)
+{
+    if (b->ops->step_frame)
+        b->ops->step_frame(b, back);
+}
+
 void kp_backend_set_volume(kp_backend *b, int volume)
 {
     b->ops->set_volume(b, volume);
