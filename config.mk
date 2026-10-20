@@ -1,7 +1,7 @@
 # Kiplay build configuration. Override any variable on the command line,
 # e.g. `make CC=clang PREFIX=/usr`.
 
-VERSION = 0.1.2
+VERSION = 0.1.3
 
 PREFIX  ?= /usr/local
 BINDIR  ?= $(PREFIX)/bin
