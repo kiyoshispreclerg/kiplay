@@ -12,6 +12,7 @@
 #include "cmd.h"
 #include "dec.h"
 #include "game.h"
+#include "midi.h"
 #include "tagreader.h"
 #include "tags.h"
 
@@ -321,6 +322,80 @@ TEST(plays_game_music)
     g_free(dir);
 }
 
+/* ---- MIDI ----------------------------------------------------------------- */
+
+/* A format 0 file: middle C for one second at 120 bpm, with the program
+ * change a piano needs. */
+static void write_mid(const char *path)
+{
+    static const unsigned char mid[] = {
+        'M', 'T', 'h', 'd', 0, 0, 0, 6, 0, 0, 0, 1, 0x01, 0xE0, /* 480 ticks a quarter note */
+        'M', 'T', 'r', 'k', 0, 0, 0, 23,
+        0x00, 0xFF, 0x51, 0x03, 0x07, 0xA1, 0x20, /* 500000 us a quarter note */
+        0x00, 0xC0, 0x00,                         /* program 0 */
+        0x00, 0x90, 60, 100,                      /* note on */
+        0x87, 0x40, 0x80, 60, 0,                  /* two quarter notes later: off */
+        0x00, 0xFF, 0x2F, 0x00,                   /* end of track */
+    };
+    g_file_set_contents(path, (const char *)mid, sizeof mid, NULL);
+}
+
+TEST(plays_midi)
+{
+    char *dir = g_dir_make_tmp("kp-test-XXXXXX", NULL);
+    char *mid = g_build_filename(dir, "nota.MID", NULL);
+    write_mid(mid);
+    CHECK(ka_midi_is(mid));
+    CHECK(!ka_midi_is("/m/nota.mp3"));
+
+    /* The length needs no SoundFont (the tag reader runs without one). */
+    ka_midi_set_soundfont("/nonexistent/none.sf2");
+    ka_tags t;
+    char err[256];
+    CHECK_MSG(ka_tags_read(mid, &t, err, sizeof err), "%s", err);
+    CHECK(fabs(t.duration - 2.5) < 0.01); /* 1 s and the tail */
+    ka_tags_clear(&t);
+
+    /* Playing it does. */
+    ka_dec *d = ka_dec_open(mid, 0, err, sizeof err);
+    CHECK(!d);
+    CHECK(strstr(err, "SoundFont") != NULL);
+
+    /* Not a MIDI file. */
+    char *bad = g_build_filename(dir, "ruim.mid", NULL);
+    g_file_set_contents(bad, "not midi at all", -1, NULL);
+    CHECK(!ka_tags_read(bad, &t, err, sizeof err));
+
+    /* With one (the system's, if there is any): the note sounds, then
+     * only its tail. */
+    ka_midi_set_soundfont(NULL);
+    d = ka_dec_open(mid, 0, err, sizeof err);
+    if (d) {
+        static int16_t buf[44100 * 2];
+        CHECK_INT_EQ(ka_dec_rate(d), 44100);
+        CHECK(fabs(ka_dec_duration(d) - 2.5) < 0.01);
+        CHECK_INT_EQ(ka_dec_read(d, buf, 22050), 22050);
+        CHECK(rms(buf + 11025 * 2, 11025) > 100);
+        /* A seek back to the start plays the note again. */
+        CHECK(ka_dec_seek(d, 0));
+        CHECK_INT_EQ(ka_dec_read(d, buf, 22050), 22050);
+        CHECK(rms(buf + 11025 * 2, 11025) > 100);
+        /* Past the end there is nothing. */
+        CHECK(ka_dec_seek(d, 10));
+        CHECK_INT_EQ(ka_dec_read(d, buf, 1024), 0);
+        ka_dec_close(d);
+        ka_midi_trim();
+    } else {
+        g_test_message("no SoundFont installed: %s", err);
+    }
+    g_remove(mid);
+    g_remove(bad);
+    g_rmdir(dir);
+    g_free(mid);
+    g_free(bad);
+    g_free(dir);
+}
+
 TEST(game_music_follows_its_m3u)
 {
     char *dir = g_dir_make_tmp("kp-test-XXXXXX", NULL);
@@ -561,6 +636,7 @@ int main(void)
     RUN(splits_subtunes);
     RUN(reads_tags);
     RUN(plays_game_music);
+    RUN(plays_midi);
     RUN(game_music_follows_its_m3u);
     RUN(tag_reader_in_background);
     RUN(plays_through_the_engine);

@@ -76,6 +76,8 @@ typedef struct {
     int volume;
     /* kiplay-audio: ALSA device ("default", "hw:1"...); NULL = default. */
     const char *device;
+    /* kiplay-audio: the SoundFont for MIDI; NULL or "" = the first usual one installed. */
+    const char *soundfont;
     /* Options from the preferences (kp_mpv_pref_args), may be NULL. */
     const char *const *args;
     /* Extra arguments as typed by the user (shell quoting), may be NULL. */

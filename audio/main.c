@@ -26,6 +26,7 @@
 
 #include "cmd.h"
 #include "dec.h"
+#include "midi.h"
 #include "out.h"
 #include "tags.h"
 
@@ -314,6 +315,7 @@ static void *engine_thread(void *arg)
         if (!e.dec && e.out && now_ns() - e.idle_since_ns > IDLE_CLOSE_S * 1000000000LL) {
             ka_out_close(e.out);
             e.out = NULL;
+            ka_midi_trim();
         }
         pthread_mutex_lock(&shared.lock);
         long long ns;
@@ -436,12 +438,14 @@ int main(int argc, char **argv)
     for (int i = 1; i < argc; i++) {
         if (!strcmp(argv[i], "-d") && i + 1 < argc)
             device = argv[++i];
+        else if (!strcmp(argv[i], "-s") && i + 1 < argc)
+            ka_midi_set_soundfont(argv[++i]);
         else if (!strcmp(argv[i], "--tags")) {
             signal(SIGPIPE, SIG_DFL);
             av_log_set_level(AV_LOG_QUIET);
             return ka_tags_serve();
         } else {
-            fprintf(stderr, "usage: kiplay-audio [-d default|ALSA_DEVICE] | --tags\n");
+            fprintf(stderr, "usage: kiplay-audio [-d default|ALSA_DEVICE] [-s SOUNDFONT] | --tags\n");
             return 2;
         }
     }

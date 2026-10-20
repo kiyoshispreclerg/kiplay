@@ -27,7 +27,7 @@ close to the original as possible:
 **Status:** in development, phase 6: already an everyday player (video
 through mpv, music through its own `kiplay-audio` engine with gapless and
 NSF/SPC/GBS/VGM game music, Master System FM included, with the names and
-lengths from the `.m3u` beside it; tabbed playlists with tags, a play queue,
+lengths from the `.m3u` beside it, and MIDI with a SoundFont of your choice; tabbed playlists with tags, a play queue,
 search, drag to reorder, m3u/pls import and export; configurable layout;
 tabbed preferences, editable shortcuts, resume where it stopped, audio
 and subtitle tracks, MPRIS, tray icon, compact mode; YouTube captions with
@@ -182,7 +182,13 @@ packages. libpulse (`libpulse-dev`) is optional but recommended: `make` uses
 it when the headers are found; otherwise it prints a note and builds with
 ALSA only (`make PULSE=0` forces that, `make PULSE=1` requires PulseAudio). Game music
 uses a copy of [Game_Music_Emu](https://github.com/libgme/game-music-emu)
-in `vendor/gme` (LGPL-2.1-or-later).
+in `vendor/gme` (LGPL-2.1-or-later). MIDI uses
+[TinySoundFont and TinyMidiLoader](https://github.com/schellingb/TinySoundFont)
+in `vendor/tsf` (MIT and zlib) and needs a General MIDI SoundFont (`.sf2`):
+set the file in Options → Preferences → Audio; empty, the first one found in
+`/usr/share/sounds/sf2` is used (the small TimGM6mb before the others). It is
+kept in memory, at twice the file's size, only while a MIDI plays. There is
+no reverb or chorus.
 
 ```sh
 make

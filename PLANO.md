@@ -179,8 +179,15 @@ música tocando o dia todo o mpv é caro. Decisão: um motor de áudio próprio,
   medição abaixo). Custa ~1 MB a mais que um decodificador mínimo e abre
   tudo, inclusive as músicas de console pelo demuxer `libgme` do ffmpeg
   (NSF, SPC, GBS, VGM).
-- **MIDI** (273 entradas no Audacious do usuário): libfluidsynth com um
-  SoundFont configurável; o ffmpeg não toca MIDI.
+- **MIDI** (273 entradas no Audacious do usuário): TinySoundFont +
+  TinyMidiLoader (`vendor/tsf`, só cabeçalhos, sem dependências) com um
+  SoundFont configurável (`[playback] soundfont`, opção `-s` do motor); o
+  ffmpeg não toca MIDI. Trocou o libfluidsynth planejado: ele puxa GLib, que
+  o motor não tem. Limites do TSF: sem reverb e chorus (CC 91/93), moduladores
+  do SF2 só em parte, só SF2 (não SF3), e o SoundFont inteiro em float na
+  memória (2× o arquivo; o FluidR3 de 148 MB custa ~300 MB, o TimGM6mb
+  ~13 MB), por isso o motor só o carrega ao tocar um MIDI e o solta ao tocar
+  outra coisa ou ficar ocioso. Renderiza ~700× o tempo real.
 - **Subfaixas**: arquivos de console têm várias músicas; a playlist guarda
   `arquivo.nsf?N` (a mesma notação do Audacious) e o motor escolhe a faixa
   (`track_index` do libgme).
@@ -518,8 +525,8 @@ identificadores em inglês; interface pelo gettext com msgids em inglês.
 2b. **`kiplay-audio`** *(feita)*: motor de música com gapless, música de
    console (subfaixas, busca, fim com fade), troca automática de motor
    entre faixa de áudio e de vídeo, reinício se cair, mpv ocioso
-   encerrado. Medições em "Motor de áudio". Falta: MIDI (fluidsynth),
-   ReplayGain, equalizador, crossfade, duração padrão da música de console
+   encerrado. Medições em "Motor de áudio". MIDI feito (TinySoundFont). Falta:
+   reverb no MIDI, ReplayGain, equalizador, crossfade, duração padrão da música de console
    configurável.
 3. **Playlists** *(feita)*: lista virtual (`ui/plmodel.c`: um
    `GtkTreeModel` que lê o `kp_playlist` sem copiar, em
@@ -700,7 +707,7 @@ identificadores em inglês; interface pelo gettext com msgids em inglês.
 - Layout configurável: vídeo acima, ao lado ou escondido (só música);
   controles no topo ou no rodapé.
 - Música no `kiplay-audio`, processo à parte, com libavformat + GME
-  embutido (+ fluidsynth para MIDI, a fazer); vídeo no mpv/MPlayer.
+  embutido + TinySoundFont para MIDI; vídeo no mpv/MPlayer.
 - Saída do `kiplay-audio` direto no PulseAudio (volume no servidor), ALSA
   como reserva; escreve meio buffer de cada vez sem bloquear.
 - Sidecars pelo padrão `Titulo [ID].ext` do yt-dlp.

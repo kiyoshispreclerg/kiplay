@@ -26,7 +26,7 @@ possível do original:
 **Estado:** em desenvolvimento, fase 6: já é um player de uso diário
 (vídeo pelo mpv, música pelo motor próprio `kiplay-audio` com gapless e
 música de console NSF/SPC/GBS/VGM, inclusive o FM do Master System, com
-os nomes e durações do `.m3u` ao lado; playlists em abas com tags, fila,
+os nomes e durações do `.m3u` ao lado, e MIDI com um SoundFont à escolha; playlists em abas com tags, fila,
 busca, arrastar para reordenar, importar e exportar m3u/pls; layout
 configurável; preferências em abas, atalhos editáveis, continuar de onde
 parou, faixas de áudio e legenda, MPRIS, bandeja, modo compacto; legendas
@@ -181,7 +181,13 @@ pacotes `-dev`. O libpulse (`libpulse-dev`) é opcional, mas recomendado: o
 `make` o usa se achar os cabeçalhos; senão avisa e compila só com ALSA
 (`make PULSE=0` força isso, `make PULSE=1` exige o PulseAudio). A música
 de console usa uma cópia do [Game_Music_Emu](https://github.com/libgme/game-music-emu)
-em `vendor/gme` (LGPL-2.1-or-later).
+em `vendor/gme` (LGPL-2.1-or-later). O MIDI usa o
+[TinySoundFont e o TinyMidiLoader](https://github.com/schellingb/TinySoundFont)
+em `vendor/tsf` (MIT e zlib) e precisa de um SoundFont General MIDI (`.sf2`):
+indique o arquivo em Opções → Preferências → Áudio; vazio, vale o primeiro
+achado em `/usr/share/sounds/sf2` (o pequeno TimGM6mb antes dos outros). Ele
+fica na memória, com o dobro do tamanho do arquivo, só enquanto um MIDI toca.
+Não há reverb nem chorus.
 
 ```sh
 make

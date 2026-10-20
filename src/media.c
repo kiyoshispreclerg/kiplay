@@ -4,18 +4,18 @@
 #include <glib.h>
 #include <string.h>
 
-/* Plain audio formats, and game music (libgme), go to kiplay-audio. */
+/* Plain audio formats, game music (libgme) and MIDI go to kiplay-audio. */
 static const char *const audio_exts[] = {
     "mp3", "mp2", "mp1", "ogg", "oga", "opus", "flac", "wav", "m4a", "aac", "wma", "ape",
     "wv",  "mpc", "spx", "aif", "aiff", "tta", "ac3", "dts", "mka", "au",  "snd", "w64",
-    "nsf", "nsfe", "spc", "gbs", "vgm", "vgz", "gym", "hes", "kss", "ay",  "sap", NULL};
+    "nsf", "nsfe", "spc", "gbs", "vgm", "vgz", "gym", "hes", "kss", "ay",  "sap",
+    "mid", "midi", "kar", NULL};
 
-/* Video, and audio only mpv plays (MIDI goes to mpv until kiplay-audio
- * has a synthesizer; it fails there too, but the file is the user's). */
+/* Video, and audio only mpv plays. */
 static const char *const video_exts[] = {
     "mp4", "m4v", "mkv", "webm", "avi", "mov", "wmv", "asf", "flv", "mpg", "mpeg", "mpe",
     "ts",  "m2ts", "mts", "vob", "ogv", "ogm", "3gp", "3g2", "rm", "rmvb", "divx", "f4v",
-    "dv",  "nsv", "mid", "midi", "mod", "xm", "it", "s3m", NULL};
+    "dv",  "nsv", "mod", "xm", "it", "s3m", NULL};
 
 static const char *const playlist_exts[] = {"m3u", "m3u8", "pls", NULL};
 

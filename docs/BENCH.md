@@ -68,8 +68,10 @@ Só o motor (`kiplay-audio` sozinho, antes → depois), CPU em 15 s:
 
 ## Não comparável ou pendente
 
-- **MIDI**: o Kiplay ainda não toca MIDI (vai para o mpv, que falha, e
-  pula). O Audacious com o sintetizador usa ~200 MB. Medido o fluidsynth
+- **MIDI**: o Kiplay toca MIDI pelo TinySoundFont (ver PLANO.md): com o
+  TimGM6mb o motor chega a ~13 MB no total e carrega em ~10 ms; com o
+  FluidR3 (148 MB) são ~294 MB e ~0,5 s, porque o TSF lê tudo em float. O
+  Audacious com o sintetizador usa ~200 MB. Para comparar, o fluidsynth
   (libfluidsynth 2.2.5, 44,1 kHz): ~1,5% de CPU em tempo real, 1,1 MB só
   para carregar a biblioteca, e a memória depende do SoundFont: +11,6 MB
   (TimGM6mb, 6 MB), +33–49 MB (FluidR3 GM, 148 MB, com carga sob demanda)

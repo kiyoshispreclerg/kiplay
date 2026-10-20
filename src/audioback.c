@@ -15,7 +15,7 @@
 
 typedef struct {
     kp_backend base;
-    char *program, *device;
+    char *program, *device, *soundfont;
     kp_event_cb cb;
     void *ud;
     int volume;
@@ -108,7 +108,7 @@ static bool start(kp_backend *b, char **err)
     audioback *a = (audioback *)b;
     if (a->child)
         return true;
-    const char *argv[] = {a->program, "-d", a->device, NULL};
+    const char *argv[] = {a->program, "-d", a->device, "-s", a->soundfont, NULL};
     a->child = kp_child_spawn(argv, G_SUBPROCESS_FLAGS_STDIN_PIPE | G_SUBPROCESS_FLAGS_STDOUT_PIPE,
                               on_exit, a, err);
     if (!a->child)
@@ -183,6 +183,7 @@ static void audioback_free(kp_backend *b)
     kp_lineio_free(a->io);
     g_free(a->program);
     g_free(a->device);
+    g_free(a->soundfont);
     g_free(a);
 }
 
@@ -208,6 +209,7 @@ kp_backend *kp_backend_new_audio(const kp_backend_opts *opts, kp_event_cb cb, vo
     a->base.ops = &audio_ops;
     a->program = g_strdup(opts->program ? opts->program : "kiplay-audio");
     a->device = g_strdup(opts->device && *opts->device ? opts->device : "default");
+    a->soundfont = g_strdup(opts->soundfont ? opts->soundfont : "");
     a->volume = opts->volume;
     a->cb = cb;
     a->ud = ud;

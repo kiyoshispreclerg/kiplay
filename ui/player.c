@@ -392,6 +392,9 @@ static kp_backend *create(kp_app *app, bool audio)
         o.device = kp_prefs_get_str(app->prefs, "playback", "device", "default");
         g_free(app->playing.audio_device);
         app->playing.audio_device = g_strdup(o.device);
+        o.soundfont = kp_prefs_get_str(app->prefs, "playback", "soundfont", "");
+        g_free(app->playing.audio_soundfont);
+        app->playing.audio_soundfont = g_strdup(o.soundfont);
         kp_backend *b = kp_backend_new_audio(&o, on_audio_event, app);
         g_free(program);
         return b;
@@ -1048,8 +1051,10 @@ void kp_player_prefs_changed(kp_app *app)
     if (p->mpv && g_strcmp0(sig, p->mpv_signature) != 0)
         restart_engine(app, false);
     g_free(sig);
-    if (p->audio && g_strcmp0(kp_prefs_get_str(app->prefs, "playback", "device", "default"),
-                              p->audio_device) != 0)
+    if (p->audio && (g_strcmp0(kp_prefs_get_str(app->prefs, "playback", "device", "default"),
+                               p->audio_device) != 0 ||
+                     g_strcmp0(kp_prefs_get_str(app->prefs, "playback", "soundfont", ""),
+                               p->audio_soundfont) != 0))
         restart_engine(app, true);
 }
 
@@ -1070,6 +1075,7 @@ void kp_player_free(kp_app *app)
     g_clear_pointer(&app->playing.title, g_free);
     g_clear_pointer(&app->playing.mpv_signature, g_free);
     g_clear_pointer(&app->playing.audio_device, g_free);
+    g_clear_pointer(&app->playing.audio_soundfont, g_free);
     if (app->playing.history)
         g_array_free(app->playing.history, TRUE);
     app->playing.history = NULL;

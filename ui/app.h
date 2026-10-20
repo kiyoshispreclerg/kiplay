@@ -86,6 +86,7 @@ typedef struct {
     bool file_stored;          /* settings are on disk for it */
     char *mpv_signature;       /* kp_mpv_pref_signature when mpv started */
     char *audio_device;        /* the device kiplay-audio started with */
+    char *audio_soundfont;     /* and its SoundFont */
     /* Played by "next" (for "previous"), and, with shuffle, the entries of
      * the playing playlist already heard this round. */
     GArray *history;           /* kp_entry_ref, oldest first */

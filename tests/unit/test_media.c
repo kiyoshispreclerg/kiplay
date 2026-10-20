@@ -11,7 +11,8 @@ TEST(kinds_by_extension)
     CHECK_INT_EQ(kp_media_kind_of("/m/Song.MP3"), KP_MEDIA_AUDIO);
     CHECK_INT_EQ(kp_media_kind_of("file:///m/Jogo%20X.nsf?12"), KP_MEDIA_AUDIO);
     CHECK_INT_EQ(kp_media_kind_of("/m/clip.webm"), KP_MEDIA_VIDEO);
-    CHECK_INT_EQ(kp_media_kind_of("/m/song.mid"), KP_MEDIA_VIDEO);
+    CHECK_INT_EQ(kp_media_kind_of("/m/song.mid"), KP_MEDIA_AUDIO);
+    CHECK_INT_EQ(kp_media_kind_of("/m/song.mod"), KP_MEDIA_VIDEO);
     CHECK_INT_EQ(kp_media_kind_of("/m/cover.jpg"), KP_MEDIA_NONE);
     CHECK_INT_EQ(kp_media_kind_of("/m.mp3/README"), KP_MEDIA_NONE);
     CHECK_INT_EQ(kp_media_kind_of("http://radio/stream"), KP_MEDIA_NONE);

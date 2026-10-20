@@ -129,7 +129,7 @@ PULSE_SINK=kpbench tools/bench-compare.sh -k DIR -a CÓPIA[:nome] CENÁRIOS.tsv 
 | `src/lineio.c`, `src/child.c` | linhas com um processo sem bloquear (fila, escrita não bloqueante); processo iniciado e acompanhado |
 | `src/backend.c`, `src/backend_impl.h` | `kp_backend` como tabela de funções (mpv, kiplay-audio) |
 | `src/audioback.c` | o `kp_backend` do kiplay-audio (pipes, protocolo de texto) |
-| `audio/` | o `kiplay-audio`: `main.c` (threads, gapless, pausa; escreve um período quando cabe e dorme até o próximo), `dec.c` (libav na taxa do arquivo pela FIFO, busca), `game.c` (música de console pelo GME de `vendor/gme`, `.m3u` ao lado), `out.c` (PulseAudio pelo `pulse.c` no `default`, senão ALSA; `null` com relógio), `cmd.c` (protocolo), `tags.c` (modo `--tags`). Sem GLib |
+| `audio/` | o `kiplay-audio`: `main.c` (threads, gapless, pausa; escreve um período quando cabe e dorme até o próximo), `dec.c` (libav na taxa do arquivo pela FIFO, busca), `game.c` (música de console pelo GME de `vendor/gme`, `.m3u` ao lado), `midi.c` (MIDI pelo TinySoundFont/TinyMidiLoader de `vendor/tsf`; o SoundFont vem de `-s`, vira `[playback] soundfont`, carregado só ao tocar MIDI), `out.c` (PulseAudio pelo `pulse.c` no `default`, senão ALSA; `null` com relógio), `cmd.c` (protocolo), `tags.c` (modo `--tags`). Sem GLib |
 | `vendor/gme/` | Game_Music_Emu 0.6.5 (C++, LGPL), só com o YM2612 do Gens; `Ym2413_Emu.cpp` é nosso (YM2413 sobre o `ext/emu2413`); símbolos escondidos (`-fvisibility=hidden`) para não cruzar com a libgme do sistema que a libavformat carrega |
 | `src/json.c` | caminhos `a.b[0]` no cJSON (vindo do kiremote); `vendor/cjson/` |
 | `src/instance.c` | instância única: socket unix por pasta de configuração, repasse de arquivos |

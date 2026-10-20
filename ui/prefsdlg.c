@@ -271,6 +271,11 @@ static void audio_tab(dialog *d, GtkWidget *nb)
     gtk_widget_set_tooltip_text(dev, _("For kiplay-audio: default (PulseAudio or PipeWire; ALSA "
                                        "when there is no sound server) or an ALSA device: hw:1, "
                                        "plughw:0,0..."));
+    GtkWidget *sf = entry(d, t, _("MIDI _SoundFont:"), "playback", "soundfont", "");
+    gtk_widget_set_tooltip_text(sf, _("A General MIDI .sf2 file for kiplay-audio. Empty: the first "
+                                      "one found in /usr/share/sounds/sf2 (the small TimGM6mb "
+                                      "first). The file is kept in memory, at twice its size, "
+                                      "only while MIDI plays."));
 
     t = section(p, _("Videos (mpv)"));
     static const char *const ao[] = {"", "pulse", "pipewire", "alsa", "jack", NULL};

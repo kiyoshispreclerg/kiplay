@@ -8,6 +8,7 @@
 
 #include "dec.h"
 #include "game.h"
+#include "midi.h"
 
 static const char *meta(const AVDictionary *d, const char *key)
 {
@@ -46,6 +47,17 @@ static bool read_game(const char *path, int subtune, ka_tags *t, char *err, int 
     return true;
 }
 
+/* MIDI: only how long it plays, which needs no SoundFont. */
+static bool read_midi(const char *path, ka_tags *t, char *err, int errsize)
+{
+    ka_midi *m = ka_midi_open(path, 0, err, errsize);
+    if (!m)
+        return false;
+    t->duration = ka_midi_duration(m);
+    ka_midi_close(m);
+    return true;
+}
+
 bool ka_tags_read(const char *location, ka_tags *t, char *err, int errsize)
 {
     memset(t, 0, sizeof *t);
@@ -57,6 +69,11 @@ bool ka_tags_read(const char *location, ka_tags *t, char *err, int errsize)
     }
     if (ka_game_is(path)) {
         bool ok = read_game(path, subtune, t, err, errsize);
+        free(path);
+        return ok;
+    }
+    if (ka_midi_is(path)) {
+        bool ok = read_midi(path, t, err, errsize);
         free(path);
         return ok;
     }

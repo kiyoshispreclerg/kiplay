@@ -14,6 +14,7 @@
 #include <sys/stat.h>
 
 #include "game.h"
+#include "midi.h"
 #include "out.h"
 
 struct ka_dec {
@@ -21,6 +22,7 @@ struct ka_dec {
     int subtune;
     int rate;
     ka_game *game; /* game music: none of the libav side below */
+    ka_midi *midi; /* MIDI: neither */
     AVFormatContext *fmt;
     AVCodecContext *codec;
     SwrContext *swr;
@@ -44,7 +46,7 @@ struct ka_dec {
     long skip;
 };
 
-/* Game music has no rate of its own: Audacious's default. */
+/* Game music and MIDI have no rate of their own: Audacious's default. */
 #define GAME_RATE 44100
 
 /* "%C3%BA" -> bytes, for file:// URIs. */
@@ -193,6 +195,19 @@ static ka_dec *open_game(ka_dec *d, char *err, int errsize)
     return d;
 }
 
+static ka_dec *open_midi(ka_dec *d, char *err, int errsize)
+{
+    if (d->rate <= 0)
+        d->rate = GAME_RATE;
+    d->midi = ka_midi_open(d->path, d->rate, err, errsize);
+    if (!d->midi) {
+        ka_dec_close(d);
+        return NULL;
+    }
+    d->duration = ka_midi_duration(d->midi);
+    return d;
+}
+
 ka_dec *ka_dec_open(const char *location, int rate, char *err, int errsize)
 {
     ka_dec *d = calloc(1, sizeof *d);
@@ -206,6 +221,10 @@ ka_dec *ka_dec_open(const char *location, int rate, char *err, int errsize)
     d->rate = rate;
     if (ka_game_is(d->path))
         return open_game(d, err, errsize);
+    if (ka_midi_is(d->path))
+        return open_midi(d, err, errsize);
+    /* Not MIDI (a MIDI after this one would read the SoundFont again). */
+    ka_midi_trim();
     int r = open_av(d);
     if (r < 0)
         goto fail;
@@ -241,6 +260,7 @@ void ka_dec_close(ka_dec *d)
     av_packet_free(&d->pkt);
     close_av(d);
     ka_game_close(d->game);
+    ka_midi_close(d->midi);
     free(d->tags);
     free(d->path);
     free(d);
@@ -336,6 +356,8 @@ long ka_dec_read(ka_dec *d, int16_t *out, long max)
 {
     if (d->game)
         return ka_game_read(d->game, out, max);
+    if (d->midi)
+        return ka_midi_read(d->midi, out, max);
     while (av_audio_fifo_size(d->fifo) < max && !d->decode_eof)
         if (!feed(d))
             break;
@@ -354,6 +376,8 @@ bool ka_dec_seek(ka_dec *d, double seconds)
         seconds = 0;
     if (d->game)
         return ka_game_seek(d->game, seconds);
+    if (d->midi)
+        return ka_midi_seek(d->midi, seconds);
     /* In the audio stream's own time base: some demuxers read the
      * timestamp in it whatever stream index is given. */
     AVStream *st = d->fmt->streams[d->stream];
