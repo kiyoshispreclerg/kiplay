@@ -161,7 +161,7 @@ que os testes linkam. Código que precisa do GTK vai em `ui/`.
 - Prefixo `kp_`/`KP_` em tudo que é público; um módulo por arquivo,
   cabeçalho com comentário explicando o porquê e de quem é a memória.
 - Nada bloqueia a interface; quem decodifica roda em outro processo.
-- `README.md` (pt-BR, padrão) e `README.en.md` andam juntos: mudou um, mude
+- `README.md` (inglês, padrão) e `README.pt-BR.md` andam juntos: mudou um, mude
   o outro.
 - Licença GPL-3.0-or-later; `SPDX-License-Identifier` no topo de cada
   arquivo.

@@ -25,7 +25,7 @@ int main(int argc, char **argv)
             o.edge_scale = g_ascii_strtod(argv[i + 1], NULL);
     }
     if (i >= argc) {
-        fprintf(stderr, "uso: %s [-s LxA] [-e fração] [-g contorno] arquivo.srv3\n", argv[0]);
+        fprintf(stderr, "usage: %s [-s WxH] [-e fraction] [-g outline] file.srv3\n", argv[0]);
         return 2;
     }
     char *err = NULL;
@@ -37,7 +37,7 @@ int main(int argc, char **argv)
     }
     char *ass = kp_ytsub_to_ass(s, &o);
     fputs(ass, stdout);
-    fprintf(stderr, "%zu eventos, %zu pens, %zu posições\n", s->nevents, s->npens, s->npos);
+    fprintf(stderr, "%zu events, %zu pens, %zu positions\n", s->nevents, s->npens, s->npos);
     g_free(ass);
     kp_ytsub_free(s);
     return 0;

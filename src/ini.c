@@ -113,7 +113,7 @@ static const char *classify(line *l, const char *section)
         if (!end || (*after && *after != '#' && *after != ';')) {
             l->kind = LINE_OTHER;
             l->section = strdup(section);
-            return "cabeçalho de seção malformado";
+            return "malformed section header";
         }
         l->kind = LINE_SECTION;
         l->section = dup_trimmed(s + 1, (size_t)(end - s - 1));

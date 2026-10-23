@@ -1,119 +1,121 @@
 # Kiplay
 
-**Português** · [English](README.en.md)
+**English** · [Português](README.pt-BR.md)
 
-Player de áudio e vídeo leve para o KiDesktop, em C + GTK2. Junta as
-playlists em abas do Audacious com a configuração do SMPlayer, toca vídeo
-por um programa externo (mpv ou MPlayer) e música num motor próprio e
-pequeno.
+A lightweight audio and video player for KiDesktop, in C + GTK2. It
+combines Audacious's tabbed playlists with SMPlayer's configurability,
+plays video through an external program (mpv or MPlayer) and music through
+its own small engine.
 
-O diferencial: mostrar o que o yt-dlp baixa junto do vídeo o mais perto
-possível do original:
+What sets it apart: showing what yt-dlp downloads alongside a video as
+close to the original as possible:
 
-- legendas do YouTube com estilo, posição e animação (srv3/json3);
-- chat de live gravado (`live_chat.json`), ao lado do vídeo ou atravessando
-  a tela (danmaku);
-- as legendas comuns (srt, ass, vtt...).
+- YouTube captions with their styling, positioning and animation
+  (srv3/json3);
+- recorded live chat (`live_chat.json`), beside the video or flying across
+  it (danmaku);
+- ordinary subtitles (srt, ass, vtt...).
 
 <p align="center">
-  <img src="docs/img/bassline.png" width="49%" alt="Legendas do YouTube com estilo, animadas sobre o vídeo">
-  <img src="docs/img/akirose-chat.png" width="49%" alt="Chat de live gravado ao lado do vídeo">
+  <img src="docs/img/bassline.png" width="49%" alt="Styled, animated YouTube captions over the video">
+  <img src="docs/img/akirose-chat.png" width="49%" alt="Recorded live chat beside the video">
 </p>
 <p align="center">
-  <img src="docs/img/playlists.png" width="80%" alt="Playlists em abas">
+  <img src="docs/img/playlists.png" width="80%" alt="Tabbed playlists">
 </p>
 
-**Estado:** em desenvolvimento, fase 6: já é um player de uso diário
-(vídeo pelo mpv, música pelo motor próprio `kiplay-audio` com gapless e
-música de console NSF/SPC/GBS/VGM, inclusive o FM do Master System, com
-os nomes e durações do `.m3u` ao lado, e MIDI com um SoundFont à escolha; playlists em abas com tags, fila,
-busca, arrastar para reordenar, importar e exportar m3u/pls; layout
-configurável; preferências em abas, atalhos editáveis, continuar de onde
-parou, faixas de áudio e legenda, MPRIS, bandeja, modo compacto; legendas
-do YouTube com estilo e posição, como no site; chat de live gravado em
-painel ao lado do vídeo). O chat em danmaku ainda não existe. Veja o [plano](PLANO.md) e a [comparação com o
-Audacious](docs/BENCH.md).
+**Status:** in development, phase 6: already an everyday player (video
+through mpv, music through its own `kiplay-audio` engine with gapless and
+NSF/SPC/GBS/VGM game music, Master System FM included, with the names and
+lengths from the `.m3u` beside it, and MIDI with a SoundFont of your choice; tabbed playlists with tags, a play queue,
+search, drag to reorder, m3u/pls import and export; configurable layout;
+tabbed preferences, editable shortcuts, resume where it stopped, audio
+and subtitle tracks, MPRIS, tray icon, compact mode; YouTube captions with
+their style and position, as on the site; recorded live chat in a panel
+beside the video). Chat as danmaku doesn't exist yet. See
+the [plan](PLANO.md) and the [comparison with Audacious](docs/BENCH.md)
+(both in Portuguese).
 
-## Uso
+## Usage
 
 ```sh
-kiplay                      # abre a janela
-kiplay video.mkv musica.mp3 # adiciona à playlist da tela e toca o primeiro
-kiplay ~/Música/Album       # pastas entram inteiras, por nome
-kiplay -e *.mp3             # só adiciona (enfileira)
-kiplay -n ~/Música/Album    # numa playlist nova (aba nova)
+kiplay                      # opens the window
+kiplay video.mkv song.mp3   # adds to the playlist on screen and plays the first
+kiplay ~/Music/Album        # folders go in whole, by name
+kiplay -e *.mp3             # only adds (enqueues)
+kiplay -n ~/Music/Album     # into a new playlist (new tab)
 ```
 
-Com o Kiplay aberto, `kiplay ARQUIVO` manda o arquivo para a janela que
-já existe. Depois do `make install` ele aparece no "Abrir com" dos tipos
-de áudio e vídeo, e no menu do gerenciador de arquivos aparecem "Adicionar
-à playlist do Kiplay" (a playlist atual, sem tocar) e "Adicionar a nova
-playlist do Kiplay", esta também para pastas.
+With Kiplay open, `kiplay FILE` sends the file to the existing window.
+After `make install` it shows up in "Open with" for audio and video types,
+and the file manager menu gets "Add to Kiplay playlist" (the current one,
+without playing) and "Add to new Kiplay playlist", the latter for folders
+too.
 
-| Tecla | Faz |
+| Key | Does |
 |---|---|
-| Espaço, tecla de mídia | tocar / pausar |
-| ← / → | volta / avança 5 s (Shift: 1 min) |
-| Ctrl+← / Ctrl+→, < / > | faixa anterior / próxima |
-| + / −, M | volume, mudo |
-| F, F11, duplo clique no vídeo | tela cheia (Esc sai; a barra de controle aparece ao mexer o mouse perto da borda, embaixo ou no topo) |
-| Ctrl+C | modo compacto: só o vídeo e os controles |
-| Ctrl+L | mostrar/ocultar as playlists (também o botão na barra de controle) |
-| # , J, V | próxima faixa de áudio, próxima legenda, mostrar/esconder legenda |
-| Ctrl++ / Ctrl+−, X / Z | atraso do áudio, atraso da legenda (100 ms) |
-| A | próxima proporção (4:3, 16:9...) |
-| Enter, duplo clique na lista | toca a faixa |
-| Del | remove da playlist |
-| Q | põe na fila (ou tira); a fila toca antes do resto |
-| Ctrl+X, Ctrl+Ins, Ctrl+V | recortar, copiar e colar arquivos na playlist (Shift+Del e Shift+Ins também) |
-| Ctrl+J | ir para arquivo: busca na playlist da tela |
-| Ctrl+F | painel de busca ao lado das playlists: faixas de todas as playlists; duplo clique toca e mostra a aba; Esc fecha |
-| Ctrl+M, Ctrl+R, Ctrl+S | parar após esta faixa, repetir, aleatório |
-| Alt+↑ / Alt+↓, arrastar | move as faixas selecionadas |
-| Ctrl+O, Ctrl+Shift+O | adicionar arquivos, adicionar pasta |
-| Ctrl+T, F2, Ctrl+W | nova playlist, renomear, fechar |
-| Ctrl+P | preferências |
-| Alt+1..9 | vai para a playlist |
+| Space, media key | play / pause |
+| ← / → | back / forward 5 s (Shift: 1 min) |
+| Ctrl+← / Ctrl+→, < / > | previous / next track |
+| + / −, M | volume, mute |
+| F, F11, double click on the video | fullscreen (Esc leaves; the control bar shows when the mouse moves near its edge, at the bottom or top) |
+| Ctrl+C | compact mode: only the video and the controls |
+| Ctrl+L | show/hide the playlists (also the button on the control bar) |
+| # , J, V | next audio track, next subtitle, show/hide subtitles |
+| Ctrl++ / Ctrl+−, X / Z | audio delay, subtitle delay (100 ms) |
+| A | next aspect ratio (4:3, 16:9...) |
+| Enter, double click on the list | plays the track |
+| Del | removes from the playlist |
+| Q | queues (or unqueues); the queue plays before the rest |
+| Ctrl+X, Ctrl+Ins, Ctrl+V | cut, copy and paste files in the playlist (Shift+Del and Shift+Ins too) |
+| Ctrl+J | jump to file: search the playlist on screen |
+| Ctrl+F | search panel beside the playlists: tracks of all playlists; double click plays and shows its tab; Esc closes |
+| Ctrl+M, Ctrl+R, Ctrl+S | stop after this track, repeat, shuffle |
+| Alt+↑ / Alt+↓, drag | moves the selected tracks |
+| Ctrl+O, Ctrl+Shift+O | add files, add folder |
+| Ctrl+T, F2, Ctrl+W | new playlist, rename, close |
+| Ctrl+P | preferences |
+| Alt+1..9 | goes to that playlist |
 
-Os atalhos se trocam em Opções → Preferências → Atalhos (até duas teclas
-por comando). Clique direito no vídeo ou na barra de controle abre um menu
-com o essencial (útil no modo compacto e na tela cheia), inclusive as faixas de áudio e legendas do vídeo. Clique direito numa faixa da playlist: tocar, pôr na fila, recortar/copiar/colar, remover e abrir a pasta do arquivo.
+Shortcuts are changed in Options → Preferences → Shortcuts (up to two
+keys per command). A right click on the video or the control bar opens a
+menu with the essentials (handy in compact mode and fullscreen), including the audio and subtitle tracks of the video. A right click on a playlist row: play, queue, cut/copy/paste, remove and open the file's folder.
 
-**Legendas do YouTube:** se o nome do vídeo termina com o ID entre colchetes
-(`Título [dQw4w9WgXcQ].mp4`, como o yt-dlp grava), o menu Legendas e o clique
-direito no vídeo oferecem "Baixar legendas do YouTube...": o Kiplay pergunta
-ao yt-dlp se o vídeo existe e quais idiomas tem (as enviadas e a automática no
-idioma do vídeo), baixa as escolhidas ao lado do arquivo (no formato com estilo)
-e já as carrega. O caminho do yt-dlp fica em Opções → Preferências → Avançado
-(`[tools] ytdlp`).
+**YouTube subtitles:** if a video's name ends with its ID in square brackets
+(`Title [dQw4w9WgXcQ].mp4`, as yt-dlp writes it), the Subtitles menu and the
+right click on the video offer "Download subtitles from YouTube...": Kiplay
+asks yt-dlp whether the video exists and which languages it has (the uploaded
+ones and the automatic captions in the video's language), downloads the chosen
+ones next to the file (in the styled format) and loads them at once. The
+yt-dlp path is in Options → Preferences → Advanced (`[tools] ytdlp`).
 
-O Kiplay lembra de cada vídeo onde ele parou, as faixas de áudio e
-legenda escolhidas, os atrasos e a proporção (em
-`~/.local/share/kiplay/files/`), e continua dali da próxima vez. Em
-Preferências → Geral dá para estender a música ou desligar.
+Kiplay remembers, for each video, where it stopped, the audio and
+subtitle tracks chosen, the delays and the aspect ratio (in
+`~/.local/share/kiplay/files/`), and goes on from there next time.
+Preferences → General extends this to music or turns it off.
 
-As colunas (número, artista, álbum, duração, caminho) ficam em Exibir →
-Colunas da playlist. As tags são lidas em segundo plano, num processo à
-parte, e guardadas na playlist.
+The columns (number, artist, album, length, path) are under View →
+Playlist columns. Tags are read in the background, in a separate process,
+and kept in the playlist.
 
-O Kiplay aparece para a área de trabalho por MPRIS (teclas de mídia,
-applets, o kikarinhas) e pode ter um ícone na bandeja.
+Kiplay shows up to the desktop through MPRIS (media keys, applets,
+kikarinhas) and can have a tray icon.
 
-A configuração fica em `~/.config/kiplay/kiplay.ini`, que a janela de
-preferências escreve e que também pode ser editado à mão (comentários são
-mantidos; só o que difere do padrão é gravado):
+Settings live in `~/.config/kiplay/kiplay.ini`, which the preferences
+dialog writes and which can also be edited by hand (comments are kept;
+only what differs from the default is written):
 
 ```ini
 [mpv]
-# o programa, ou o caminho completo
+# the program, or its full path
 program = mpv
-# true: lê também o seu ~/.config/mpv/mpv.conf
+# true: also reads your ~/.config/mpv/mpv.conf
 use_config = false
-# opções extras, como no SMPlayer
+# extra options, as in SMPlayer
 extra = --deband
 
 [tools]
-# yt-dlp (binário do Linux) para baixar legendas do YouTube; vazio: procura no PATH
+# yt-dlp (the Linux binary), to download YouTube subtitles; empty: looked up in PATH
 ytdlp = ~/Downloads/yt-dlp_linux
 
 [video]
@@ -124,79 +126,78 @@ languages = pt-BR,pt,en
 font_size = 48
 
 [playback]
-# auto: música no kiplay-audio (leve, gapless); mpv: tudo pelo mpv
+# auto: music on kiplay-audio (light, gapless); mpv: everything on mpv
 engine = auto
-# saída do kiplay-audio: default (PulseAudio/PipeWire, ou o ALSA se não
-# houver servidor) ou um dispositivo ALSA (hw:0, null...)
+# kiplay-audio's output: default (PulseAudio/PipeWire, or ALSA when there's
+# no server) or an ALSA device (hw:0, null...)
 device = default
 
 [files]
-# off, video ou all: continuar de onde parou
+# off, video or all: resume where it stopped
 resume = video
 
 [shortcuts]
-# teclas no formato do GTK; vazio: nenhuma
+# keys in GTK's format; empty: none
 next = <Control>Right,greater
 mute =
 ```
 
-(Comentários só em linha própria: depois do valor, o `#` faria parte
-dele.)
+(Comments only on lines of their own: after a value, the `#` would be
+part of it.)
 
-Para baixar um vídeo com as legendas no formato certo:
+To download a video with captions in the right format:
 
 ```sh
 yt-dlp --write-subs --sub-langs all,live_chat --sub-format srv3/json3/best URL
 ```
 
-O formato padrão do yt-dlp é vtt, que perde posição, cores e tamanhos.
+yt-dlp's default format is vtt, which loses positions, colors and sizes.
 
-O Kiplay acha os arquivos ao lado do vídeo pelo nome (`Título [ID].mp4` →
-`Título [ID].ko.srv3`, `.json3`, `.vtt`, `.srt`, `.ass`...). De cada
-idioma, o srv3 (ou o json3) vence os comuns: ele é convertido para ASS
-(em `~/.cache/kiplay/subs`) e entra no menu Legendas como "estilo do
-YouTube". O idioma é escolhido pela lista de [subtitles] languages.
-Para converter à mão, para usar em outro player:
+Kiplay finds the files next to the video by name (`Title [ID].mp4` →
+`Title [ID].ko.srv3`, `.json3`, `.vtt`, `.srt`, `.ass`...). For each
+language the srv3 (or json3) wins over the plain ones: it is converted to
+ASS (in `~/.cache/kiplay/subs`) and shows in the Subtitles menu as "YouTube
+style". The language is picked from the `[subtitles] languages` list. To
+convert by hand, for another player:
 
 ```sh
-kiplay --convert "Título [ID].ko.srv3" > ko.ass
+kiplay --convert "Title [ID].ko.srv3" > ko.ass
 ```
 
-O chat gravado (`Título [ID].live_chat.json`, que o yt-dlp salva com
-`--sub-langs live_chat`) aparece num painel ao lado do vídeo, seguindo o
-tempo do vídeo e refazendo-se a cada pulo: mensagens com os emojis do
-canal e os avatares (baixados uma vez com o `curl` para
-`~/.cache/kiplay/chat`, com botão para limpar o cache em Preferências → Chat), Super Chats e novos membros em cartões coloridos,
-nome em dourado/azul/verde para o canal, moderadores e membros. Menu Exibir
-→ Chat (tecla `c`; em tela cheia o próprio mpv desenha o chat à direita do vídeo); em Preferências → Chat: largura e filtro ("só Super
-Chats e membros").
+The recorded chat (`Title [ID].live_chat.json`, which yt-dlp saves with
+`--sub-langs live_chat`) shows in a panel beside the video, following the
+video's time and starting over at every seek: messages with the channel's
+emoji and avatars (downloaded once with `curl` into `~/.cache/kiplay/chat`, with a clear-cache button in Preferences → Chat),
+Super Chats and new members as colored cards, names in gold/blue/green for
+the channel, moderators and members. View → Chat (key `c`; in fullscreen mpv itself draws the chat right of the video); Preferences →
+Chat: width and a filter ("Super Chats and members only").
 
-Em [subtitles], `youtube_edge = strong` troca o contorno fino do YouTube por
-um grosso e borrado, mais fácil de ler; `auto = no` desliga a busca.
+In `[subtitles]`, `youtube_edge = strong` swaps YouTube's thin outline for a
+thick, blurred one that is easier to read; `auto = no` turns the search off.
 
-## Compilar
+## Building
 
-Precisa de GTK 2, GLib, ALSA, zlib, um compilador de C++ e das
-bibliotecas do FFmpeg (libavformat, libavcodec, libswresample), com os
-pacotes `-dev`. O libpulse (`libpulse-dev`) é opcional, mas recomendado: o
-`make` o usa se achar os cabeçalhos; senão avisa e compila só com ALSA
-(`make PULSE=0` força isso, `make PULSE=1` exige o PulseAudio). A música
-de console usa uma cópia do [Game_Music_Emu](https://github.com/libgme/game-music-emu)
-em `vendor/gme` (LGPL-2.1-or-later). O MIDI usa o
-[TinySoundFont e o TinyMidiLoader](https://github.com/schellingb/TinySoundFont)
-em `vendor/tsf` (MIT e zlib) e precisa de um SoundFont General MIDI (`.sf2`):
-indique o arquivo em Opções → Preferências → Áudio; vazio, vale o primeiro
-achado em `/usr/share/sounds/sf2` (o pequeno TimGM6mb antes dos outros). Ele
-fica na memória, com o dobro do tamanho do arquivo, só enquanto um MIDI toca.
-Não há reverb nem chorus.
+Needs GTK 2, GLib, ALSA, zlib, a C++ compiler and the FFmpeg
+libraries (libavformat, libavcodec, libswresample), with their `-dev`
+packages. libpulse (`libpulse-dev`) is optional but recommended: `make` uses
+it when the headers are found; otherwise it prints a note and builds with
+ALSA only (`make PULSE=0` forces that, `make PULSE=1` requires PulseAudio). Game music
+uses a copy of [Game_Music_Emu](https://github.com/libgme/game-music-emu)
+in `vendor/gme` (LGPL-2.1-or-later). MIDI uses
+[TinySoundFont and TinyMidiLoader](https://github.com/schellingb/TinySoundFont)
+in `vendor/tsf` (MIT and zlib) and needs a General MIDI SoundFont (`.sf2`):
+set the file in Options → Preferences → Audio; empty, the first one found in
+`/usr/share/sounds/sf2` is used (the small TimGM6mb before the others). It is
+kept in memory, at twice the file's size, only while a MIDI plays. There is
+no reverb or chorus.
 
 ```sh
 make
 make test
-make run             # roda do build/, com as traduções
-sudo make install    # em /usr/local
+make run             # runs from build/, with the translations
+sudo make install    # into /usr/local
 ```
 
-## Licença
+## License
 
 GPL-3.0-or-later.

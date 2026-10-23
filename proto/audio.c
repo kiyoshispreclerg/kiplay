@@ -77,7 +77,7 @@ static int play_drmp3(const char *path)
     if (!drmp3_init_file(&mp3, path, NULL))
         return 1;
     if (mp3.sampleRate != RATE || mp3.channels != CHANNELS)
-        fprintf(stderr, "aviso: %u Hz %u canais tocados como 48 kHz estéreo\n",
+        fprintf(stderr, "warning: %u Hz %u channels played as 48 kHz stereo\n",
                 mp3.sampleRate, mp3.channels);
     static int16_t buf[4096 * CHANNELS];
     drmp3_uint64 n;
@@ -92,13 +92,13 @@ static int play_av(const char *path)
     AVFormatContext *fmt = NULL;
     if (avformat_open_input(&fmt, path, NULL, NULL) < 0 ||
         avformat_find_stream_info(fmt, NULL) < 0) {
-        fprintf(stderr, "não abriu %s\n", path);
+        fprintf(stderr, "could not open %s\n", path);
         return 1;
     }
     ka_av_codec *codec = NULL;
     int si = av_find_best_stream(fmt, AVMEDIA_TYPE_AUDIO, -1, -1, &codec, 0);
     if (si < 0) {
-        fprintf(stderr, "sem áudio\n");
+        fprintf(stderr, "no audio\n");
         return 1;
     }
     for (unsigned i = 0; i < fmt->nb_streams; i++)
