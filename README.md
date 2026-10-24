@@ -36,6 +36,22 @@ beside the video). Chat as danmaku doesn't exist yet. See
 the [plan](PLANO.md) and the [comparison with Audacious](docs/BENCH.md)
 (both in Portuguese).
 
+## Install
+
+Download the `.deb` for your distro from the
+[Releases page](https://github.com/kiyoshispreclerg/kiplay/releases)
+(available for Ubuntu 22.04 and 24.04, and Devuan daedalus and excalibur;
+amd64) and install it with `apt`, which pulls in the libraries it needs,
+plus `mpv` and `curl` (recommended packages; video needs mpv or MPlayer,
+music plays without them):
+
+```sh
+sudo apt install ./kiplay_<version>-1_<distro>_amd64.deb
+```
+
+To download YouTube subtitles, point `[tools] ytdlp` at a yt-dlp binary
+(see Usage). Uninstall with `sudo apt remove kiplay`.
+
 ## Usage
 
 ```sh
@@ -175,7 +191,7 @@ Chat: width and a filter ("Super Chats and members only").
 In `[subtitles]`, `youtube_edge = strong` swaps YouTube's thin outline for a
 thick, blurred one that is easier to read; `auto = no` turns the search off.
 
-## Building
+## Build
 
 Needs GTK 2, GLib, ALSA, zlib, a C++ compiler and the FFmpeg
 libraries (libavformat, libavcodec, libswresample), with their `-dev`

@@ -34,6 +34,22 @@ do YouTube com estilo e posição, como no site; chat de live gravado em
 painel ao lado do vídeo). O chat em danmaku ainda não existe. Veja o [plano](PLANO.md) e a [comparação com o
 Audacious](docs/BENCH.md).
 
+## Instalar
+
+Baixe o `.deb` da sua distro na
+[página de Releases](https://github.com/kiyoshispreclerg/kiplay/releases)
+(há para Ubuntu 22.04 e 24.04, e Devuan daedalus e excalibur; amd64) e
+instale com o `apt`, que traz as bibliotecas de que ele precisa, mais o
+`mpv` e o `curl` (pacotes recomendados; vídeo precisa do mpv ou do MPlayer,
+música toca sem eles):
+
+```sh
+sudo apt install ./kiplay_<versão>-1_<distro>_amd64.deb
+```
+
+Para baixar legendas do YouTube, aponte `[tools] ytdlp` para um binário do
+yt-dlp (veja Uso). Para desinstalar: `sudo apt remove kiplay`.
+
 ## Uso
 
 ```sh
