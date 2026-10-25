@@ -20,7 +20,7 @@
  * added, go to the tag reader (src/tagreader.h); answers update the row
  * and are saved with the playlist. */
 
-const char *const kp_column_names[] = {"number", "artist", "album", "length", "path", NULL};
+const char *const kp_column_names[] = {"number", "artist", "album", "length", "path", "queue", NULL};
 
 typedef struct {
     int id;
@@ -43,6 +43,7 @@ static const struct {
     int width;
 } columns[] = {
     {KP_COLUMN_NUM, KP_COL_NUM, "number", "#", 1.0f, 56},
+    {KP_COLUMN_QUEUE, KP_COL_QUEUE, "queue", N_("Queue"), 1.0f, 56},
     {0, KP_COL_TITLE, "title", N_("Title"), 0.0f, 200},
     {KP_COLUMN_ARTIST, KP_COL_ARTIST, "artist", N_("Artist"), 0.0f, 150},
     {KP_COLUMN_ALBUM, KP_COL_ALBUM, "album", N_("Album"), 0.0f, 150},

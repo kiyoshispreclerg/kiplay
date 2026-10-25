@@ -132,7 +132,7 @@ static void on_column(GtkCheckMenuItem *it, gpointer data)
 static void columns_menu(GtkWidget *menu, kp_app *app)
 {
     static const char *const labels[] = {N_("_Number"), N_("_Artist"), N_("Al_bum"),
-                                         N_("_Length"), N_("_Path")};
+                                         N_("_Length"), N_("_Path"), N_("_Queue")};
     for (int i = 0; i < KP_COLUMN_COUNT; i++) {
         GtkWidget *it = gtk_check_menu_item_new_with_mnemonic(_(labels[i]));
         app->column_items[i] = it;

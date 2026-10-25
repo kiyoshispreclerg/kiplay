@@ -108,7 +108,7 @@ legenda escolhidas, os atrasos e a proporção (em
 `~/.local/share/kiplay/files/`), e continua dali da próxima vez. Em
 Preferências → Geral dá para estender a música ou desligar.
 
-As colunas (número, artista, álbum, duração, caminho) ficam em Exibir →
+As colunas (número, posição na fila, artista, álbum, duração, caminho) ficam em Exibir →
 Colunas da playlist. As tags são lidas em segundo plano, num processo à
 parte, e guardadas na playlist.
 

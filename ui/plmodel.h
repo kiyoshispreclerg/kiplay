@@ -26,6 +26,7 @@ enum {
     KP_COL_ALBUM,
     KP_COL_LENGTH, /* "3:25" */
     KP_COL_PATH,   /* where the file is, readable */
+    KP_COL_QUEUE,  /* "#1" when queued, else empty */
     KP_COL_WEIGHT, /* bold for the playing row */
     KP_N_COLS
 };

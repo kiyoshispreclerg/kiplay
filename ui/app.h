@@ -42,7 +42,8 @@ enum {
     KP_COLUMN_ALBUM = 1 << 2,
     KP_COLUMN_LENGTH = 1 << 3,
     KP_COLUMN_PATH = 1 << 4,
-    KP_COLUMN_COUNT = 5,
+    KP_COLUMN_QUEUE = 1 << 5,
+    KP_COLUMN_COUNT = 6,
 };
 #define KP_COLUMNS_DEFAULT (KP_COLUMN_NUM | KP_COLUMN_LENGTH)
 extern const char *const kp_column_names[];

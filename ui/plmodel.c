@@ -164,6 +164,14 @@ static void get_value(GtkTreeModel *model, GtkTreeIter *it, gint col, GValue *va
         }
         break;
     }
+    case KP_COL_QUEUE: {
+        int q = m->queue_pos ? m->queue_pos(m->ud, e) : 0;
+        if (q > 0) {
+            g_snprintf(buf, sizeof buf, "#%d", q);
+            g_value_set_string(value, buf);
+        }
+        break;
+    }
     case KP_COL_TITLE:
         g_value_take_string(value, kp_entry_display_title(e, !m->split_artist));
         break;

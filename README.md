@@ -110,7 +110,7 @@ subtitle tracks chosen, the delays and the aspect ratio (in
 `~/.local/share/kiplay/files/`), and goes on from there next time.
 Preferences → General extends this to music or turns it off.
 
-The columns (number, artist, album, length, path) are under View →
+The columns (number, queue position, artist, album, length, path) are under View →
 Playlist columns. Tags are read in the background, in a separate process,
 and kept in the playlist.
 

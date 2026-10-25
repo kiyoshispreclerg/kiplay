@@ -236,7 +236,7 @@ static void interface_tab(dialog *d, GtkWidget *nb)
 
     t = section(p, _("Playlist columns"));
     static const char *const labels[] = {N_("_Number"), N_("_Artist"), N_("Al_bum"),
-                                         N_("_Length"), N_("_Path")};
+                                         N_("_Length"), N_("_Path"), N_("_Queue")};
     for (int i = 0; i < KP_COLUMN_COUNT; i++) {
         d->columns[i] = check(d, t, _(labels[i]), "playlists", NULL, false);
         gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(d->columns[i]), app->columns & (1u << i));

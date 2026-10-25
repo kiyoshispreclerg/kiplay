@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: kiplay\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-20 19:41-0300\n"
+"POT-Creation-Date: 2026-10-25 12:42-0300\n"
 "PO-Revision-Date: 2026-10-09 16:23-0300\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -96,6 +96,10 @@ msgstr "_Duração"
 msgid "_Path"
 msgstr "_Caminho"
 
+#: ui/window.c:135 ui/jump.c:141 ui/prefsdlg.c:239
+msgid "_Queue"
+msgstr "_Fila"
+
 #: ui/window.c:173
 msgid ""
 "Light audio and video player for KiDesktop, with YouTube's styled captions "
@@ -125,7 +129,7 @@ msgstr "Adicionar _pasta..."
 msgid "_Import playlist..."
 msgstr "_Importar playlist..."
 
-#: ui/window.c:217 ui/playlists.c:1188
+#: ui/window.c:217 ui/playlists.c:1189
 msgid "_Export playlist..."
 msgstr "_Exportar playlist..."
 
@@ -141,7 +145,7 @@ msgstr "_Playlist"
 msgid "_New"
 msgstr "_Nova"
 
-#: ui/window.c:223 ui/playlists.c:1187
+#: ui/window.c:223 ui/playlists.c:1188
 msgid "_Rename..."
 msgstr "_Renomear..."
 
@@ -157,11 +161,11 @@ msgstr "_Ir para arquivo..."
 msgid "_Search panel"
 msgstr "_Painel de busca"
 
-#: ui/window.c:228 ui/playlists.c:888
+#: ui/window.c:228 ui/playlists.c:889
 msgid "_Queue / unqueue"
 msgstr "Pôr na _fila / tirar"
 
-#: ui/window.c:229 ui/playlists.c:893
+#: ui/window.c:229 ui/playlists.c:894
 msgid "Remove _selected"
 msgstr "Remover _selecionadas"
 
@@ -287,140 +291,144 @@ msgid "cannot find the settings folder (is $HOME set?)"
 msgstr "não achei a pasta de configuração ($HOME está definido?)"
 
 #: ui/playlists.c:46
+msgid "Queue"
+msgstr "Fila"
+
+#: ui/playlists.c:47
 msgid "Title"
 msgstr "Título"
 
-#: ui/playlists.c:47
+#: ui/playlists.c:48
 msgid "Artist"
 msgstr "Artista"
 
-#: ui/playlists.c:48
+#: ui/playlists.c:49
 msgid "Album"
 msgstr "Álbum"
 
-#: ui/playlists.c:49
+#: ui/playlists.c:50
 msgid "Length"
 msgstr "Duração"
 
-#: ui/playlists.c:50
+#: ui/playlists.c:51
 msgid "Path"
 msgstr "Caminho"
 
-#: ui/playlists.c:146
+#: ui/playlists.c:147
 #, c-format
 msgid "could not save the playlists: %s"
 msgstr "não foi possível salvar as playlists: %s"
 
-#: ui/playlists.c:170
+#: ui/playlists.c:171
 msgid "Empty playlist"
 msgstr "Playlist vazia"
 
-#: ui/playlists.c:172
+#: ui/playlists.c:173
 #, c-format
 msgid "%zu track"
 msgid_plural "%zu tracks"
 msgstr[0] "%zu faixa"
 msgstr[1] "%zu faixas"
 
-#: ui/playlists.c:173
+#: ui/playlists.c:174
 #, c-format
 msgid "%zu track, %s"
 msgid_plural "%zu tracks, %s"
 msgstr[0] "%zu faixa, %s"
 msgstr[1] "%zu faixas, %s"
 
-#: ui/playlists.c:176
+#: ui/playlists.c:177
 #, c-format
 msgid "%s — reading tags (%zu file left)"
 msgid_plural "%s — reading tags (%zu files left)"
 msgstr[0] "%s — lendo tags (falta %zu arquivo)"
 msgstr[1] "%s — lendo tags (faltam %zu arquivos)"
 
-#: ui/playlists.c:602 ui/shortcuts.c:106
+#: ui/playlists.c:603 ui/shortcuts.c:106
 msgid "Add folder"
 msgstr "Adicionar pasta"
 
-#: ui/playlists.c:602 ui/shortcuts.c:105
+#: ui/playlists.c:603 ui/shortcuts.c:105
 msgid "Add files"
 msgstr "Adicionar arquivos"
 
-#: ui/playlists.c:847
+#: ui/playlists.c:848
 #, c-format
 msgid "could not open the folder: %s"
 msgstr "não foi possível abrir a pasta: %s"
 
-#: ui/playlists.c:887
+#: ui/playlists.c:888
 msgid "_Play"
 msgstr "_Tocar"
 
-#: ui/playlists.c:890
+#: ui/playlists.c:891
 msgid "Cu_t"
 msgstr "Reco_rtar"
 
-#: ui/playlists.c:891
+#: ui/playlists.c:892
 msgid "_Copy"
 msgstr "_Copiar"
 
-#: ui/playlists.c:892
+#: ui/playlists.c:893
 msgid "_Paste"
 msgstr "C_olar"
 
-#: ui/playlists.c:895
+#: ui/playlists.c:896
 msgid "Open containing _folder"
 msgstr "Abrir _pasta do arquivo"
 
-#: ui/playlists.c:1192
+#: ui/playlists.c:1193
 msgid "Re_move"
 msgstr "_Remover"
 
-#: ui/playlists.c:1303 ui/playlists.c:1344
+#: ui/playlists.c:1304 ui/playlists.c:1345
 #, c-format
 msgid "Playlist %zu"
 msgstr "Playlist %zu"
 
-#: ui/playlists.c:1355 ui/shortcuts.c:108
+#: ui/playlists.c:1356 ui/shortcuts.c:108
 msgid "Rename playlist"
 msgstr "Renomear playlist"
 
-#: ui/playlists.c:1388
+#: ui/playlists.c:1389
 #, c-format
 msgid "Close the playlist \"%s\"?"
 msgstr "Fechar a playlist \"%s\"?"
 
-#: ui/playlists.c:1391
+#: ui/playlists.c:1392
 #, c-format
 msgid "Its %zu track will be removed from the list (the file stays)."
 msgid_plural "Its %zu tracks will be removed from the list (the files stay)."
 msgstr[0] "A %zu faixa sai da lista (o arquivo continua no disco)."
 msgstr[1] "As %zu faixas saem da lista (os arquivos continuam no disco)."
 
-#: ui/playlists.c:1427
+#: ui/playlists.c:1428
 msgid "Playlists (m3u, m3u8, pls)"
 msgstr "Playlists (m3u, m3u8, pls)"
 
-#: ui/playlists.c:1437
+#: ui/playlists.c:1438
 msgid "Import playlist"
 msgstr "Importar playlist"
 
-#: ui/playlists.c:1458
+#: ui/playlists.c:1459
 #, c-format
 msgid "Cannot read %s"
 msgstr "Não foi possível ler %s"
 
-#: ui/playlists.c:1487
+#: ui/playlists.c:1488
 msgid "Export playlist"
 msgstr "Exportar playlist"
 
-#: ui/playlists.c:1500
+#: ui/playlists.c:1501
 #, c-format
 msgid "Cannot write %s"
 msgstr "Não foi possível gravar %s"
 
-#: ui/playlists.c:1555
+#: ui/playlists.c:1556
 msgid "Playlist 1"
 msgstr "Playlist 1"
 
-#: ui/playlists.c:1562 ui/shortcuts.c:107
+#: ui/playlists.c:1563 ui/shortcuts.c:107
 msgid "New playlist"
 msgstr "Nova playlist"
 
@@ -519,10 +527,6 @@ msgstr[1] "%zu arquivos"
 #: ui/jump.c:139 ui/shortcuts.c:111
 msgid "Jump to file"
 msgstr "Ir para arquivo"
-
-#: ui/jump.c:141
-msgid "_Queue"
-msgstr "_Fila"
 
 #: ui/searchpanel.c:121
 #, c-format
