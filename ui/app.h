@@ -181,7 +181,7 @@ void kp_fsbar_video_changed(kp_app *app);
 void kp_playlists_init(kp_app *app);
 void kp_playlists_free(kp_app *app);
 void kp_playlists_new(kp_app *app);
-void kp_playlists_rename(kp_app *app);
+void kp_playlists_properties(kp_app *app);
 void kp_playlists_close(kp_app *app);
 void kp_playlists_add_files(kp_app *app);
 void kp_playlists_add_folder(kp_app *app);

@@ -87,7 +87,7 @@ playlist do Kiplay", esta também para pastas.
 | Ctrl+M, Ctrl+R, Ctrl+S | parar após esta faixa, repetir, aleatório |
 | Alt+↑ / Alt+↓, arrastar | move as faixas selecionadas |
 | Ctrl+O, Ctrl+Shift+O | adicionar arquivos, adicionar pasta |
-| Ctrl+T, F2, Ctrl+W | nova playlist, renomear, fechar |
+| Ctrl+T, F2, Ctrl+W | nova playlist, propriedades (nome, tipo), fechar |
 | Ctrl+P | preferências |
 | Alt+1..9 | vai para a playlist |
 
@@ -111,6 +111,12 @@ Preferências → Geral dá para estender a música ou desligar.
 As colunas (número, posição na fila, artista, álbum, duração, caminho) ficam em Exibir →
 Colunas da playlist. As tags são lidas em segundo plano, num processo à
 parte, e guardadas na playlist.
+
+O tipo de uma playlist (botão direito na aba → Propriedades, ou F2) é
+"Mista" ou "Só áudio". Numa playlist só de áudio tudo toca no motor leve
+de música, vídeos também (só o som: poucos MB de memória e quase nada de
+CPU, mesmo num arquivo grande), e um vídeo aberto enquanto ela é a atual
+vai para a próxima playlist mista (uma nova, se não houver).
 
 O Kiplay aparece para a área de trabalho por MPRIS (teclas de mídia,
 applets, o kikarinhas) e pode ter um ícone na bandeja.

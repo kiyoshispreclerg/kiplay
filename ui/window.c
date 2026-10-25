@@ -220,7 +220,7 @@ static GtkWidget *menu_bar(kp_app *app)
 
     m = submenu(bar, _("_Playlist"));
     command(m, _("_New"), G_CALLBACK(kp_playlists_new), app, "new_playlist");
-    command(m, _("_Rename..."), G_CALLBACK(kp_playlists_rename), app, "rename_playlist");
+    command(m, _("_Properties..."), G_CALLBACK(kp_playlists_properties), app, "rename_playlist");
     command(m, _("_Close"), G_CALLBACK(kp_playlists_close), app, "close_playlist");
     separator(m);
     command(m, _("_Jump to file..."), G_CALLBACK(kp_jump_dialog), app, "jump");

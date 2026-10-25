@@ -51,6 +51,15 @@ kp_media_kind kp_media_kind_of(const char *location)
     return k;
 }
 
+bool kp_media_video_has_sound(const char *location)
+{
+    char *ext = extension(location);
+    static const char *const trackers[] = {"mod", "xm", "it", "s3m", NULL};
+    bool yes = kp_media_kind_of(location) == KP_MEDIA_VIDEO && !in(trackers, ext);
+    g_free(ext);
+    return yes;
+}
+
 bool kp_media_is_playlist(const char *location)
 {
     char *ext = extension(location);

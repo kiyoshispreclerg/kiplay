@@ -21,6 +21,9 @@ kp_media_kind kp_media_kind_of(const char *location);
  * URI with the "?N", as Audacious writes it; anything else unchanged.
  * Returns a new string. */
 char *kp_media_location(const char *location);
+/* A video file whose sound kiplay-audio can play alone (it opens only the
+ * audio stream): video, minus the tracker modules only mpv understands. */
+bool kp_media_video_has_sound(const char *location);
 /* Playlists that can be opened as tabs (m3u, m3u8, pls). */
 bool kp_media_is_playlist(const char *location);
 

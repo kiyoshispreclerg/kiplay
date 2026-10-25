@@ -48,11 +48,23 @@ typedef struct {
 
 typedef struct kp_playlist kp_playlist;
 
+/* What a playlist is for. In an audio-only one every file plays on
+ * kiplay-audio (a video plays just its sound); kept as "#KIPLAY-TYPE:audio"
+ * in the M3U8 (nothing for the usual mixed kind, so old files stay as
+ * they were). */
+typedef enum {
+    KP_PLAYLIST_MIXED,
+    KP_PLAYLIST_AUDIO,
+} kp_playlist_type;
+
 kp_playlist *kp_playlist_new(const char *name);
 void kp_playlist_free(kp_playlist *pl);
 
 const char *kp_playlist_name(const kp_playlist *pl);
 void kp_playlist_set_name(kp_playlist *pl, const char *name);
+
+kp_playlist_type kp_playlist_get_type(const kp_playlist *pl);
+void kp_playlist_set_type(kp_playlist *pl, kp_playlist_type type);
 
 size_t kp_playlist_count(const kp_playlist *pl);
 /* NULL past the end. Valid until the playlist changes. */

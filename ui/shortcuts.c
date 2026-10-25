@@ -105,7 +105,7 @@ static const action actions[] = {
     {"add_files", N_("Add files"), "<Control>o", kp_playlists_add_files, false},
     {"add_folder", N_("Add folder"), "<Control><Shift>o", kp_playlists_add_folder, false},
     {"new_playlist", N_("New playlist"), "<Control>t", kp_playlists_new, false},
-    {"rename_playlist", N_("Rename playlist"), "F2", kp_playlists_rename, false},
+    {"rename_playlist", N_("Playlist properties"), "F2", kp_playlists_properties, false},
     {"close_playlist", N_("Close playlist"), "<Control>w", kp_playlists_close, false},
     {"search", N_("Search panel"), "<Control>f", kp_search_panel_toggle, false},
     {"jump", N_("Jump to file"), "<Control>j", kp_jump_dialog, false},

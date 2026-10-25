@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: kiplay\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-25 12:42-0300\n"
+"POT-Creation-Date: 2026-10-25 12:45-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -110,7 +110,7 @@ msgstr ""
 msgid "_Import playlist..."
 msgstr ""
 
-#: ui/window.c:217 ui/playlists.c:1189
+#: ui/window.c:217 ui/playlists.c:1230
 msgid "_Export playlist..."
 msgstr ""
 
@@ -126,8 +126,8 @@ msgstr ""
 msgid "_New"
 msgstr ""
 
-#: ui/window.c:223 ui/playlists.c:1188
-msgid "_Rename..."
+#: ui/window.c:223 ui/playlists.c:1229
+msgid "_Properties..."
 msgstr ""
 
 #: ui/window.c:224
@@ -142,11 +142,11 @@ msgstr ""
 msgid "_Search panel"
 msgstr ""
 
-#: ui/window.c:228 ui/playlists.c:889
+#: ui/window.c:228 ui/playlists.c:930
 msgid "_Queue / unqueue"
 msgstr ""
 
-#: ui/window.c:229 ui/playlists.c:894
+#: ui/window.c:229 ui/playlists.c:935
 msgid "Remove _selected"
 msgstr ""
 
@@ -324,91 +324,114 @@ msgid_plural "%s — reading tags (%zu files left)"
 msgstr[0] ""
 msgstr[1] ""
 
-#: ui/playlists.c:603 ui/shortcuts.c:106
+#: ui/playlists.c:644 ui/shortcuts.c:106
 msgid "Add folder"
 msgstr ""
 
-#: ui/playlists.c:603 ui/shortcuts.c:105
+#: ui/playlists.c:644 ui/shortcuts.c:105
 msgid "Add files"
 msgstr ""
 
-#: ui/playlists.c:848
+#: ui/playlists.c:889
 #, c-format
 msgid "could not open the folder: %s"
 msgstr ""
 
-#: ui/playlists.c:888
+#: ui/playlists.c:929
 msgid "_Play"
 msgstr ""
 
-#: ui/playlists.c:891
+#: ui/playlists.c:932
 msgid "Cu_t"
 msgstr ""
 
-#: ui/playlists.c:892
+#: ui/playlists.c:933
 msgid "_Copy"
 msgstr ""
 
-#: ui/playlists.c:893
+#: ui/playlists.c:934
 msgid "_Paste"
 msgstr ""
 
-#: ui/playlists.c:896
+#: ui/playlists.c:937
 msgid "Open containing _folder"
 msgstr ""
 
-#: ui/playlists.c:1193
+#: ui/playlists.c:1234
 msgid "Re_move"
 msgstr ""
 
-#: ui/playlists.c:1304 ui/playlists.c:1345
+#: ui/playlists.c:1345 ui/playlists.c:1386
 #, c-format
 msgid "Playlist %zu"
 msgstr ""
 
-#: ui/playlists.c:1356 ui/shortcuts.c:108
-msgid "Rename playlist"
+#: ui/playlists.c:1397 ui/shortcuts.c:108
+msgid "Playlist properties"
 msgstr ""
 
-#: ui/playlists.c:1389
+#: ui/playlists.c:1407
+msgid "Mixed"
+msgstr ""
+
+#: ui/playlists.c:1408
+msgid "Audio only"
+msgstr ""
+
+#: ui/playlists.c:1414
+msgid "_Name:"
+msgstr ""
+
+#: ui/playlists.c:1415
+msgid "_Type:"
+msgstr ""
+
+#: ui/playlists.c:1424
+msgid ""
+"In an audio-only playlist every file plays on the light music engine, videos "
+"too (just their sound). Videos opened while it is the current one go to the "
+"next mixed playlist."
+msgstr ""
+
+#: ui/playlists.c:1462
 #, c-format
 msgid "Close the playlist \"%s\"?"
 msgstr ""
 
-#: ui/playlists.c:1392
+#: ui/playlists.c:1465
 #, c-format
 msgid "Its %zu track will be removed from the list (the file stays)."
 msgid_plural "Its %zu tracks will be removed from the list (the files stay)."
 msgstr[0] ""
 msgstr[1] ""
 
-#: ui/playlists.c:1428
+#: ui/playlists.c:1501
 msgid "Playlists (m3u, m3u8, pls)"
 msgstr ""
 
-#: ui/playlists.c:1438
+#: ui/playlists.c:1511
 msgid "Import playlist"
 msgstr ""
 
-#: ui/playlists.c:1459
+#: ui/playlists.c:1532
 #, c-format
 msgid "Cannot read %s"
 msgstr ""
 
-#: ui/playlists.c:1488
+#: ui/playlists.c:1562
 msgid "Export playlist"
 msgstr ""
 
-#: ui/playlists.c:1501
+#: ui/playlists.c:1575
 #, c-format
 msgid "Cannot write %s"
 msgstr ""
 
-#: ui/playlists.c:1556
+#: ui/playlists.c:1630
 msgid "Playlist 1"
 msgstr ""
 
-#: ui/playlists.c:1563 ui/shortcuts.c:107
+#: ui/playlists.c:1637 ui/shortcuts.c:107
 msgid "New playlist"
 msgstr ""
 
@@ -444,53 +467,53 @@ msgstr ""
 msgid "Show / hide the playlists"
 msgstr ""
 
-#: ui/player.c:440
+#: ui/player.c:444
 msgid "Cannot run the music engine (kiplay-audio)"
 msgstr ""
 
-#: ui/player.c:441
+#: ui/player.c:445
 msgid "Cannot run the player program (mpv)"
 msgstr ""
 
-#: ui/player.c:444
+#: ui/player.c:448
 msgid ""
 "Reinstall Kiplay, or play music through mpv with [playback] engine = mpv in "
 "kiplay.ini."
 msgstr ""
 
-#: ui/player.c:446
+#: ui/player.c:450
 msgid "Install mpv, or set its path in kiplay.ini ([mpv] program = ...)."
 msgstr ""
 
-#: ui/player.c:475 ui/subdl.c:108
+#: ui/player.c:479 ui/subdl.c:108
 #, c-format
 msgid "cannot read the captions %s: %s"
 msgstr ""
 
-#: ui/player.c:553
+#: ui/player.c:557
 #, c-format
 msgid "Resuming at %s"
 msgstr ""
 
-#: ui/player.c:706
+#: ui/player.c:710
 msgid "Muted"
 msgstr ""
 
-#: ui/player.c:706
+#: ui/player.c:710
 msgid "Sound on"
 msgstr ""
 
-#: ui/player.c:807
+#: ui/player.c:811
 #, c-format
 msgid "Could not play %s"
 msgstr ""
 
-#: ui/player.c:895
+#: ui/player.c:899
 #, c-format
 msgid "the player program stopped (%s)"
 msgstr ""
 
-#: ui/player.c:898
+#: ui/player.c:902
 msgid "The player program keeps stopping; giving up for now."
 msgstr ""
 

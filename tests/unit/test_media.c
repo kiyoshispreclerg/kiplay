@@ -16,6 +16,10 @@ TEST(kinds_by_extension)
     CHECK_INT_EQ(kp_media_kind_of("/m/cover.jpg"), KP_MEDIA_NONE);
     CHECK_INT_EQ(kp_media_kind_of("/m.mp3/README"), KP_MEDIA_NONE);
     CHECK_INT_EQ(kp_media_kind_of("http://radio/stream"), KP_MEDIA_NONE);
+    CHECK(kp_media_video_has_sound("/m/clip.MKV"));
+    CHECK(!kp_media_video_has_sound("/m/song.mod"));
+    CHECK(!kp_media_video_has_sound("/m/song.mp3"));
+    CHECK(!kp_media_video_has_sound("http://radio/stream"));
     CHECK(kp_media_is_playlist("/a/list.M3U8"));
     CHECK(kp_media_is_playlist("/a/radio.pls"));
     CHECK(!kp_media_is_playlist("/a/list.m3u8.mp3"));

@@ -89,7 +89,7 @@ too.
 | Ctrl+M, Ctrl+R, Ctrl+S | stop after this track, repeat, shuffle |
 | Alt+↑ / Alt+↓, drag | moves the selected tracks |
 | Ctrl+O, Ctrl+Shift+O | add files, add folder |
-| Ctrl+T, F2, Ctrl+W | new playlist, rename, close |
+| Ctrl+T, F2, Ctrl+W | new playlist, properties (name, type), close |
 | Ctrl+P | preferences |
 | Alt+1..9 | goes to that playlist |
 
@@ -113,6 +113,12 @@ Preferences → General extends this to music or turns it off.
 The columns (number, queue position, artist, album, length, path) are under View →
 Playlist columns. Tags are read in the background, in a separate process,
 and kept in the playlist.
+
+A playlist's type (right-click its tab → Properties, or F2) is "Mixed" or
+"Audio only". In an audio-only playlist everything plays on the light
+music engine, videos too (just their sound: a few MB of memory and almost
+no CPU, even for a big file), and a video you open while it is the current
+playlist goes to the next mixed playlist (a new one if there is none).
 
 Kiplay shows up to the desktop through MPRIS (media keys, applets,
 kikarinhas) and can have a tray icon.

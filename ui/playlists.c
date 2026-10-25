@@ -570,6 +570,21 @@ static void add_locations(kp_app *app, page_t *pg, long at, char **uris, bool de
 
 static void new_page(kp_app *app, const char *name);
 
+/* The first mixed playlist after from (wrapping around); a new one,
+ * selected, if there is none. */
+static page_t *next_mixed_page(kp_app *app, page_t *from)
+{
+    GtkNotebook *nb = GTK_NOTEBOOK(app->notebook);
+    int n = gtk_notebook_get_n_pages(nb), start = gtk_notebook_page_num(nb, from->scroll);
+    for (int k = 1; k < n; k++) {
+        page_t *pg = page_at(app, (start + k) % n);
+        if (pg && kp_playlist_get_type(list_of(pg)) == KP_PLAYLIST_MIXED)
+            return pg;
+    }
+    kp_playlists_new(app);
+    return current_page(app);
+}
+
 void kp_playlists_open(kp_app *app, char **locations, bool play, bool new_playlist)
 {
     if (new_playlist) {
@@ -590,8 +605,34 @@ void kp_playlists_open(kp_app *app, char **locations, bool play, bool new_playli
         g_free(name);
     }
     page_t *pg = current_page(app);
-    if (pg)
+    if (!pg)
+        return;
+    if (kp_playlist_get_type(list_of(pg)) != KP_PLAYLIST_AUDIO) {
         add_locations(app, pg, -1, locations, true, play);
+        return;
+    }
+    /* An audio-only playlist doesn't take videos: they go to the next
+     * mixed playlist (a new one if there is none). */
+    GPtrArray *keep = g_ptr_array_new(), *video = g_ptr_array_new();
+    for (char **l = locations; *l; l++)
+        g_ptr_array_add(kp_media_kind_of(*l) == KP_MEDIA_VIDEO ? video : keep, *l);
+    g_ptr_array_add(keep, NULL);
+    g_ptr_array_add(video, NULL);
+    if (video->len == 1) {
+        add_locations(app, pg, -1, locations, true, play);
+    } else {
+        bool video_plays = play && kp_media_kind_of(locations[0]) == KP_MEDIA_VIDEO;
+        page_t *vp = next_mixed_page(app, pg);
+        add_locations(app, vp, -1, (char **)video->pdata, true, video_plays);
+        if (keep->len > 1)
+            add_locations(app, pg, -1, (char **)keep->pdata, true, play && !video_plays);
+        if (!video_plays)
+            gtk_notebook_set_current_page(GTK_NOTEBOOK(app->notebook),
+                                          gtk_notebook_page_num(GTK_NOTEBOOK(app->notebook),
+                                                                pg->scroll));
+    }
+    g_ptr_array_free(keep, TRUE);
+    g_ptr_array_free(video, TRUE);
 }
 
 static void choose_and_add(kp_app *app, bool folder)
@@ -1185,7 +1226,7 @@ static void tab_menu_item(GtkWidget *menu, const char *label, void (*cb)(kp_app 
 static void tab_menu(kp_app *app, GdkEventButton *ev)
 {
     GtkWidget *m = gtk_menu_new();
-    tab_menu_item(m, _("_Rename..."), kp_playlists_rename, app);
+    tab_menu_item(m, _("_Properties..."), kp_playlists_properties, app);
     tab_menu_item(m, _("_Export playlist..."), kp_playlists_export, app);
     GtkWidget *sep = gtk_separator_menu_item_new();
     gtk_menu_shell_append(GTK_MENU_SHELL(m), sep);
@@ -1209,7 +1250,7 @@ static gboolean on_tab_click(GtkWidget *w, GdkEventButton *ev, gpointer data)
     if (ev->button == 3)
         tab_menu(app, ev);
     else
-        kp_playlists_rename(app);
+        kp_playlists_properties(app);
     return TRUE;
 }
 
@@ -1347,13 +1388,13 @@ void kp_playlists_new(kp_app *app)
     g_free(name);
 }
 
-void kp_playlists_rename(kp_app *app)
+void kp_playlists_properties(kp_app *app)
 {
     page_t *pg = current_page(app);
     if (!pg)
         return;
     kp_playlist *pl = list_of(pg);
-    GtkWidget *dlg = gtk_dialog_new_with_buttons(_("Rename playlist"), GTK_WINDOW(app->window),
+    GtkWidget *dlg = gtk_dialog_new_with_buttons(_("Playlist properties"), GTK_WINDOW(app->window),
                                                  GTK_DIALOG_MODAL | GTK_DIALOG_NO_SEPARATOR,
                                                  GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
                                                  GTK_STOCK_OK, GTK_RESPONSE_OK, NULL);
@@ -1362,17 +1403,49 @@ void kp_playlists_rename(kp_app *app)
     gtk_entry_set_text(GTK_ENTRY(entry), kp_playlist_name(pl));
     gtk_entry_set_activates_default(GTK_ENTRY(entry), TRUE);
     gtk_entry_set_width_chars(GTK_ENTRY(entry), 30);
-    gtk_container_set_border_width(GTK_CONTAINER(entry), 6);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg)->vbox), entry, TRUE, TRUE, 6);
+    GtkWidget *type = gtk_combo_box_new_text();
+    gtk_combo_box_append_text(GTK_COMBO_BOX(type), _("Mixed"));
+    gtk_combo_box_append_text(GTK_COMBO_BOX(type), _("Audio only"));
+    gtk_combo_box_set_active(GTK_COMBO_BOX(type), kp_playlist_get_type(pl));
+    GtkWidget *table = gtk_table_new(2, 2, FALSE);
+    gtk_table_set_col_spacings(GTK_TABLE(table), 8);
+    gtk_table_set_row_spacings(GTK_TABLE(table), 6);
+    gtk_container_set_border_width(GTK_CONTAINER(table), 6);
+    GtkWidget *l1 = gtk_label_new_with_mnemonic(_("_Name:"));
+    GtkWidget *l2 = gtk_label_new_with_mnemonic(_("_Type:"));
+    gtk_label_set_mnemonic_widget(GTK_LABEL(l1), entry);
+    gtk_label_set_mnemonic_widget(GTK_LABEL(l2), type);
+    gtk_misc_set_alignment(GTK_MISC(l1), 0.0f, 0.5f);
+    gtk_misc_set_alignment(GTK_MISC(l2), 0.0f, 0.5f);
+    gtk_table_attach(GTK_TABLE(table), l1, 0, 1, 0, 1, GTK_FILL, 0, 0, 0);
+    gtk_table_attach(GTK_TABLE(table), entry, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, 0, 0, 0);
+    gtk_table_attach(GTK_TABLE(table), l2, 0, 1, 1, 2, GTK_FILL, 0, 0, 0);
+    gtk_table_attach(GTK_TABLE(table), type, 1, 2, 1, 2, GTK_EXPAND | GTK_FILL, 0, 0, 0);
+    GtkWidget *note = gtk_label_new(_("In an audio-only playlist every file plays on the light "
+                                      "music engine, videos too (just their sound). Videos "
+                                      "opened while it is the current one go to the next mixed "
+                                      "playlist."));
+    gtk_label_set_line_wrap(GTK_LABEL(note), TRUE);
+    gtk_label_set_max_width_chars(GTK_LABEL(note), 50);
+    gtk_misc_set_alignment(GTK_MISC(note), 0.0f, 0.5f);
+    gtk_table_attach(GTK_TABLE(table), note, 1, 2, 2, 3, GTK_EXPAND | GTK_FILL, 0, 0, 0);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg)->vbox), table, TRUE, TRUE, 6);
     gtk_widget_show_all(dlg);
     if (gtk_dialog_run(GTK_DIALOG(dlg)) == GTK_RESPONSE_OK) {
         char *name = g_strstrip(g_strdup(gtk_entry_get_text(GTK_ENTRY(entry))));
         if (*name) {
             kp_playlist_set_name(pl, name);
             gtk_label_set_text(GTK_LABEL(pg->tab_label), name);
-            schedule_save(app);
         }
         g_free(name);
+        kp_playlist_type t = (kp_playlist_type)gtk_combo_box_get_active(GTK_COMBO_BOX(type));
+        if (t != kp_playlist_get_type(pl)) {
+            kp_playlist_set_type(pl, t);
+            /* What comes next may now be on the other engine. */
+            if (pg->id == app->playing.playlist_id)
+                kp_player_requeue(app);
+        }
+        schedule_save(app);
     }
     gtk_widget_destroy(dlg);
 }
@@ -1463,6 +1536,7 @@ void kp_playlists_import(kp_app *app)
         size_t at = kp_plset_insert(app->playlists, new_position(app),
                                     *kp_playlist_name(in) ? kp_playlist_name(in) : name);
         kp_playlist *pl = kp_plset_get(app->playlists, at);
+        kp_playlist_set_type(pl, kp_playlist_get_type(in));
         for (size_t i = 0; i < kp_playlist_count(in); i++) {
             const kp_entry *e = kp_playlist_get(in, i);
             kp_tags t = {e->title, e->artist, e->album, e->length_ms};

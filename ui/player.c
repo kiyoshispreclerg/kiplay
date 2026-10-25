@@ -80,11 +80,15 @@ static char *backend_path(const char *location)
     return path ? path : g_strdup(location);
 }
 
-/* kiplay-audio's turn? ([playback] engine = mpv sends everything to mpv) */
-static bool for_audio_engine(kp_app *app, const char *location)
+/* kiplay-audio's turn? ([playback] engine = mpv sends everything to mpv.)
+ * pl is the playlist the file plays from: in an audio-only one a video
+ * goes to kiplay-audio too, which plays just its sound. */
+static bool for_audio_engine(kp_app *app, const kp_playlist *pl, const char *location)
 {
     if (!strcmp(kp_prefs_get_str(app->prefs, "playback", "engine", "auto"), "mpv"))
         return false;
+    if (pl && kp_playlist_get_type(pl) == KP_PLAYLIST_AUDIO && kp_media_video_has_sound(location))
+        return true;
     return kp_media_kind_of(location) == KP_MEDIA_AUDIO;
 }
 
@@ -502,7 +506,7 @@ static void free_subs(kp_sub_file *subs, int n)
 /* Starts location on the right engine, with what is remembered of it. */
 static bool start_playing(kp_app *app, const char *location, double at)
 {
-    bool audio = for_audio_engine(app, location);
+    bool audio = for_audio_engine(app, playing_list(app), location);
     if (!ensure_backend(app, audio))
         return false;
     /* kiplay-audio takes "?N" and file:// itself; mpv gets a plain path. */
@@ -845,7 +849,7 @@ void kp_player_requeue(kp_app *app)
     if (!p->stop_after && pick_next(app, false, &id, &i))
         pl = kp_playlists_get(app, id);
     const kp_entry *e = pl ? kp_playlist_get(pl, (size_t)i) : NULL;
-    if (e && for_audio_engine(app, e->location)) {
+    if (e && for_audio_engine(app, pl, e->location)) {
         p->queued_id = id;
         p->queued = i;
         kp_backend_queue(p->backend, e->location);

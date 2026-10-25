@@ -11,6 +11,7 @@ struct kp_playlist {
     GStringChunk *strings;
     kp_entry *items;
     size_t n, cap;
+    kp_playlist_type type;
     bool dirty;
 };
 
@@ -43,6 +44,19 @@ void kp_playlist_set_name(kp_playlist *pl, const char *name)
         return;
     g_free(pl->name);
     pl->name = g_strdup(name);
+    pl->dirty = true;
+}
+
+kp_playlist_type kp_playlist_get_type(const kp_playlist *pl)
+{
+    return pl->type;
+}
+
+void kp_playlist_set_type(kp_playlist *pl, kp_playlist_type type)
+{
+    if (pl->type == type)
+        return;
+    pl->type = type;
     pl->dirty = true;
 }
 
@@ -286,6 +300,10 @@ static void m3u_line(char *line, void *ud)
     if (g_str_has_prefix(line, "#PLAYLIST:")) {
         g_free(st->pl->name);
         st->pl->name = field(line, "#PLAYLIST:");
+    } else if (g_str_has_prefix(line, "#KIPLAY-TYPE:")) {
+        char *type = field(line, "#KIPLAY-TYPE:");
+        st->pl->type = !strcmp(type, "audio") ? KP_PLAYLIST_AUDIO : KP_PLAYLIST_MIXED;
+        g_free(type);
     } else if (g_str_has_prefix(line, "#EXTINF:")) {
         const char *num = line + strlen("#EXTINF:");
         char *num_end;
@@ -471,6 +489,8 @@ char *kp_playlist_dump(const kp_playlist *pl)
     char *name = one_line(pl->name);
     g_string_append_printf(out, "#PLAYLIST:%s\n", name);
     g_free(name);
+    if (pl->type == KP_PLAYLIST_AUDIO)
+        g_string_append(out, "#KIPLAY-TYPE:audio\n");
     for (size_t i = 0; i < pl->n; i++) {
         const kp_entry *e = &pl->items[i];
         if (e->title || e->length_ms >= 0) {

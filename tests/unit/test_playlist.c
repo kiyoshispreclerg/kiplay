@@ -65,6 +65,28 @@ TEST(dump_round_trips)
     kp_playlist_free(pl);
 }
 
+TEST(type_round_trips)
+{
+    kp_playlist *pl = kp_playlist_new("x");
+    CHECK_INT_EQ(kp_playlist_get_type(pl), KP_PLAYLIST_MIXED);
+    kp_playlist_mark_saved(pl);
+    kp_playlist_set_type(pl, KP_PLAYLIST_AUDIO);
+    CHECK(kp_playlist_dirty(pl));
+    kp_playlist_add(pl, "/a.mkv", NULL);
+    char *text = kp_playlist_dump(pl);
+    CHECK_STR_EQ(text, "#EXTM3U\n#PLAYLIST:x\n#KIPLAY-TYPE:audio\n/a.mkv\n");
+    kp_playlist *back = kp_playlist_parse_m3u(text, NULL, "y");
+    CHECK_INT_EQ(kp_playlist_get_type(back), KP_PLAYLIST_AUDIO);
+    CHECK(!kp_playlist_dirty(back));
+    g_free(text);
+    kp_playlist_free(back);
+    /* Without the line (every older file) it is mixed. */
+    back = kp_playlist_parse_m3u("#EXTM3U\n/a.mp3\n", NULL, "y");
+    CHECK_INT_EQ(kp_playlist_get_type(back), KP_PLAYLIST_MIXED);
+    kp_playlist_free(back);
+    kp_playlist_free(pl);
+}
+
 TEST(remove_and_totals)
 {
     kp_playlist *pl = kp_playlist_new("x");
@@ -314,6 +336,7 @@ int main(void)
     RUN(parses_extended_m3u);
     RUN(name_defaults_without_header);
     RUN(dump_round_trips);
+    RUN(type_round_trips);
     RUN(remove_and_totals);
     RUN(tags_from_the_reader);
     RUN(artist_and_album_round_trip);
