@@ -312,6 +312,10 @@ void kp_subdl_start(kp_app *app);
 /* The playing file is a local video with an ID in its name. */
 bool kp_subdl_possible(kp_app *app);
 
+/* download.c: File > Download...: links to yt-dlp (set in Preferences > Advanced),
+ * with options and a progress bar, in a modal window. */
+void kp_download_dialog(kp_app *app);
+
 /* shortcuts.c: the keyboard commands (Preferences > Shortcuts). */
 void kp_shortcuts_load(kp_app *app);
 /* Runs the command bound to that key; false if none. */

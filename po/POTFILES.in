@@ -12,7 +12,9 @@ src/tagreader.c
 ui/shortcuts.c
 ui/tracks.c
 ui/subdl.c
+ui/download.c
 src/ytdlp.c
+src/ytdl.c
 ui/prefsdlg.c
 ui/desktop.c
 ui/chatpanel.c

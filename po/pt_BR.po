@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: kiplay\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-25 12:45-0300\n"
+"POT-Creation-Date: 2026-10-26 16:56-0300\n"
 "PO-Revision-Date: 2026-10-09 16:23-0300\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -108,7 +108,7 @@ msgstr ""
 "Reprodutor leve de áudio e vídeo para o KiDesktop, com as legendas "
 "estilizadas do YouTube e o chat de lives gravadas."
 
-#: ui/window.c:198 ui/prefsdlg.c:448
+#: ui/window.c:198 ui/download.c:171 ui/prefsdlg.c:448
 #, c-format
 msgid "could not save the settings: %s"
 msgstr "não foi possível salvar a configuração: %s"
@@ -133,160 +133,163 @@ msgstr "_Importar playlist..."
 msgid "_Export playlist..."
 msgstr "_Exportar playlist..."
 
-#: ui/window.c:219 ui/window.c:313 ui/desktop.c:176
+#: ui/window.c:219
+msgid "_Download..."
+msgstr "_Baixar..."
+
+#: ui/window.c:221 ui/window.c:315 ui/desktop.c:176
 msgid "_Quit"
 msgstr "_Sair"
 
-#: ui/window.c:221
+#: ui/window.c:223
 msgid "_Playlist"
 msgstr "_Playlist"
 
-#: ui/window.c:222
+#: ui/window.c:224
 msgid "_New"
 msgstr "_Nova"
 
-#: ui/window.c:223 ui/playlists.c:1229
+#: ui/window.c:225 ui/playlists.c:1229
 msgid "_Properties..."
 msgstr "_Propriedades..."
 
-#: ui/window.c:224
+#: ui/window.c:226 ui/download.c:201 ui/download.c:505
 msgid "_Close"
 msgstr "_Fechar"
 
-#: ui/window.c:226
+#: ui/window.c:228
 msgid "_Jump to file..."
 msgstr "_Ir para arquivo..."
 
-#: ui/window.c:227
+#: ui/window.c:229
 msgid "_Search panel"
 msgstr "_Painel de busca"
 
-#: ui/window.c:228 ui/playlists.c:930
+#: ui/window.c:230 ui/playlists.c:930
 msgid "_Queue / unqueue"
 msgstr "Pôr na _fila / tirar"
 
-#: ui/window.c:229 ui/playlists.c:935
+#: ui/window.c:231 ui/playlists.c:935
 msgid "Remove _selected"
 msgstr "Remover _selecionadas"
 
-#: ui/window.c:231
+#: ui/window.c:233
 msgid "Play_back"
 msgstr "_Reprodução"
 
-#: ui/window.c:232 ui/window.c:297 ui/desktop.c:169
+#: ui/window.c:234 ui/window.c:299 ui/desktop.c:169
 msgid "_Play / Pause"
 msgstr "_Tocar / Pausar"
 
-#: ui/window.c:233 ui/window.c:298 ui/desktop.c:170
+#: ui/window.c:235 ui/window.c:300 ui/desktop.c:170
 msgid "_Stop"
 msgstr "_Parar"
 
-#: ui/window.c:234 ui/window.c:299 ui/desktop.c:171
+#: ui/window.c:236 ui/window.c:301 ui/desktop.c:171
 msgid "P_revious"
 msgstr "_Anterior"
 
-#: ui/window.c:235 ui/window.c:300 ui/desktop.c:172
+#: ui/window.c:237 ui/window.c:302 ui/desktop.c:172
 msgid "_Next"
 msgstr "_Próxima"
 
-#: ui/window.c:236
+#: ui/window.c:238
 msgid "Next _frame"
 msgstr "Próximo _quadro"
 
-#: ui/window.c:237
-#, fuzzy
+#: ui/window.c:239
 msgid "Previous f_rame"
-msgstr "Anterior"
+msgstr "Quadro _anterior"
 
-#: ui/window.c:238
+#: ui/window.c:240
 msgid "Stop _after this track"
 msgstr "_Parar após esta faixa"
 
-#: ui/window.c:245
+#: ui/window.c:247
 msgid "_View"
 msgstr "_Exibir"
 
-#: ui/window.c:246
+#: ui/window.c:248
 msgid "_Video area"
 msgstr "Área de _vídeo"
 
-#: ui/window.c:251 ui/window.c:306
+#: ui/window.c:253 ui/window.c:308
 msgid "C_ompact mode"
 msgstr "Modo c_ompacto"
 
-#: ui/window.c:255
+#: ui/window.c:257
 msgid "_Playlists"
 msgstr "_Playlists"
 
-#: ui/window.c:260
+#: ui/window.c:262
 msgid "_Chat"
 msgstr "_Chat"
 
-#: ui/window.c:267
+#: ui/window.c:269
 msgid "Video _above the playlists"
 msgstr "Vídeo _acima das playlists"
 
-#: ui/window.c:268
+#: ui/window.c:270
 msgid "Video on the _left"
 msgstr "Vídeo à _esquerda"
 
-#: ui/window.c:269
+#: ui/window.c:271
 msgid "Video on the _right"
 msgstr "Vídeo à _direita"
 
-#: ui/window.c:273
+#: ui/window.c:275
 msgid "Controls at the _bottom"
 msgstr "Controles no _rodapé"
 
-#: ui/window.c:274
+#: ui/window.c:276
 msgid "Controls at the _top"
 msgstr "Controles no _topo"
 
-#: ui/window.c:278
+#: ui/window.c:280
 msgid "Playlist _columns"
 msgstr "_Colunas da playlist"
 
-#: ui/window.c:284
+#: ui/window.c:286
 msgid "_Options"
 msgstr "_Opções"
 
-#: ui/window.c:285 ui/window.c:312
+#: ui/window.c:287 ui/window.c:314
 msgid "_Preferences..."
 msgstr "_Preferências..."
 
-#: ui/window.c:287
+#: ui/window.c:289
 msgid "_Help"
 msgstr "Aj_uda"
 
-#: ui/window.c:288
+#: ui/window.c:290
 msgid "_About"
 msgstr "_Sobre"
 
-#: ui/window.c:304
+#: ui/window.c:306
 msgid "Leave _fullscreen"
 msgstr "Sair da tela _cheia"
 
-#: ui/window.c:304 ui/tracks.c:407
+#: ui/window.c:306 ui/tracks.c:407
 msgid "_Fullscreen"
 msgstr "Tela _cheia"
 
-#: ui/window.c:306
+#: ui/window.c:308
 msgid "Leave c_ompact mode"
 msgstr "Sair do modo c_ompacto"
 
-#: ui/window.c:309
+#: ui/window.c:311
 msgid "Hide c_hat"
 msgstr "Ocultar c_hat"
 
-#: ui/window.c:309
+#: ui/window.c:311
 msgid "Show c_hat"
 msgstr "Mostrar c_hat"
 
-#: ui/window.c:480
+#: ui/window.c:482
 msgid "out of memory"
 msgstr "memória insuficiente"
 
-#: ui/window.c:485
+#: ui/window.c:487
 msgid "cannot find the settings folder (is $HOME set?)"
 msgstr "não achei a pasta de configuração ($HOME está definido?)"
 
@@ -394,7 +397,7 @@ msgstr "Propriedades da playlist"
 msgid "Mixed"
 msgstr "Mista"
 
-#: ui/playlists.c:1408
+#: ui/playlists.c:1408 ui/download.c:554
 msgid "Audio only"
 msgstr "Só áudio"
 
@@ -402,7 +405,7 @@ msgstr "Só áudio"
 msgid "_Name:"
 msgstr "_Nome:"
 
-#: ui/playlists.c:1415
+#: ui/playlists.c:1415 ui/download.c:557
 msgid "_Type:"
 msgstr "_Tipo:"
 
@@ -589,9 +592,8 @@ msgid "Next frame"
 msgstr "Próximo quadro"
 
 #: ui/shortcuts.c:83
-#, fuzzy
 msgid "Previous frame"
-msgstr "Anterior"
+msgstr "Quadro anterior"
 
 #: ui/shortcuts.c:84
 msgid "Stop after this track"
@@ -872,7 +874,7 @@ msgstr "Essas legendas já foram baixadas"
 msgid "Download subtitles from YouTube"
 msgstr "Baixar legendas do YouTube"
 
-#: ui/subdl.c:147
+#: ui/subdl.c:147 ui/download.c:504
 msgid "_Download"
 msgstr "_Baixar"
 
@@ -909,13 +911,181 @@ msgstr ""
 "O nome do arquivo tem que terminar com o ID do vídeo no YouTube entre "
 "colchetes, como \"Título [dQw4w9WgXcQ].mp4\"."
 
-#: ui/subdl.c:240
+#: ui/subdl.c:240 ui/download.c:684
 msgid "yt-dlp is not available."
 msgstr "O yt-dlp não está disponível."
 
 #: ui/subdl.c:250
 msgid "Looking for subtitles on YouTube..."
 msgstr "Procurando legendas no YouTube..."
+
+#: ui/download.c:201
+msgid "_Cancel"
+msgstr "_Cancelar"
+
+#: ui/download.c:211
+#, c-format
+msgid "Item %d of %d — %.0f%%"
+msgstr "Item %d de %d — %.0f%%"
+
+#: ui/download.c:215
+#, c-format
+msgid "Link %d of %d — %s"
+msgstr "Link %d de %d — %s"
+
+#: ui/download.c:286
+#, c-format
+msgid "%d link failed; it stays in the list."
+msgid_plural "%d links failed; they stay in the list."
+msgstr[0] "%d link falhou; ele continua na lista."
+msgstr[1] "%d links falharam; eles continuam na lista."
+
+#: ui/download.c:295
+msgid "Done"
+msgstr "Pronto"
+
+#: ui/download.c:296
+msgid "Download finished."
+msgstr "Download concluído."
+
+#: ui/download.c:297
+msgid "Download finished"
+msgstr "Download concluído"
+
+#: ui/download.c:319
+msgid "Cancelled."
+msgstr "Cancelado."
+
+#: ui/download.c:361
+msgid "Starting..."
+msgstr "Iniciando..."
+
+#: ui/download.c:383
+#, c-format
+msgid "Cannot create the folder %s: %s"
+msgstr "Não foi possível criar a pasta %s: %s"
+
+#: ui/download.c:429
+msgid "Cancelling..."
+msgstr "Cancelando..."
+
+#: ui/download.c:441
+msgid "Folder for the downloads"
+msgstr "Pasta dos downloads"
+
+#: ui/download.c:502
+msgid "Download"
+msgstr "Baixar"
+
+#: ui/download.c:514
+msgid "_Links (one or more, separated by spaces or lines):"
+msgstr "_Links (um ou mais, separados por espaço ou linha):"
+
+#: ui/download.c:537
+msgid "_Browse..."
+msgstr "_Procurar..."
+
+#: ui/download.c:541
+msgid "_Save in:"
+msgstr "_Salvar em:"
+
+#: ui/download.c:548
+msgid ""
+"yt-dlp's output template (-o). Folders in it are created inside the "
+"destination."
+msgstr ""
+"Modelo do nome de saída do yt-dlp (-o). As pastas que ele tiver são criadas "
+"dentro do destino."
+
+#: ui/download.c:550
+msgid "File _name:"
+msgstr "_Nome do arquivo:"
+
+#: ui/download.c:553 ui/prefsdlg.c:248
+msgid "Video"
+msgstr "Vídeo"
+
+#: ui/download.c:562
+#, c-format
+msgid "Up to %dp"
+msgstr "Até %dp"
+
+#: ui/download.c:563
+msgid "Best available"
+msgstr "Melhor disponível"
+
+#: ui/download.c:570
+msgid "_Quality:"
+msgstr "_Qualidade:"
+
+#: ui/download.c:577
+msgid "Keep the original"
+msgstr "Manter o original"
+
+#: ui/download.c:583
+msgid "Audio _format:"
+msgstr "_Formato do áudio:"
+
+#: ui/download.c:591
+msgid ""
+"Language codes separated by commas (pt,en), or all. all includes the live "
+"chat of past streams."
+msgstr ""
+"Códigos de idioma separados por vírgula (pt,en), ou all. all inclui o chat "
+"das lives que já acabaram."
+
+#: ui/download.c:594
+msgid ""
+"Only these items of a playlist: 1:3 (1 to 3) or 1,2,5. Empty: all of them."
+msgstr "Só estes itens de uma playlist: 1:3 (de 1 a 3) ou 1,2,5. Vazio: todos."
+
+#: ui/download.c:596
+msgid "Playlist _items:"
+msgstr "_Itens da playlist:"
+
+#: ui/download.c:599
+msgid "More yt-dlp arguments, as typed in a shell, e.g. --limit-rate 1M"
+msgstr "Mais argumentos do yt-dlp, como num terminal, ex.: --limit-rate 1M"
+
+#: ui/download.c:601
+msgid "E_xtra arguments:"
+msgstr "Argumentos e_xtras:"
+
+#: ui/download.c:605
+msgid "Convert the video to _mp4"
+msgstr "Converter o vídeo para _mp4"
+
+#: ui/download.c:606
+msgid "Save the _thumbnail"
+msgstr "Salvar a _miniatura"
+
+#: ui/download.c:607
+msgid "Download _subtitles"
+msgstr "Baixar _legendas"
+
+#: ui/download.c:608
+msgid "_Automatic captions too"
+msgstr "Legendas _automáticas também"
+
+#: ui/download.c:609
+msgid "Simple file names (no _special characters)"
+msgstr "Nomes de arquivo simples (sem caracteres _especiais)"
+
+#: ui/download.c:611
+msgid "_Only the video, if the link is in a playlist"
+msgstr "_Só o vídeo, se o link estiver numa playlist"
+
+#: ui/download.c:613
+msgid "Do not download the _video (only the rest)"
+msgstr "Não baixar o _vídeo (só o resto)"
+
+#: ui/download.c:620
+msgid "Subtitle _languages:"
+msgstr "_Idiomas das legendas:"
+
+#: ui/download.c:630
+msgid "Show _details"
+msgstr "Ver _detalhes"
 
 #: src/ytdlp.c:27
 msgid "yt-dlp was not found. Set its path in Preferences > Advanced."
@@ -938,9 +1108,22 @@ msgstr "O yt-dlp não devolveu um vídeo."
 msgid "yt-dlp took too long."
 msgstr "O yt-dlp demorou demais."
 
-#: src/ytdlp.c:155
+#: src/ytdlp.c:155 src/ytdl.c:275
 msgid "yt-dlp failed."
 msgstr "O yt-dlp falhou."
+
+#: src/ytdl.c:48
+msgid "Enter at least one link."
+msgstr "Informe pelo menos um link."
+
+#: src/ytdl.c:53
+msgid "The playlist items must look like 1:3 or 1,2,5."
+msgstr "Os itens da playlist devem ser como 1:3 ou 1,2,5."
+
+#: src/ytdl.c:61
+#, c-format
+msgid "Cannot read the extra arguments: %s"
+msgstr "Não foi possível ler os argumentos extras: %s"
 
 #: ui/prefsdlg.c:195
 msgid "General"
@@ -1044,10 +1227,6 @@ msgstr "Sem isso, a área de vídeo só aparece enquanto um vídeo toca."
 #: ui/prefsdlg.c:237
 msgid "Playlist columns"
 msgstr "Colunas da playlist"
-
-#: ui/prefsdlg.c:248
-msgid "Video"
-msgstr "Vídeo"
 
 #: ui/prefsdlg.c:249
 msgid "Decoding and output (mpv)"
@@ -1363,6 +1542,12 @@ msgstr "_Mostrar a janela"
 #, c-format
 msgid "cannot read the chat %s: %s"
 msgstr "não foi possível ler o chat %s: %s"
+
+#~ msgid "The download failed."
+#~ msgstr "O download falhou."
+
+#~ msgid "Cannot run yt-dlp."
+#~ msgstr "Não foi possível executar o yt-dlp."
 
 #~ msgid "_Rename..."
 #~ msgstr "_Renomear..."

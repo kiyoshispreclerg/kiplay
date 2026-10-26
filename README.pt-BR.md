@@ -103,6 +103,17 @@ idioma do vídeo), baixa as escolhidas ao lado do arquivo (no formato com estilo
 e já as carrega. O caminho do yt-dlp fica em Opções → Preferências → Avançado
 (`[tools] ytdlp`).
 
+**Baixar com o yt-dlp:** Arquivo → Baixar... recebe um ou mais links
+(separados por espaço ou linha), a pasta de destino e as opções comuns do
+yt-dlp: qualidade do vídeo, só áudio (m4a, mp3, opus...), modelo do nome do
+arquivo (há prontos para playlists e títulos longos; o padrão é
+`Título [ID].ext`, que o download de legendas acima entende), legendas,
+miniatura, itens da playlist (`1:3`, `1,2,5`) e argumentos extras. O comando
+que vai rodar aparece conforme você escolhe. Enquanto roda, as opções ficam
+travadas, uma barra de progresso acompanha a saída do yt-dlp (item N de M numa
+playlist) e só o Cancelar funciona. As escolhas ficam em `[download]`; o
+caminho do yt-dlp é o mesmo `[tools] ytdlp`.
+
 O Kiplay lembra de cada vídeo onde ele parou, as faixas de áudio e
 legenda escolhidas, os atrasos e a proporção (em
 `~/.local/share/kiplay/files/`), e continua dali da próxima vez. Em

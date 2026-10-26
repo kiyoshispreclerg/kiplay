@@ -105,6 +105,16 @@ ones and the automatic captions in the video's language), downloads the chosen
 ones next to the file (in the styled format) and loads them at once. The
 yt-dlp path is in Options → Preferences → Advanced (`[tools] ytdlp`).
 
+**Downloading with yt-dlp:** File → Download... takes one or more links
+(spaces or lines apart), the destination folder and yt-dlp's usual options:
+video quality, audio only (m4a, mp3, opus...), file name template (ready-made
+ones for playlists and long titles; the default is `Title [ID].ext`, which the
+subtitle download above understands), subtitles, thumbnail, playlist items
+(`1:3`, `1,2,5`) and extra arguments. The command that will run is shown as
+you choose. While it runs the choices are locked, a progress bar follows
+yt-dlp's output (item N of M in a playlist) and only Cancel works. The choices
+are remembered in `[download]`; the yt-dlp path is the same `[tools] ytdlp`.
+
 Kiplay remembers, for each video, where it stopped, the audio and
 subtitle tracks chosen, the delays and the aspect ratio (in
 `~/.local/share/kiplay/files/`), and goes on from there next time.

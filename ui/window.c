@@ -216,6 +216,8 @@ static GtkWidget *menu_bar(kp_app *app)
     item(m, _("_Import playlist..."), G_CALLBACK(kp_playlists_import), app);
     item(m, _("_Export playlist..."), G_CALLBACK(kp_playlists_export), app);
     separator(m);
+    item(m, _("_Download..."), G_CALLBACK(kp_download_dialog), app);
+    separator(m);
     command(m, _("_Quit"), G_CALLBACK(kp_window_quit), app, "quit");
 
     m = submenu(bar, _("_Playlist"));
