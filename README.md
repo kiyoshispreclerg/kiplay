@@ -81,6 +81,7 @@ too.
 | Ctrl++ / Ctrl+−, X / Z | audio delay, subtitle delay (100 ms) |
 | A | next aspect ratio (4:3, 16:9...) |
 | Enter, double click on the list | plays the track |
+| Double click on a tab | plays that playlist from the track it was at |
 | Del | removes from the playlist |
 | Q | queues (or unqueues); the queue plays before the rest |
 | Ctrl+X, Ctrl+Ins, Ctrl+V | cut, copy and paste files in the playlist (Shift+Del and Shift+Ins too) |

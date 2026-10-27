@@ -79,6 +79,7 @@ playlist do Kiplay", esta também para pastas.
 | Ctrl++ / Ctrl+−, X / Z | atraso do áudio, atraso da legenda (100 ms) |
 | A | próxima proporção (4:3, 16:9...) |
 | Enter, duplo clique na lista | toca a faixa |
+| Duplo clique numa aba | toca a playlist da faixa onde estava |
 | Del | remove da playlist |
 | Q | põe na fila (ou tira); a fila toca antes do resto |
 | Ctrl+X, Ctrl+Ins, Ctrl+V | recortar, copiar e colar arquivos na playlist (Shift+Del e Shift+Ins também) |

@@ -340,6 +340,14 @@ static void remember(kp_app *app)
     g_array_append_val(p->history, r);
 }
 
+/* The track a playlist is at, per playlist id, for playing it from its tab. */
+static void remember_last(kp_app *app, int id, long index)
+{
+    char *key = g_strdup_printf("%d", id);
+    kp_prefs_set_int(app->prefs, "last", key, (int)index);
+    g_free(key);
+}
+
 static void reset_state(kp_app *app)
 {
     app->playing.loaded = false;
@@ -546,6 +554,7 @@ static void play_entry(kp_app *app, int id, long index, bool remember_it)
     kp_playlists_scroll_to_playing(app, id, index);
     kp_prefs_set_int(app->prefs, "playback", "playlist", id);
     kp_prefs_set_int(app->prefs, "playback", "index", (int)index);
+    remember_last(app, id, index);
     load_file_settings(app, e->location);
     kp_tracks_file_changed(app);
     double start = resume_applies(app, e->location) ? app->playing.file.position : 0;
@@ -582,6 +591,19 @@ void kp_player_play(kp_app *app)
         index = app->playing.index >= 0 ? app->playing.index : 0;
     }
     kp_player_play_at(app, id, index < 0 ? 0 : index);
+}
+
+void kp_player_play_playlist(kp_app *app, int id)
+{
+    kp_playlist *pl = kp_playlists_get(app, id);
+    if (!pl || !kp_playlist_count(pl))
+        return;
+    char *key = g_strdup_printf("%d", id);
+    long index = kp_prefs_get_int(app->prefs, "last", key, 0, 0, 100000000);
+    g_free(key);
+    if (index >= (long)kp_playlist_count(pl))
+        index = 0;
+    kp_player_play_at(app, id, index);
 }
 
 void kp_player_pause(kp_app *app)
@@ -752,6 +774,7 @@ void kp_player_playlist_changed(kp_app *app, int id)
             p->index = i;
             kp_playlists_mark_playing(app, id, i);
             kp_prefs_set_int(app->prefs, "playback", "index", (int)i);
+            remember_last(app, id, i);
         }
     }
     guint before = app->queue->len;
@@ -879,6 +902,7 @@ static void took_next(kp_app *app)
     kp_playlists_scroll_to_playing(app, p->playlist_id, p->index);
     kp_prefs_set_int(app->prefs, "playback", "playlist", p->playlist_id);
     kp_prefs_set_int(app->prefs, "playback", "index", (int)p->index);
+    remember_last(app, p->playlist_id, p->index);
     /* Gapless only joins music on kiplay-audio: it started from the top,
      * with nothing to choose. */
     load_file_settings(app, e->location);

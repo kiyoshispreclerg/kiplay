@@ -249,6 +249,8 @@ void kp_player_init(kp_app *app);
 void kp_player_free(kp_app *app);
 /* Plays entry index of the playlist with that id. */
 void kp_player_play_at(kp_app *app, int id, long index);
+/* Plays a playlist from the track it was last at (the first if none). */
+void kp_player_play_playlist(kp_app *app, int id);
 /* The Play button: resume, or start the selection / where it stopped. */
 void kp_player_play(kp_app *app);
 void kp_player_pause(kp_app *app);

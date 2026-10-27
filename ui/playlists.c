@@ -1250,7 +1250,7 @@ static gboolean on_tab_click(GtkWidget *w, GdkEventButton *ev, gpointer data)
     if (ev->button == 3)
         tab_menu(app, ev);
     else
-        kp_playlists_properties(app);
+        kp_player_play_playlist(app, kp_plmodel_id(pg->model));
     return TRUE;
 }
 
