@@ -283,8 +283,15 @@ void kp_playlists_scroll_to_playing(kp_app *app, int id, long index)
      * and nothing is lost. */
     if (!pg || !pg->view || index < 0 || (size_t)index >= kp_playlist_count(list_of(pg)))
         return;
+    /* A row wholly in view stays where it is: only the bold moves. A row
+     * cut by an edge scrolls like one out of view. */
+    GtkTreeView *tv = GTK_TREE_VIEW(pg->view);
     GtkTreePath *p = gtk_tree_path_new_from_indices((int)index, -1);
-    gtk_tree_view_scroll_to_cell(GTK_TREE_VIEW(pg->view), p, NULL, TRUE, 0.5f, 0.0f);
+    GdkRectangle cell, vis;
+    gtk_tree_view_get_background_area(tv, p, NULL, &cell);
+    gtk_tree_view_get_visible_rect(tv, &vis);
+    if (cell.y < 0 || cell.y + cell.height > vis.height)
+        gtk_tree_view_scroll_to_cell(tv, p, NULL, TRUE, 0.5f, 0.0f);
     gtk_tree_path_free(p);
 }
 
