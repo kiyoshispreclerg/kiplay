@@ -331,6 +331,40 @@ TEST(set_keeps_ids_order_and_files)
     g_free(dir);
 }
 
+TEST(set_recovers_from_a_cut_file_and_forgets_a_removed_one)
+{
+    char *dir = g_dir_make_tmp("kp-test-XXXXXX", NULL);
+    CHECK(dir != NULL);
+    kp_plset *s = kp_plset_load(dir, NULL);
+    kp_plset_insert(s, 0, "Um");
+    kp_playlist_add(kp_plset_get(s, 0), "/a.mp3", NULL);
+    CHECK_INT_EQ(kp_plset_save(s), 0);
+    kp_plset_free(s);
+
+    /* A second save puts the first one in the backup. */
+    s = kp_plset_load(dir, NULL);
+    kp_playlist_add(kp_plset_get(s, 0), "/b.mp3", NULL);
+    CHECK_INT_EQ(kp_plset_save(s), 0);
+    kp_plset_free(s);
+
+    /* The power cut: the new file ends up empty. */
+    char *file = g_build_filename(dir, "1.m3u8", NULL);
+    char *bak = g_strconcat(file, ".backup", NULL);
+    CHECK(g_file_set_contents(file, "", 0, NULL));
+    s = kp_plset_load(dir, NULL);
+    CHECK_INT_EQ(kp_plset_count(s), 1);
+    CHECK_INT_EQ(kp_playlist_count(kp_plset_get(s, 0)), 1);
+
+    kp_plset_remove(s, 0);
+    CHECK(!g_file_test(file, G_FILE_TEST_EXISTS));
+    CHECK(!g_file_test(bak, G_FILE_TEST_EXISTS));
+    kp_plset_free(s);
+    g_rmdir(dir);
+    g_free(bak);
+    g_free(file);
+    g_free(dir);
+}
+
 int main(void)
 {
     RUN(parses_extended_m3u);
@@ -345,5 +379,6 @@ int main(void)
     RUN(pls_round_trip);
     RUN(load_finds_the_format_and_encoding);
     RUN(set_keeps_ids_order_and_files);
+    RUN(set_recovers_from_a_cut_file_and_forgets_a_removed_one);
     return harness_report();
 }

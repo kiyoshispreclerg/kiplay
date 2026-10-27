@@ -1,5 +1,6 @@
 src/main.c
 src/prefs.c
+src/util.c
 src/log.c
 ui/window.c
 ui/playlists.c

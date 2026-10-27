@@ -177,6 +177,14 @@ mute =
 (Comments only on lines of their own: after a value, the `#` would be
 part of it.)
 
+The settings and the playlists (`~/.config/kiplay/playlists/`) are written
+so that a power cut cannot leave them empty: first to a `.tmp` file, flushed
+to the disk, then renamed over the old one. The previous version stays next
+to it as `kiplay.ini.backup` (`N.m3u8.backup` for a playlist), and is read
+instead when the file is missing, empty or zeroed. A file you broke by
+hand is not replaced by the backup. To reset by deleting a file, delete its
+`.backup` too, or the old content comes back.
+
 To download a video with captions in the right format:
 
 ```sh

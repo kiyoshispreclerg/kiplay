@@ -35,7 +35,7 @@ kp_prefs *kp_prefs_load(const char *path)
     else
         kp_config_path(p->path, sizeof p->path, "kiplay.ini");
 
-    char *text = p->path[0] ? kp_read_file(p->path, NULL) : NULL;
+    char *text = p->path[0] ? kp_read_file_or_backup(p->path, NULL, NULL) : NULL;
     if (!text && p->path[0] && errno != ENOENT)
         kp_log_warn(_("could not read %s"), p->path);
     p->ini = text ? kp_ini_parse(text, warn_line, p) : kp_ini_new();
@@ -149,7 +149,7 @@ int kp_prefs_save(kp_prefs *p)
         errno = ENOENT;
         return -1;
     }
-    if (kp_ini_save(p->ini, p->path) < 0)
+    if (kp_ini_save_backed_up(p->ini, p->path) < 0)
         return -1;
     p->dirty = false;
     return 0;

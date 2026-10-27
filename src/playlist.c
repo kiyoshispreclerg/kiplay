@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "util.h"
+
 struct kp_playlist {
     char *name;
     GStringChunk *strings;
@@ -442,19 +444,13 @@ static bool looks_like_pls(const char *text)
     return !g_ascii_strncasecmp(text, "[playlist]", 10);
 }
 
-kp_playlist *kp_playlist_load(const char *path, const char *default_name)
+static kp_playlist *load_text(char *text, size_t len, const char *path, const char *default_name)
 {
-    char *text;
-    gsize len;
-    if (!g_file_get_contents(path, &text, &len, NULL)) {
-        errno = ENOENT;
-        return NULL;
-    }
     if (!g_utf8_validate(text, (gssize)len, NULL)) {
         /* Old .m3u files are in the system's 8-bit encoding. */
         char *conv = g_convert(text, (gssize)len, "UTF-8", "WINDOWS-1252", NULL, NULL, NULL);
         if (conv) {
-            g_free(text);
+            free(text);
             text = conv;
         }
     }
@@ -462,8 +458,30 @@ kp_playlist *kp_playlist_load(const char *path, const char *default_name)
     kp_playlist *pl = looks_like_pls(text) ? kp_playlist_parse_pls(text, dir, default_name)
                                            : kp_playlist_parse_m3u(text, dir, default_name);
     g_free(dir);
-    g_free(text);
+    free(text);
     return pl;
+}
+
+kp_playlist *kp_playlist_load(const char *path, const char *default_name)
+{
+    size_t len;
+    char *text = kp_read_file(path, &len);
+    if (!text) {
+        errno = ENOENT;
+        return NULL;
+    }
+    return load_text(text, len, path, default_name);
+}
+
+kp_playlist *kp_playlist_load_saved(const char *path, const char *default_name)
+{
+    size_t len;
+    char *text = kp_read_file_or_backup(path, kp_check_lines, &len);
+    if (!text) {
+        errno = ENOENT;
+        return NULL;
+    }
+    return load_text(text, len, path, default_name);
 }
 
 /* One line in the file. */
@@ -537,20 +555,18 @@ char *kp_playlist_dump_pls(const kp_playlist *pl)
 
 int kp_playlist_save(const kp_playlist *pl, const char *path)
 {
-    char *dir = g_path_get_dirname(path);
-    g_mkdir_with_parents(dir, 0755);
-    g_free(dir);
     char *text = g_str_has_suffix(path, ".pls") ? kp_playlist_dump_pls(pl) : kp_playlist_dump(pl);
-    GError *err = NULL;
-    /* g_file_set_contents writes a temp file and renames it over. */
-    bool ok = g_file_set_contents(path, text, -1, &err);
+    int r = kp_save_file(path, text, strlen(text), NULL);
     g_free(text);
-    if (!ok) {
-        errno = EIO;
-        g_error_free(err);
-        return -1;
-    }
-    return 0;
+    return r;
+}
+
+int kp_playlist_save_kept(const kp_playlist *pl, const char *path)
+{
+    char *text = g_str_has_suffix(path, ".pls") ? kp_playlist_dump_pls(pl) : kp_playlist_dump(pl);
+    int r = kp_save_file(path, text, strlen(text), kp_check_lines);
+    g_free(text);
+    return r;
 }
 
 bool kp_playlist_dirty(const kp_playlist *pl)

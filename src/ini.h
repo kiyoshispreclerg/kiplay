@@ -3,6 +3,7 @@
 #define KP_INI_H
 
 #include <stdbool.h>
+#include <stddef.h>
 
 /* A small INI document that can be read and edited in place:
  *
@@ -50,7 +51,13 @@ void kp_ini_remove_section(kp_ini *ini, const char *section);
 
 /* The whole document as text; the caller frees it. */
 char *kp_ini_dump(const kp_ini *ini);
-/* Writes atomically (temp file + rename), creating the parent folders. */
+/* Writes atomically and durably (kp_save_file), creating the parent folders. */
 int kp_ini_save(const kp_ini *ini, const char *path);
+/* The same, keeping the previous file as path.backup when it parses without
+ * a single warning. Read it back with kp_read_file_or_backup(path, NULL). */
+int kp_ini_save_backed_up(const kp_ini *ini, const char *path);
+/* For a backup: usable and no malformed line. (To be read, usable is enough
+ * - a typo of the user must not bring the backup back.) */
+bool kp_ini_check_clean(const char *text, size_t len);
 
 #endif

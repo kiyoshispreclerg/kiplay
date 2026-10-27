@@ -66,7 +66,7 @@ kp_plset *kp_plset_load(const char *dir, const char *order)
             if (id < 0)
                 continue;
             char *path = g_build_filename(dir, f, NULL);
-            kp_playlist *pl = kp_playlist_load(path, f);
+            kp_playlist *pl = kp_playlist_load_saved(path, f);
             g_free(path);
             if (pl)
                 push(s, s->n, id, pl, false);
@@ -146,6 +146,10 @@ void kp_plset_remove(kp_plset *s, size_t i)
         return;
     char *path = file_for(s, s->items[i].id);
     g_remove(path);
+    /* The backup too, or it would be the only thing left of the list. */
+    char *bak = g_strconcat(path, ".backup", NULL);
+    g_remove(bak);
+    g_free(bak);
     g_free(path);
     kp_playlist_free(s->items[i].pl);
     memmove(&s->items[i], &s->items[i + 1], (s->n - i - 1) * sizeof(slot));
@@ -180,7 +184,7 @@ int kp_plset_save(kp_plset *s)
         if (!it->is_new && !kp_playlist_dirty(it->pl))
             continue;
         char *path = file_for(s, it->id);
-        if (kp_playlist_save(it->pl, path) == 0) {
+        if (kp_playlist_save_kept(it->pl, path) == 0) {
             kp_playlist_mark_saved(it->pl);
             it->is_new = false;
         } else {

@@ -111,13 +111,19 @@ kp_playlist *kp_playlist_parse_pls(const char *text, const char *dir,
 /* M3U or PLS, by content. Text that isn't UTF-8 (old .m3u files) is read
  * as Windows-1252. NULL if the file can't be read (errno set). */
 kp_playlist *kp_playlist_load(const char *path, const char *default_name);
+/* For the playlists kiplay keeps itself: when the file is missing or
+ * damaged (empty, zeroed, cut mid-line) the .backup written by
+ * kp_playlist_save_kept is read instead. Not for files the user picked. */
+kp_playlist *kp_playlist_load_saved(const char *path, const char *default_name);
 
 /* The M3U8 / PLS text; caller g_free()s. */
 char *kp_playlist_dump(const kp_playlist *pl);
 char *kp_playlist_dump_pls(const kp_playlist *pl);
-/* Atomic (temp file + rename), creating the folder; PLS if the name ends
- * in .pls, M3U8 otherwise. 0 or -1 (errno set). */
+/* Atomic and durable (kp_save_file), creating the folder; PLS if the name
+ * ends in .pls, M3U8 otherwise. 0 or -1 (errno set). For exports. */
 int kp_playlist_save(const kp_playlist *pl, const char *path);
+/* The same, keeping the previous sound file as path.backup. */
+int kp_playlist_save_kept(const kp_playlist *pl, const char *path);
 
 /* Has it changed since load/save (kp_playlist_mark_saved clears it)? */
 bool kp_playlist_dirty(const kp_playlist *pl);

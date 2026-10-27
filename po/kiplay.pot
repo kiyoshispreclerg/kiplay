@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: kiplay\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-26 16:56-0300\n"
+"POT-Creation-Date: 2026-10-27 10:17-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -49,6 +49,26 @@ msgstr ""
 #: src/prefs.c:40
 #, c-format
 msgid "could not read %s"
+msgstr ""
+
+#: src/util.c:144
+#, c-format
+msgid "could not read %s to back it up"
+msgstr ""
+
+#: src/util.c:148
+#, c-format
+msgid "%s looks damaged: keeping the previous backup"
+msgstr ""
+
+#: src/util.c:157
+#, c-format
+msgid "could not write %s"
+msgstr ""
+
+#: src/util.c:178
+#, c-format
+msgid "%s is missing or damaged: using the copy in %s"
 msgstr ""
 
 #: src/log.c:29

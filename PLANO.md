@@ -251,7 +251,8 @@ mpv não faz. A música fica no motor próprio por padrão.
 ## Playlists (o lado Audacious)
 
 - Abas com nome; criar, renomear, fechar, reordenar arrastando; cada uma
-  guardada em `~/.config/kiplay/playlists/NN.m3u8` (gravação atômica).
+  guardada em `~/.config/kiplay/playlists/NN.m3u8` (gravação atômica e durável: `.tmp` + fsync + rename, com a versão anterior
+  em `NN.m3u8.backup`, lida se o arquivo faltar ou estiver vazio/cortado).
 - Colunas configuráveis (n.º, título, artista, álbum, duração, caminho);
   lista virtual (`GtkTreeView` com modelo próprio, sem `GtkListStore` de
   10 mil linhas, se a medição pedir).
@@ -265,7 +266,11 @@ mpv não faz. A música fica no motor próprio por padrão.
 ## Configuração (o lado SMPlayer)
 
 - `~/.config/kiplay/kiplay.ini`, editável à mão (o `ini.c` do kikarinhas
-  mantém comentários).
+  mantém comentários). Gravado como as playlists (`kp_save_file`: `.tmp` +
+  fsync + rename); `kiplay.ini.backup` guarda a versão anterior, só se ela
+  lia sem nenhum aviso, e vale se o arquivo faltar ou estiver vazio/zerado
+  (um erro de digitação do usuário não aciona o backup). Apagar o arquivo
+  para resetar exige apagar o `.backup` também.
 - Preferências em abas: Geral, Vídeo, Áudio, Legendas, Chat, Playlists,
   Atalhos, Backend (programa, caminho, opções extras), Avançado.
 - Opções por arquivo (como o `file_settings` do SMPlayer): posição para

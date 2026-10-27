@@ -176,6 +176,15 @@ mute =
 (Comentários só em linha própria: depois do valor, o `#` faria parte
 dele.)
 
+A configuração e as playlists (`~/.config/kiplay/playlists/`) são gravadas
+de um jeito que uma queda de energia não as deixe vazias: primeiro num
+arquivo `.tmp`, gravado de verdade no disco, depois renomeado sobre o
+antigo. A versão anterior fica ao lado como `kiplay.ini.backup`
+(`N.m3u8.backup` numa playlist) e é lida no lugar quando o arquivo some,
+está vazio ou zerado. Um arquivo que você estragou à mão não é trocado
+pelo backup. Para "resetar" apagando um arquivo, apague também o
+`.backup`, senão o conteúdo antigo volta.
+
 Para baixar um vídeo com as legendas no formato certo:
 
 ```sh

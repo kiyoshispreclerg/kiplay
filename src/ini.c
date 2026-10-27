@@ -377,29 +377,46 @@ char *kp_ini_dump(const kp_ini *ini)
     return s;
 }
 
-int kp_ini_save(const kp_ini *ini, const char *path)
+static void count_warning(void *ud, int lineno, const char *msg)
 {
-    char tmp[KP_PATH_MAX];
+    (void)lineno;
+    (void)msg;
+    ++*(int *)ud;
+}
+
+bool kp_ini_check_clean(const char *text, size_t len)
+{
+    if (!kp_check_usable(text, len))
+        return false;
+    int warnings = 0;
+    kp_ini *ini = kp_ini_parse(text, count_warning, &warnings);
+    if (!ini)
+        return false;
+    kp_ini_free(ini);
+    return warnings == 0;
+}
+
+static int save(const kp_ini *ini, const char *path, kp_check_fn backup_ok)
+{
     char *text = kp_ini_dump(ini);
-    if (!text || !kp_pathf(tmp, sizeof tmp, "%s.tmp", path)) {
-        free(text);
+    if (!text) {
         errno = ENOMEM;
         return -1;
     }
-    kp_make_parent_dirs(path);
-    FILE *f = fopen(tmp, "w");
-    if (!f) {
-        free(text);
-        return -1;
-    }
-    bool ok = fputs(text, f) >= 0 && fflush(f) == 0;
-    ok = fclose(f) == 0 && ok;
+    /* An empty file is what a power cut leaves: never write one on purpose. */
+    int r = kp_save_file(path, *text ? text : "\n", *text ? strlen(text) : 1, backup_ok);
+    int e = errno;
     free(text);
-    if (!ok || rename(tmp, path) < 0) {
-        int e = errno;
-        remove(tmp);
-        errno = e;
-        return -1;
-    }
-    return 0;
+    errno = e;
+    return r;
+}
+
+int kp_ini_save(const kp_ini *ini, const char *path)
+{
+    return save(ini, path, NULL);
+}
+
+int kp_ini_save_backed_up(const kp_ini *ini, const char *path)
+{
+    return save(ini, path, kp_ini_check_clean);
 }

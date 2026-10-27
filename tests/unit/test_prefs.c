@@ -61,6 +61,27 @@ TEST(save_keeps_comments_and_unknown_keys)
     free(text);
 }
 
+TEST(prefs_come_back_from_the_backup)
+{
+    write_file("[window]\ntab = 1\n");
+    kp_prefs *p = kp_prefs_load(path);
+    kp_prefs_set_int(p, "window", "tab", 2);
+    CHECK_INT_EQ(kp_prefs_save(p), 0);
+    kp_prefs_free(p);
+
+    /* The power cut: the file is zeroed. */
+    write_file("");
+    p = kp_prefs_load(path);
+    CHECK_INT_EQ(kp_prefs_get_int(p, "window", "tab", 0, 0, 3), 1);
+    kp_prefs_free(p);
+
+    /* A typo of the user is not damage: it is read, not replaced. */
+    write_file("[window]\ntab = 3\noops\n");
+    p = kp_prefs_load(path);
+    CHECK_INT_EQ(kp_prefs_get_int(p, "window", "tab", 0, 0, 3), 3);
+    kp_prefs_free(p);
+}
+
 int main(void)
 {
     if (!mkdtemp(dir))
@@ -69,6 +90,7 @@ int main(void)
     RUN(missing_file_gives_defaults);
     RUN(bad_values_fall_back_or_clamp);
     RUN(save_keeps_comments_and_unknown_keys);
+    RUN(prefs_come_back_from_the_backup);
     remove(path);
     rmdir(dir);
     return harness_report();
