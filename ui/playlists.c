@@ -1215,8 +1215,11 @@ void kp_playlists_set_columns(kp_app *app, unsigned cols)
     kp_prefs_set_str(app->prefs, "playlists", "columns", names->str);
     g_string_free(names, TRUE);
     int n = gtk_notebook_get_n_pages(GTK_NOTEBOOK(app->notebook));
-    for (int i = 0; i < n; i++)
-        show_columns(app, page_at(app, i));
+    for (int i = 0; i < n; i++) {
+        page_t *pg = page_at(app, i);
+        if (pg) /* not every notebook page is a playlist */
+            show_columns(app, pg);
+    }
 }
 
 /* ---- tabs ---------------------------------------------------------------- */
