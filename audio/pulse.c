@@ -8,6 +8,8 @@
 #define FRAME_BYTES 4 /* S16 stereo */
 /* Connecting gives up after this (a server that's there but stuck). */
 #define CONNECT_TIMEOUT_US 2000000
+/* prebuf asked for: this part of the buffer. */
+#define PREBUF_PART 10
 
 struct ka_pulse {
     pa_mainloop *ml;
@@ -85,11 +87,18 @@ ka_pulse *ka_pulse_open(int rate, int buffer_ms, char *err, int errsize)
         goto fail;
     /* As Audacious: the whole latency is buffer_ms (ADJUST_LATENCY lets
      * the server split it between us and the card), and the server
-     * interpolates the clock between its timing updates. */
+     * interpolates the clock between its timing updates.
+     *
+     * But a small prebuf, not the server's (nearly all of tlength): that
+     * one assumes we write whenever minreq fits, and we write a period at
+     * a time. After an underrun, with a short write in between (a file's
+     * last one), the buffer could stop above tlength - period and below
+     * prebuf: the server waiting for more, we for room, forever. Below a
+     * small prebuf there's always room for a period (checked below). */
     pa_buffer_attr attr = {
         .maxlength = (uint32_t)-1,
         .tlength = (uint32_t)pa_usec_to_bytes((pa_usec_t)buffer_ms * 1000, &ss),
-        .prebuf = (uint32_t)-1,
+        .prebuf = (uint32_t)pa_usec_to_bytes((pa_usec_t)buffer_ms * 1000 / PREBUF_PART, &ss),
         .minreq = (uint32_t)-1,
         .fragsize = (uint32_t)-1,
     };
@@ -109,6 +118,15 @@ ka_pulse *ka_pulse_open(int rate, int buffer_ms, char *err, int errsize)
     p->period = got ? (long)(got->tlength / FRAME_BYTES / 2) : rate / 4;
     if (got && p->period < (long)(got->minreq / FRAME_BYTES))
         p->period = (long)(got->minreq / FRAME_BYTES);
+    /* The server asks for room in minreq steps: below prebuf, there's room
+     * for a period only if prebuf + period + minreq fit in tlength. With
+     * a server that cut tlength much shorter, smaller writes. */
+    if (got) {
+        long minreq = (long)(got->minreq / FRAME_BYTES);
+        long fit = (long)(got->tlength / FRAME_BYTES) - (long)(got->prebuf / FRAME_BYTES) - minreq;
+        if (p->period > fit)
+            p->period = fit > minreq ? fit : minreq;
+    }
     pa_proplist_free(props);
     return p;
 
