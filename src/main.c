@@ -27,13 +27,16 @@ static void find_self_dir(void)
         self_dir[0] = '\0';
 }
 
-/* Translations: locale/ next to the executable (a build tree), else the
- * installed ones. */
+/* Translations: locale/ next to the executable (a build tree), else
+ * ../share/locale from it (a relocated install, such as an AppImage), else
+ * the installed ones. */
 static void setup_gettext(void)
 {
     char dir[KP_PATH_MAX];
     const char *localedir = LOCALEDIR;
     if (self_dir[0] && kp_pathf(dir, sizeof dir, "%s/locale", self_dir) && kp_dir_exists(dir))
+        localedir = dir;
+    else if (self_dir[0] && kp_pathf(dir, sizeof dir, "%s/../share/locale", self_dir) && kp_dir_exists(dir))
         localedir = dir;
     bindtextdomain(KP_GETTEXT_DOMAIN, localedir);
     bind_textdomain_codeset(KP_GETTEXT_DOMAIN, "UTF-8");

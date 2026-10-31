@@ -2,6 +2,9 @@
 # Checks an installed kiplay: the version matches, every library the
 # binaries need is there, the engine plays a file of silence on the ALSA
 # null device, and the window opens on a virtual X screen and exits.
+# With SMOKE_APPDIR=<squashfs-root> it checks an extracted AppImage instead:
+# kiplay must be on PATH as a wrapper that runs its AppRun, and the binaries
+# are looked up in the AppDir.
 # Usage: tools/smoke-test.sh      (from the repository root; needs xvfb-run)
 # Touches nothing of the user's: HOME lives in a temporary folder.
 set -eu
@@ -25,14 +28,18 @@ got=$(kiplay --version 2>&1) || fail "kiplay --version: $got"
 
 echo "== libraries"
 for b in kiplay kiplay-audio; do
-	p=$(command -v "$b") || fail "$b is not installed"
+	if [ -n "${SMOKE_APPDIR:-}" ]; then
+		p=$SMOKE_APPDIR/usr/bin/$b
+	else
+		p=$(command -v "$b") || fail "$b is not installed"
+	fi
 	if ldd "$p" | grep "not found"; then
 		fail "$b needs libraries the package does not depend on"
 	fi
 done
 
 echo "== engine"
-printf 'tick 1\n' | timeout 10 kiplay-audio -d null >/dev/null || fail "kiplay-audio did not start"
+printf 'tick 1\n' | timeout 10 "${SMOKE_APPDIR:+$SMOKE_APPDIR/usr/bin/}kiplay-audio" -d null >/dev/null || fail "kiplay-audio did not start"
 
 echo "== window"
 xvfb-run -a -s "-screen 0 1280x720x24" timeout 30 env NO_AT_BRIDGE=1 kiplay --exit-after-map \

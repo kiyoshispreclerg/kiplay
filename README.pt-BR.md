@@ -38,7 +38,7 @@ Audacious](docs/BENCH.md).
 
 Baixe o `.deb` da sua distro na
 [página de Releases](https://github.com/kiyoshispreclerg/kiplay/releases)
-(há para Ubuntu 22.04 e 24.04, e Devuan daedalus e excalibur; amd64) e
+(há para Ubuntu 22.04, 24.04 e 26.04, e Devuan daedalus e excalibur; amd64) e
 instale com o `apt`, que traz as bibliotecas de que ele precisa, mais o
 `mpv` e o `curl` (pacotes recomendados; vídeo precisa do mpv ou do MPlayer,
 música toca sem eles):
@@ -46,6 +46,11 @@ música toca sem eles):
 ```sh
 sudo apt install ./kiplay_<versão>-1_<distro>_amd64.deb
 ```
+
+Há também um AppImage (`kiplay-<versão>-x86_64.AppImage`) que roda sem
+instalar nada: `chmod +x` e execute. Ele leva as bibliotecas junto (libav*
+inclusive), mas ainda precisa das bibliotecas X11, ALSA, harfbuzz e
+fontconfig do sistema, e usa o mpv e o curl do sistema.
 
 Para baixar legendas do YouTube, aponte `[tools] ytdlp` para um binário do
 yt-dlp (veja Uso). Para desinstalar: `sudo apt remove kiplay`.

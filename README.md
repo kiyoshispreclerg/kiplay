@@ -40,14 +40,19 @@ the [plan](PLANO.md) and the [comparison with Audacious](docs/BENCH.md)
 
 Download the `.deb` for your distro from the
 [Releases page](https://github.com/kiyoshispreclerg/kiplay/releases)
-(available for Ubuntu 22.04 and 24.04, and Devuan daedalus and excalibur;
-amd64) and install it with `apt`, which pulls in the libraries it needs,
+(available for Ubuntu 22.04, 24.04 and 26.04, and Devuan daedalus and
+excalibur; amd64) and install it with `apt`, which pulls in the libraries it needs,
 plus `mpv` and `curl` (recommended packages; video needs mpv or MPlayer,
 music plays without them):
 
 ```sh
 sudo apt install ./kiplay_<version>-1_<distro>_amd64.deb
 ```
+
+There is also an AppImage (`kiplay-<version>-x86_64.AppImage`) that runs
+without installing anything: `chmod +x` it and run it. It bundles the
+libraries (libav* included) but still needs the system's X11, ALSA,
+harfbuzz and fontconfig libraries, and uses the mpv and curl of the system.
 
 To download YouTube subtitles, point `[tools] ytdlp` at a yt-dlp binary
 (see Usage). Uninstall with `sudo apt remove kiplay`.

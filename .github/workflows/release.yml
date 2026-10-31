@@ -1,8 +1,8 @@
 name: Release
 
-# Source zip + .deb for Ubuntu 22.04 and 24.04, Devuan daedalus (Debian 12
-# "bookworm" base) and Devuan excalibur (Debian 13 "trixie" base) on every
-# v* tag, or on demand from the Actions tab, once lint and ASan pass. Each
+# Source zip, an AppImage and .deb for Ubuntu 22.04, 24.04 and 26.04, Devuan
+# daedalus (Debian 12 "bookworm" base) and Devuan excalibur (Debian 13
+# "trixie" base) on every v* tag, or on demand from the Actions tab, once lint and ASan pass. Each
 # .deb is installed on a clean system of its own target and run before
 # anything is published. Tags starting with v0 or containing a hyphen are
 # published as pre-releases.
@@ -52,6 +52,9 @@ jobs:
             runner: ubuntu-22.04
           - name: ubuntu24.04
             runner: ubuntu-24.04
+          - name: ubuntu26.04
+            runner: ubuntu-latest
+            image: ubuntu:26.04
           - name: devuan-daedalus
             runner: ubuntu-latest
             image: debian:bookworm   # Devuan daedalus is bookworm without systemd
@@ -84,6 +87,67 @@ jobs:
           name: deb-${{ matrix.name }}
           path: dist/*.deb
 
+  # One AppImage with kiplay and kiplay-audio (libav* bundled). Built on the
+  # oldest Ubuntu, like the .deb. mpv stays the host's.
+  appimage:
+    needs: checks
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            ca-certificates git build-essential pkg-config gettext \
+            libglib2.0-dev libgtk2.0-dev libx11-dev libasound2-dev libavformat-dev \
+            libavcodec-dev libavutil-dev libswresample-dev curl file
+      - uses: actions/checkout@v4
+      - run: tools/build-appimage.sh dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: appimage
+          path: dist/*.AppImage
+
+  # Runs the AppImage extracted (no FUSE) on bare systems, the oldest and the
+  # newest: only the libraries the AppImage leaves to the host are installed.
+  smoke-appimage:
+    name: smoke (appimage on ${{ matrix.image }})
+    needs: appimage
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ['ubuntu:22.04', 'ubuntu:26.04']
+    runs-on: ubuntu-latest
+    container: ${{ matrix.image }}
+    env:
+      DEBIAN_FRONTEND: noninteractive
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: appimage
+          path: dist
+      - name: Install what the host provides
+        run: |
+          apt-get update
+          # The package is libasound2t64 on 24.04 and later.
+          alsa=libasound2t64
+          apt-cache show "$alsa" > /dev/null 2>&1 || alsa=libasound2
+          apt-get install -y --no-install-recommends xvfb xauth fonts-dejavu-core \
+            "$alsa" libx11-6 libxext6 libfontconfig1 libfreetype6 \
+            libxrender1 libxcb1 libxcb-render0 libxcb-shm0 libglib2.0-0 \
+            libharfbuzz0b libfribidi0 libgraphite2-3 libexpat1 zlib1g \
+            libselinux1 libuuid1 libgpg-error0 libudev1 libp11-kit0 \
+            libice6 libsm6 libxau6 libxdmcp6
+      - name: Run it
+        run: |
+          cd dist && chmod +x ./*.AppImage && ./*.AppImage --appimage-extract > /dev/null
+          app=$PWD/squashfs-root
+          cd ..
+          mkdir bin
+          printf '#!/bin/sh\nexec %s/AppRun "$@"\n' "$app" > bin/kiplay
+          chmod +x bin/kiplay
+          PATH=$PWD/bin:$PATH SMOKE_APPDIR=$app sh tools/smoke-test.sh
+
   # Installs each .deb on a bare image of the system it was built for (so
   # only its Depends come along: a missing one fails here, not on a
   # user's machine), then runs tools/smoke-test.sh.
@@ -98,6 +162,8 @@ jobs:
             image: ubuntu:22.04
           - name: ubuntu24.04
             image: ubuntu:24.04
+          - name: ubuntu26.04
+            image: ubuntu:26.04
           - name: devuan-daedalus
             image: debian:bookworm
           - name: devuan-excalibur
@@ -124,7 +190,7 @@ jobs:
 
   publish:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [source, deb, smoke]
+    needs: [source, deb, smoke, appimage, smoke-appimage]
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/download-artifact@v4
