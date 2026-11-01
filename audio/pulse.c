@@ -9,7 +9,9 @@
 /* Connecting gives up after this (a server that's there but stuck). */
 #define CONNECT_TIMEOUT_US 2000000
 /* prebuf asked for: this part of the buffer. */
-#define PREBUF_PART 10
+#define PREBUF_PART 4
+/* The engine is woken when this part of the buffer is free. */
+#define WAKE_PART 4
 
 struct ka_pulse {
     pa_mainloop *ml;
@@ -89,12 +91,14 @@ ka_pulse *ka_pulse_open(int rate, int buffer_ms, char *err, int errsize)
      * the server split it between us and the card), and the server
      * interpolates the clock between its timing updates.
      *
-     * But a small prebuf, not the server's (nearly all of tlength): that
-     * one assumes we write whenever minreq fits, and we write a period at
-     * a time. After an underrun, with a short write in between (a file's
+     * But a smaller prebuf, not the server's (nearly all of tlength): that
+     * one assumes we write whenever minreq fits, and we wait for a period
+     * of room. After an underrun, with a short write in between (a file's
      * last one), the buffer could stop above tlength - period and below
-     * prebuf: the server waiting for more, we for room, forever. Below a
-     * small prebuf there's always room for a period (checked below). */
+     * prebuf: the server waiting for more, we for room, forever. Below
+     * prebuf there's always room for a period (checked below). Not a tiny
+     * one either: after an underrun the server would start again with
+     * almost nothing and run dry at once, over and over (crackling). */
     pa_buffer_attr attr = {
         .maxlength = (uint32_t)-1,
         .tlength = (uint32_t)pa_usec_to_bytes((pa_usec_t)buffer_ms * 1000, &ss),
@@ -113,9 +117,11 @@ ka_pulse *ka_pulse_open(int rate, int buffer_ms, char *err, int errsize)
         if (!PA_STREAM_IS_GOOD(s) || pa_mainloop_iterate(p->ml, 1, NULL) < 0)
             goto fail;
     }
-    /* Write in halves of what the server keeps for us. */
+    /* Woken when a quarter of what the server keeps for us is free (the
+     * engine then fills all the room: the server takes the sound in
+     * bursts, and half-empty writes ran it dry). */
     const pa_buffer_attr *got = pa_stream_get_buffer_attr(p->st);
-    p->period = got ? (long)(got->tlength / FRAME_BYTES / 2) : rate / 4;
+    p->period = got ? (long)(got->tlength / FRAME_BYTES / WAKE_PART) : rate / 8;
     if (got && p->period < (long)(got->minreq / FRAME_BYTES))
         p->period = (long)(got->minreq / FRAME_BYTES);
     /* The server asks for room in minreq steps: below prebuf, there's room

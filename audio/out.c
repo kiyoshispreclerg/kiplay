@@ -12,10 +12,10 @@
 #include "pulse.h"
 #endif
 
-/* Half a second of buffer, written a period (half of it) at a time: enough
- * to ride out a slow decode, few wakeups, and seek and pause don't feel it
- * (they drop or hold the buffer). */
-#define BUFFER_MS 500
+/* The buffer comes from ka_out_open (-b; half a second by default):
+ * enough to ride out a slow decode, few wakeups, and seek and pause don't
+ * feel it (they drop or hold the buffer). ALSA wakes us a period (half of
+ * it) early. */
 #define PERIODS 2
 
 struct ka_out {
@@ -34,16 +34,16 @@ struct ka_out {
 };
 
 /* Interleaved S16 stereo at that rate (ALSA's plug converts if the card
- * can't), BUFFER_MS of buffer in PERIODS periods; a period of room wakes
+ * can't), buffer_ms of buffer in PERIODS periods; a period of room wakes
  * the engine (avail_min). */
-static int set_params(ka_out *o)
+static int set_params(ka_out *o, int buffer_ms)
 {
     snd_pcm_hw_params_t *hw; /* not the _alloca macros: alloca isn't C11 */
     snd_pcm_sw_params_t *sw = NULL;
     int r = snd_pcm_hw_params_malloc(&hw);
     if (r < 0)
         return r;
-    unsigned buffer = BUFFER_MS * 1000, period = buffer / PERIODS;
+    unsigned buffer = (unsigned)buffer_ms * 1000, period = buffer / PERIODS;
     unsigned rate = (unsigned)o->rate;
     snd_pcm_uframes_t psize, bsize;
     if ((r = snd_pcm_hw_params_any(o->pcm, hw)) < 0 ||
@@ -73,11 +73,11 @@ out:
     return r;
 }
 
-static ka_out *open_alsa(ka_out *o, const char *device, char *err, int errsize)
+static ka_out *open_alsa(ka_out *o, const char *device, int buffer_ms, char *err, int errsize)
 {
     int r = snd_pcm_open(&o->pcm, device, SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK);
     if (r >= 0)
-        r = set_params(o);
+        r = set_params(o, buffer_ms);
     if (r < 0) {
         snprintf(err, (size_t)errsize, "%s: %s", device, snd_strerror(r));
         ka_out_close(o);
@@ -88,7 +88,7 @@ static ka_out *open_alsa(ka_out *o, const char *device, char *err, int errsize)
     return o;
 }
 
-ka_out *ka_out_open(const char *device, int rate, char *err, int errsize)
+ka_out *ka_out_open(const char *device, int rate, int buffer_ms, char *err, int errsize)
 {
     ka_out *o = calloc(1, sizeof *o);
     if (!o) {
@@ -98,7 +98,7 @@ ka_out *ka_out_open(const char *device, int rate, char *err, int errsize)
     o->rate = rate;
 #ifdef KA_HAVE_PULSE
     if (!strcmp(device, "default") || !strcmp(device, "pulse")) {
-        o->pulse = ka_pulse_open(rate, BUFFER_MS, err, errsize);
+        o->pulse = ka_pulse_open(rate, buffer_ms, err, errsize);
         if (o->pulse) {
             o->period = ka_pulse_period(o->pulse);
             return o;
@@ -110,7 +110,7 @@ ka_out *ka_out_open(const char *device, int rate, char *err, int errsize)
         }
     }
 #endif
-    return open_alsa(o, device, err, errsize);
+    return open_alsa(o, device, buffer_ms, err, errsize);
 }
 
 void ka_out_close(ka_out *o)

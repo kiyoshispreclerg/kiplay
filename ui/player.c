@@ -394,6 +394,12 @@ static void stopped(kp_app *app)
 static void on_mpv_event(void *ud, const kp_event *ev);
 static void on_audio_event(void *ud, const kp_event *ev);
 
+static int audio_buffer_ms(kp_app *app)
+{
+    return kp_prefs_get_int(app->prefs, "playback", "buffer", KP_AUDIO_BUFFER_MS_DEFAULT,
+                            KP_AUDIO_BUFFER_MS_MIN, KP_AUDIO_BUFFER_MS_MAX);
+}
+
 static kp_backend *create(kp_app *app, bool audio)
 {
     int volume = kp_prefs_get_int(app->prefs, "playback", "volume", 100, 0, 100);
@@ -407,6 +413,8 @@ static kp_backend *create(kp_app *app, bool audio)
         o.soundfont = kp_prefs_get_str(app->prefs, "playback", "soundfont", "");
         g_free(app->playing.audio_soundfont);
         app->playing.audio_soundfont = g_strdup(o.soundfont);
+        o.buffer_ms = audio_buffer_ms(app);
+        app->playing.audio_buffer_ms = o.buffer_ms;
         kp_backend *b = kp_backend_new_audio(&o, on_audio_event, app);
         g_free(program);
         return b;
@@ -1082,7 +1090,8 @@ void kp_player_prefs_changed(kp_app *app)
     if (p->audio && (g_strcmp0(kp_prefs_get_str(app->prefs, "playback", "device", "default"),
                                p->audio_device) != 0 ||
                      g_strcmp0(kp_prefs_get_str(app->prefs, "playback", "soundfont", ""),
-                               p->audio_soundfont) != 0))
+                               p->audio_soundfont) != 0 ||
+                     audio_buffer_ms(app) != p->audio_buffer_ms))
         restart_engine(app, true);
 }
 

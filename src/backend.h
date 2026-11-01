@@ -65,6 +65,12 @@ enum {
     KP_CAP_TRACKS = 1 << 2,  /* KP_EV_TRACKS, tracks, delays and aspect can be chosen */
 };
 
+/* kiplay-audio's sound buffer, in ms ([playback] buffer; the engine's -b,
+ * which has the same limits in audio/out.h). */
+#define KP_AUDIO_BUFFER_MS_DEFAULT 500
+#define KP_AUDIO_BUFFER_MS_MIN 100
+#define KP_AUDIO_BUFFER_MS_MAX 5000
+
 typedef struct {
     /* Program to run ("mpv", "kiplay-audio", or a full path). */
     const char *program;
@@ -78,6 +84,8 @@ typedef struct {
     const char *device;
     /* kiplay-audio: the SoundFont for MIDI; NULL or "" = the first usual one installed. */
     const char *soundfont;
+    /* kiplay-audio: sound buffer in ms (KP_AUDIO_BUFFER_MS_*); 0 = the default. */
+    int buffer_ms;
     /* Options from the preferences (kp_mpv_pref_args), may be NULL. */
     const char *const *args;
     /* Extra arguments as typed by the user (shell quoting), may be NULL. */

@@ -10,7 +10,7 @@
  * one to the other through `shared` under its mutex; events go to stdout,
  * one line each (cmd.h has the protocol).
  *
- *   kiplay-audio [-d default|ALSA_DEVICE]
+ *   kiplay-audio [-d default|ALSA_DEVICE] [-s SOUNDFONT] [-b BUFFER_MS]
  *   kiplay-audio --tags     reads tags instead (tags.h), for the playlist */
 #include <errno.h>
 #include <libavformat/avformat.h>
@@ -40,6 +40,7 @@
 #define IDLE_CLOSE_S 3
 
 static const char *device = "default";
+static int buffer_ms = KA_BUFFER_MS_DEFAULT;
 
 /* ---- requests from the command thread ------------------------------------ */
 
@@ -136,7 +137,7 @@ static bool ensure_out(engine *e, int rate)
         return true;
     ka_out_close(e->out);
     char err[256];
-    e->out = ka_out_open(device, rate, err, sizeof err);
+    e->out = ka_out_open(device, rate, buffer_ms, err, sizeof err);
     if (!e->out) {
         event("ended error %s", err);
         return false;
@@ -246,7 +247,8 @@ static void finished(engine *e)
     event("ended ok");
 }
 
-/* One write of decoded sound, if there's room for it. */
+/* One write of decoded sound, if there's room for a period: all the room
+ * there is (up to CHUNK), so the buffer is kept full. */
 static void play_some(engine *e, int16_t *buf)
 {
     long room = ka_out_room(e->out);
@@ -255,6 +257,8 @@ static void play_some(engine *e, int16_t *buf)
         want = CHUNK;
     if (room >= 0 && room < want)
         return;
+    if (room > want)
+        want = room > CHUNK ? CHUNK : room;
     long n = room < 0 ? -1 : ka_dec_read(e->dec, buf, want);
     if (n == 0) {
         finished(e);
@@ -440,15 +444,21 @@ int main(int argc, char **argv)
             device = argv[++i];
         else if (!strcmp(argv[i], "-s") && i + 1 < argc)
             ka_midi_set_soundfont(argv[++i]);
+        else if (!strcmp(argv[i], "-b") && i + 1 < argc)
+            buffer_ms = atoi(argv[++i]);
         else if (!strcmp(argv[i], "--tags")) {
             signal(SIGPIPE, SIG_DFL);
             av_log_set_level(AV_LOG_QUIET);
             return ka_tags_serve();
         } else {
-            fprintf(stderr, "usage: kiplay-audio [-d default|ALSA_DEVICE] [-s SOUNDFONT] | --tags\n");
+            fprintf(stderr, "usage: kiplay-audio [-d default|ALSA_DEVICE] [-s SOUNDFONT] [-b MS] | --tags\n");
             return 2;
         }
     }
+    if (buffer_ms < KA_BUFFER_MS_MIN)
+        buffer_ms = KA_BUFFER_MS_MIN;
+    if (buffer_ms > KA_BUFFER_MS_MAX)
+        buffer_ms = KA_BUFFER_MS_MAX;
     /* Kiplay going away closes our stdout: let the write kill us. */
     signal(SIGPIPE, SIG_DFL);
     av_log_set_level(AV_LOG_ERROR);

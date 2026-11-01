@@ -21,14 +21,20 @@
  * then keeps time by the clock as a real card would. */
 
 #define KA_CHANNELS 2
+/* Buffer sizes -b takes, in ms (Kiplay's [playback] buffer). */
+#define KA_BUFFER_MS_DEFAULT 500
+#define KA_BUFFER_MS_MIN 100
+#define KA_BUFFER_MS_MAX 5000
 
 typedef struct ka_out ka_out;
 
-/* At rate frames a second; NULL with a message in err (size errsize). */
-ka_out *ka_out_open(const char *device, int rate, char *err, int errsize);
+/* At rate frames a second with about buffer_ms of buffer (Pulse may keep
+ * part of it on the server side); NULL with a message in err (size
+ * errsize). */
+ka_out *ka_out_open(const char *device, int rate, int buffer_ms, char *err, int errsize);
 void ka_out_close(ka_out *o);
 int ka_out_rate(const ka_out *o);
-/* How much the engine writes at a time, in frames. */
+/* How much room, in frames, is worth waking the engine for. */
 long ka_out_period(const ka_out *o);
 
 /* Frames that can be written now; -1 if the device is gone. */

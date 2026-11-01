@@ -276,6 +276,19 @@ static void audio_tab(dialog *d, GtkWidget *nb)
                                       "one found in /usr/share/sounds/sf2 (the small TimGM6mb "
                                       "first). The file is kept in memory, at twice its size, "
                                       "only while MIDI plays."));
+    GtkWidget *buf = spin(d, t, _("Sound _buffer:"), "playback", "buffer",
+                          KP_AUDIO_BUFFER_MS_DEFAULT, KP_AUDIO_BUFFER_MS_MIN,
+                          KP_AUDIO_BUFFER_MS_MAX);
+    gtk_spin_button_set_increments(GTK_SPIN_BUTTON(buf), 50, 500);
+    gtk_box_pack_start(GTK_BOX(gtk_widget_get_parent(buf)), gtk_label_new(_("ms")), FALSE, FALSE,
+                       6);
+    gtk_widget_set_tooltip_text(buf, _("How much sound kiplay-audio keeps ready ahead of the "
+                                       "speakers. The default, 500 ms, suits most machines."));
+    note(t, _("Larger (1000-2000 ms): fewer wakeups, a little less CPU and more slack when the "
+              "machine is busy (crackling or small skips); costs only a few hundred KB of "
+              "memory. With a plain ALSA device, volume changes take that long to be heard. "
+              "Smaller (100-300 ms): volume reacts sooner on ALSA, but sound breaks up more "
+              "easily under load. Pause, seek and the next track are not affected."));
 
     t = section(p, _("Videos (mpv)"));
     static const char *const ao[] = {"", "pulse", "pipewire", "alsa", "jack", NULL};

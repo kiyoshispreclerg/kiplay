@@ -88,6 +88,7 @@ typedef struct {
     char *mpv_signature;       /* kp_mpv_pref_signature when mpv started */
     char *audio_device;        /* the device kiplay-audio started with */
     char *audio_soundfont;     /* and its SoundFont */
+    int audio_buffer_ms;       /* and its buffer */
     /* Played by "next" (for "previous"), and, with shuffle, the entries of
      * the playing playlist already heard this round. */
     GArray *history;           /* kp_entry_ref, oldest first */

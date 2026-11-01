@@ -16,6 +16,7 @@
 typedef struct {
     kp_backend base;
     char *program, *device, *soundfont;
+    char buffer_ms[16];
     kp_event_cb cb;
     void *ud;
     int volume;
@@ -108,7 +109,8 @@ static bool start(kp_backend *b, char **err)
     audioback *a = (audioback *)b;
     if (a->child)
         return true;
-    const char *argv[] = {a->program, "-d", a->device, "-s", a->soundfont, NULL};
+    const char *argv[] = {a->program, "-d", a->device, "-s", a->soundfont,
+                          "-b", a->buffer_ms, NULL};
     a->child = kp_child_spawn(argv, G_SUBPROCESS_FLAGS_STDIN_PIPE | G_SUBPROCESS_FLAGS_STDOUT_PIPE,
                               on_exit, a, err);
     if (!a->child)
@@ -210,6 +212,8 @@ kp_backend *kp_backend_new_audio(const kp_backend_opts *opts, kp_event_cb cb, vo
     a->program = g_strdup(opts->program ? opts->program : "kiplay-audio");
     a->device = g_strdup(opts->device && *opts->device ? opts->device : "default");
     a->soundfont = g_strdup(opts->soundfont ? opts->soundfont : "");
+    g_snprintf(a->buffer_ms, sizeof a->buffer_ms, "%d",
+               opts->buffer_ms > 0 ? opts->buffer_ms : KP_AUDIO_BUFFER_MS_DEFAULT);
     a->volume = opts->volume;
     a->cb = cb;
     a->ud = ud;
