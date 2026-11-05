@@ -38,6 +38,7 @@ LIBKP = $(BUILD)/libkp.a
 APP_SRC = src/main.c \
       ui/window.c \
       ui/layout.c \
+      ui/videowin.c \
       ui/playlists.c \
       ui/plmodel.c \
       ui/jump.c \

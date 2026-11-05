@@ -419,9 +419,8 @@ static kp_backend *create(kp_app *app, bool audio)
         g_free(program);
         return b;
     }
-    gtk_widget_realize(app->video);
     o.program = kp_prefs_get_str(app->prefs, "mpv", "program", "mpv");
-    o.wid = (unsigned long)GDK_WINDOW_XID(app->video->window);
+    o.wid = kp_videowin_xid(app);
     o.use_config = kp_prefs_get_bool(app->prefs, "mpv", "use_config", false);
     o.extra = kp_prefs_get_str(app->prefs, "mpv", "extra", NULL);
     char **args = kp_mpv_pref_args(app->prefs);

@@ -39,19 +39,21 @@ void kp_layout_save(kp_app *app)
 }
 
 /* mpv 0.34 watches the --wid window and takes any MapNotify it sees there
- * as its own window being mapped. Moving the video area unmaps and maps
- * that window: if mpv had just created its window, it never maps it and
- * the video stays black. The area's children are the backend's windows,
- * and a backend always wants them shown, so they are mapped here. */
+ * as its own window being mapped: if that came before mpv mapped its
+ * window, the video stayed black. The --wid (videowin.c) is no longer
+ * unmapped when the video area moves, but its children are the backend's
+ * windows, and a backend always wants them shown, so they are mapped here
+ * all the same. */
 static void map_backend_windows(GtkWidget *video)
 {
-    if (!gtk_widget_get_realized(video))
+    Window wid = kp_videowin_peek();
+    if (!wid || !gtk_widget_get_realized(video))
         return;
     Display *dpy = GDK_WINDOW_XDISPLAY(video->window);
     Window root, parent, *children = NULL;
     unsigned n = 0;
     gdk_error_trap_push();
-    if (XQueryTree(dpy, GDK_WINDOW_XID(video->window), &root, &parent, &children, &n)) {
+    if (XQueryTree(dpy, wid, &root, &parent, &children, &n)) {
         for (unsigned i = 0; i < n; i++)
             XMapWindow(dpy, children[i]);
         if (children)

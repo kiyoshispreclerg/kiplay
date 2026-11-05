@@ -104,7 +104,7 @@ typedef struct {
 
     /* The pieces layout.c arranges inside body. */
     GtkWidget *body;     /* vbox under the menu bar */
-    GtkWidget *video;    /* black drawing area; its X window is the backend's --wid */
+    GtkWidget *video;    /* black drawing area; videowin.c's window in it is the --wid */
     GtkWidget *notebook; /* one page per playlist */
     GtkWidget *side;     /* what layout.c places for the playlists: the notebook,
                           * and the search panel beside it while open */
@@ -373,6 +373,12 @@ void kp_desktop_prefs_changed(kp_app *app);
 bool kp_desktop_close_to_tray(kp_app *app);
 /* Shows the window if hidden in the tray (and raises it). */
 void kp_desktop_present(kp_app *app);
+
+/* videowin.c: the backend's --wid, a plain X window of ours filling the
+ * video area (made on first use, which realizes the area). */
+unsigned long kp_videowin_xid(kp_app *app);
+/* That window if it exists, 0 otherwise (doesn't make it). */
+unsigned long kp_videowin_peek(void);
 
 /* window.c */
 /* Saves everything and closes the window (Quit). */

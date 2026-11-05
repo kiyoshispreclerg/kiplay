@@ -117,6 +117,7 @@ PULSE_SINK=kpbench tools/bench-compare.sh -k DIR -a CÓPIA[:nome] CENÁRIOS.tsv 
 | `ui/app.h` | o que as partes da janela compartilham, posições do vídeo e dos controles |
 | `ui/window.c` | janela, menus (os comandos mostram a tecla pelo `kp_shortcuts_attach`), teclas fixas (mídia, Alt+1..9), menu do clique direito, salvar ao fechar |
 | `ui/layout.c` | monta vídeo + abas + controles; move a área de vídeo sem trocar o XID |
+| `ui/videowin.c` | o `--wid`: janela X pura nossa dentro da área de vídeo, do tamanho dela (o GDK não a conhece; base para o X-DENSITY) |
 | `ui/playlists.c` | abas (a lista de cada uma só nasce quando aparece), adicionar (pastas numa thread), remover, fila, arrastar, colunas, importar/exportar, pedidos de tags |
 | `ui/plmodel.c` | `GtkTreeModel` virtual sobre o `kp_playlist` (sem cópia; `GtkTreeDragSource` para o arrastar do GTK 2) |
 | `ui/jump.c` | Ctrl+J: busca na playlist visível, toca ou enfileira |
