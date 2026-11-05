@@ -24,8 +24,9 @@ PKGS       = glib-2.0 gio-2.0 gio-unix-2.0
 PKG_CFLAGS = $(if $(PKGS),$(shell $(PKG_CONFIG) --cflags $(PKGS) | sed 's/-I/-isystem /g'))
 PKG_LIBS   = $(if $(PKGS),$(shell $(PKG_CONFIG) --libs $(PKGS)))
 
-# Phase 0 prototypes that need GTK.
-GTK_PKGS   = gtk+-2.0 gio-unix-2.0 x11
+# The window and the prototypes that need GTK (videowin.c also redirects
+# and copies mpv's window: Composite, Damage, Render).
+GTK_PKGS   = gtk+-2.0 gio-unix-2.0 x11 xcomposite xdamage xrender
 GTK_CFLAGS = $(shell $(PKG_CONFIG) --cflags $(GTK_PKGS) | sed 's/-I/-isystem /g')
 GTK_LIBS   = $(shell $(PKG_CONFIG) --libs $(GTK_PKGS))
 

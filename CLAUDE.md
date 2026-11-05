@@ -30,6 +30,7 @@ make asan            # os testes com ASan/UBSan
 make asan-run ARGS=--exit-after-map   # o programa com ASan (supressões em tools/lsan.supp)
 make pot             # recria po/kiplay.pot e mescla nos .po
 build/kiplay -v [-c X.ini] [ARQ...]   # -v: tempos, linhas do mpv (mpv<), eventos, XID do vídeo
+KP_VIDEO_DENSITY=1.5 build/kiplay -v ARQ   # o --wid redirecionado em 1,5× sem compositor pedindo (1: redirecionado no tamanho da área)
 make lint            # cppcheck + funções proibidas (strcpy, strcat, sprintf, vsprintf, gets)
 make BUILD=build/clang CC=clang test   # também tem que passar com clang (o C++ do GME fica no g++: o clang++ daqui não acha os cabeçalhos)
 build/proto/subconv [-s LxA] [-e fração] [-g contorno] X.srv3 > X.ass
@@ -117,7 +118,7 @@ PULSE_SINK=kpbench tools/bench-compare.sh -k DIR -a CÓPIA[:nome] CENÁRIOS.tsv 
 | `ui/app.h` | o que as partes da janela compartilham, posições do vídeo e dos controles |
 | `ui/window.c` | janela, menus (os comandos mostram a tecla pelo `kp_shortcuts_attach`), teclas fixas (mídia, Alt+1..9), menu do clique direito, salvar ao fechar |
 | `ui/layout.c` | monta vídeo + abas + controles; move a área de vídeo sem trocar o XID |
-| `ui/videowin.c` | o `--wid`: janela X pura nossa dentro da área de vídeo, do tamanho dela (o GDK não a conhece; base para o X-DENSITY) |
+| `ui/videowin.c` | o `--wid`: janela X pura nossa dentro da área de vídeo (o GDK não a conhece). Numa densidade: redirecionada (Composite manual), densidade × o tamanho da área, e a área recebe uma cópia reduzida a cada Damage (Render) |
 | `ui/playlists.c` | abas (a lista de cada uma só nasce quando aparece), adicionar (pastas numa thread), remover, fila, arrastar, colunas, importar/exportar, pedidos de tags |
 | `ui/plmodel.c` | `GtkTreeModel` virtual sobre o `kp_playlist` (sem cópia; `GtkTreeDragSource` para o arrastar do GTK 2) |
 | `ui/jump.c` | Ctrl+J: busca na playlist visível, toca ou enfileira |

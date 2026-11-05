@@ -379,6 +379,9 @@ void kp_desktop_present(kp_app *app);
 unsigned long kp_videowin_xid(kp_app *app);
 /* That window if it exists, 0 otherwise (doesn't make it). */
 unsigned long kp_videowin_peek(void);
+/* Renders the video density times the area's size, redirected, and shows
+ * a scaled-down copy in the area; below 1 (0), back to a plain window. */
+void kp_videowin_set_density(double density);
 
 /* window.c */
 /* Saves everything and closes the window (Quit). */
