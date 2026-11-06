@@ -14,7 +14,9 @@
  * shared memory (kp_backend_levels; the engine does the FFT) while that
  * engine plays, and an area is drawn only when one of its bars moved by a
  * pixel (docs/BENCH.md has the cost). Plain GDK rectangles: no Cairo, no
- * Pango. The video engine (mpv) gives no levels. */
+ * Pango. The video engines (mpv, MPlayer) give no levels, so by default
+ * ([layout] meters_autohide) the meters go away while something plays on
+ * one of them, and come back with the music. */
 
 #define FPS 30
 #define FLOOR_DB -40.0
@@ -39,6 +41,19 @@ unsigned kp_meters_wanted(kp_app *app)
 {
     return (kp_prefs_get_bool(app->prefs, "layout", "vu", false) ? KP_LEVELS_VU : 0) |
            (kp_prefs_get_bool(app->prefs, "layout", "spectrum", false) ? KP_LEVELS_SPECTRUM : 0);
+}
+
+/* Shown or not, as View and the autohide say. */
+static void apply_visibility(kp_app *app)
+{
+    const kp_playing *p = &app->playing;
+    unsigned what = kp_meters_wanted(app);
+    if (p->backend && p->backend != p->audio &&
+        kp_prefs_get_bool(app->prefs, "layout", "meters_autohide", true))
+        what = 0;
+    gtk_widget_set_visible(box, what != 0);
+    gtk_widget_set_visible(vu_area, what & KP_LEVELS_VU);
+    gtk_widget_set_visible(sp_area, what & KP_LEVELS_SPECTRUM);
 }
 
 static int to_px(double db, int size)
@@ -145,7 +160,10 @@ static gboolean on_tick(gpointer data)
 
 void kp_meters_update(kp_app *app)
 {
-    if (!vu_area || timer || !kp_meters_wanted(app))
+    if (!vu_area)
+        return;
+    apply_visibility(app);
+    if (timer || !kp_meters_wanted(app))
         return;
     const kp_playing *p = &app->playing;
     if (p->loaded && !p->paused && p->backend && p->backend == p->audio)
@@ -156,12 +174,9 @@ void kp_meters_changed(kp_app *app)
 {
     if (!vu_area)
         return;
-    unsigned what = kp_meters_wanted(app);
-    gtk_widget_set_visible(box, what != 0);
-    gtk_widget_set_visible(vu_area, what & KP_LEVELS_VU);
-    gtk_widget_set_visible(sp_area, what & KP_LEVELS_SPECTRUM);
+    apply_visibility(app);
     if (app->playing.audio)
-        kp_backend_set_levels(app->playing.audio, what);
+        kp_backend_set_levels(app->playing.audio, kp_meters_wanted(app));
     kp_meters_update(app);
 }
 
@@ -187,9 +202,6 @@ GtkWidget *kp_meters_new(kp_app *app)
     sp_area = meter_area(SP_W, SP_H, G_CALLBACK(on_sp_expose));
     gtk_box_pack_start(GTK_BOX(box), vu_area, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(box), sp_area, FALSE, FALSE, 0);
-    unsigned what = kp_meters_wanted(app);
-    gtk_widget_set_visible(box, what != 0);
-    gtk_widget_set_visible(vu_area, what & KP_LEVELS_VU);
-    gtk_widget_set_visible(sp_area, what & KP_LEVELS_SPECTRUM);
+    apply_visibility(app);
     return box;
 }

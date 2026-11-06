@@ -234,6 +234,8 @@ static void interface_tab(dialog *d, GtkWidget *nb)
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(d->show_video), app->video_forced);
     note(t, _("Without it, the video area shows up only while a video plays."));
 
+    check(d, t, _("_Hide the VU meter and spectrum while a video plays"), "layout",
+          "meters_autohide", true);
     t = section(p, _("Playlist columns"));
     static const char *const labels[] = {N_("_Number"), N_("_Artist"), N_("Al_bum"),
                                          N_("_Length"), N_("_Path"), N_("_Queue")};
@@ -476,6 +478,7 @@ static void apply(dialog *d)
     kp_player_prefs_changed(app);
     kp_desktop_prefs_changed(app);
     kp_chat_prefs_changed(app);
+    kp_meters_changed(app);
     if (kp_prefs_save(app->prefs) < 0)
         kp_log_warn(_("could not save the settings: %s"), g_strerror(errno));
 }

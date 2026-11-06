@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: kiplay\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-06 17:54-0300\n"
+"POT-Creation-Date: 2026-11-06 18:28-0300\n"
 "PO-Revision-Date: 2026-10-09 16:23-0300\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -96,27 +96,27 @@ msgstr "aviso: "
 msgid "error: "
 msgstr "erro: "
 
-#: ui/window.c:154 ui/prefsdlg.c:238
+#: ui/window.c:154 ui/prefsdlg.c:240
 msgid "_Number"
 msgstr "_Número"
 
-#: ui/window.c:154 ui/prefsdlg.c:238
+#: ui/window.c:154 ui/prefsdlg.c:240
 msgid "_Artist"
 msgstr "_Artista"
 
-#: ui/window.c:154 ui/prefsdlg.c:238
+#: ui/window.c:154 ui/prefsdlg.c:240
 msgid "Al_bum"
 msgstr "Ál_bum"
 
-#: ui/window.c:155 ui/prefsdlg.c:239
+#: ui/window.c:155 ui/prefsdlg.c:241
 msgid "_Length"
 msgstr "_Duração"
 
-#: ui/window.c:155 ui/prefsdlg.c:239
+#: ui/window.c:155 ui/prefsdlg.c:241
 msgid "_Path"
 msgstr "_Caminho"
 
-#: ui/window.c:155 ui/jump.c:141 ui/prefsdlg.c:239
+#: ui/window.c:155 ui/jump.c:141 ui/prefsdlg.c:241
 msgid "_Queue"
 msgstr "_Fila"
 
@@ -128,7 +128,7 @@ msgstr ""
 "Reprodutor leve de áudio e vídeo para o KiDesktop, com as legendas "
 "estilizadas do YouTube e o chat de lives gravadas."
 
-#: ui/window.c:218 ui/download.c:171 ui/prefsdlg.c:480
+#: ui/window.c:218 ui/download.c:171 ui/prefsdlg.c:483
 #, c-format
 msgid "could not save the settings: %s"
 msgstr "não foi possível salvar a configuração: %s"
@@ -548,7 +548,10 @@ msgid ""
 "The experience will not be the expected one: no tracks menu, no gapless, no "
 "chat over a fullscreen video, and some formats may not play. Install mpv for "
 "the full Kiplay."
-msgstr "A experiência não será a esperada: sem menu de faixas, sem gapless, sem chat sobre o vídeo em tela cheia, e alguns formatos podem não tocar. Instale o mpv para ter o Kiplay completo."
+msgstr ""
+"A experiência não será a esperada: sem menu de faixas, sem gapless, sem chat "
+"sobre o vídeo em tela cheia, e alguns formatos podem não tocar. Instale o "
+"mpv para ter o Kiplay completo."
 
 #: ui/player.c:479
 msgid "Cannot run the music engine (kiplay-audio)"
@@ -723,7 +726,7 @@ msgstr "Área de vídeo"
 msgid "Playlists"
 msgstr "Playlists"
 
-#: ui/shortcuts.c:104 ui/prefsdlg.c:357
+#: ui/shortcuts.c:104 ui/prefsdlg.c:359
 msgid "Chat"
 msgstr "Chat"
 
@@ -763,7 +766,7 @@ msgstr "Subir as selecionadas"
 msgid "Move selection down"
 msgstr "Descer as selecionadas"
 
-#: ui/shortcuts.c:119 ui/prefsdlg.c:490
+#: ui/shortcuts.c:119 ui/prefsdlg.c:493
 msgid "Preferences"
 msgstr "Preferências"
 
@@ -813,7 +816,7 @@ msgstr "(estilo do YouTube)"
 msgid "(file)"
 msgstr "(arquivo)"
 
-#: ui/tracks.c:136 ui/prefsdlg.c:323
+#: ui/tracks.c:136 ui/prefsdlg.c:325
 msgid "None"
 msgstr "Nenhuma"
 
@@ -1065,7 +1068,7 @@ msgstr ""
 msgid "File _name:"
 msgstr "_Nome do arquivo:"
 
-#: ui/download.c:553 ui/prefsdlg.c:248
+#: ui/download.c:553 ui/prefsdlg.c:250
 msgid "Video"
 msgstr "Vídeo"
 
@@ -1289,122 +1292,126 @@ msgid "Without it, the video area shows up only while a video plays."
 msgstr "Sem isso, a área de vídeo só aparece enquanto um vídeo toca."
 
 #: ui/prefsdlg.c:237
+msgid "_Hide the VU meter and spectrum while a video plays"
+msgstr "_Ocultar o VU e o espectro enquanto um vídeo toca"
+
+#: ui/prefsdlg.c:239
 msgid "Playlist columns"
 msgstr "Colunas da playlist"
 
-#: ui/prefsdlg.c:249
+#: ui/prefsdlg.c:251
 msgid "Video player"
 msgstr "Player de vídeo"
 
-#: ui/prefsdlg.c:251
+#: ui/prefsdlg.c:253
 msgid "mpv (all features)"
 msgstr "mpv (todos os recursos)"
 
-#: ui/prefsdlg.c:252
+#: ui/prefsdlg.c:254
 msgid "MPlayer (basic: no tracks menu, no gapless, no chat over fullscreen)"
 msgstr ""
 "MPlayer (básico: sem menu de faixas, sem gapless, sem chat sobre a tela "
 "cheia)"
 
-#: ui/prefsdlg.c:254
+#: ui/prefsdlg.c:256
 msgid "_Play videos with:"
 msgstr "_Reproduzir vídeos com:"
 
-#: ui/prefsdlg.c:255
+#: ui/prefsdlg.c:257
 msgid "Decoding and output (mpv)"
 msgstr "Decodificação e saída (mpv)"
 
-#: ui/prefsdlg.c:257
+#: ui/prefsdlg.c:259
 msgid "Off (mpv's default)"
 msgstr "Desligada (padrão do mpv)"
 
-#: ui/prefsdlg.c:257
+#: ui/prefsdlg.c:259
 msgid "Automatic, safe"
 msgstr "Automática, segura"
 
-#: ui/prefsdlg.c:258
+#: ui/prefsdlg.c:260
 msgid "VA-API"
 msgstr "VA-API"
 
-#: ui/prefsdlg.c:258
+#: ui/prefsdlg.c:260
 msgid "VDPAU"
 msgstr "VDPAU"
 
-#: ui/prefsdlg.c:259
+#: ui/prefsdlg.c:261
 msgid "_Hardware decoding:"
 msgstr "Decodificação por _hardware:"
 
-#: ui/prefsdlg.c:261 ui/prefsdlg.c:307
+#: ui/prefsdlg.c:263 ui/prefsdlg.c:309
 msgid "mpv's default"
 msgstr "padrão do mpv"
 
-#: ui/prefsdlg.c:261
+#: ui/prefsdlg.c:263
 msgid "gpu (OpenGL)"
 msgstr "gpu (OpenGL)"
 
-#: ui/prefsdlg.c:262
+#: ui/prefsdlg.c:264
 msgid "xv (old graphics cards)"
 msgstr "xv (placas de vídeo antigas)"
 
-#: ui/prefsdlg.c:263
+#: ui/prefsdlg.c:265
 msgid "x11 (software, slowest)"
 msgstr "x11 (por software, a mais lenta)"
 
-#: ui/prefsdlg.c:264
+#: ui/prefsdlg.c:266
 msgid "Video _output:"
 msgstr "_Saída de vídeo:"
 
-#: ui/prefsdlg.c:265
+#: ui/prefsdlg.c:267
 msgid "Changes here restart the player; the video goes on where it was."
 msgstr "Mudanças aqui reiniciam o player; o vídeo continua de onde estava."
 
-#: ui/prefsdlg.c:266
+#: ui/prefsdlg.c:268
 msgid "Output (MPlayer)"
 msgstr "Saída (MPlayer)"
 
-#: ui/prefsdlg.c:267
+#: ui/prefsdlg.c:269
 msgid "Video o_utput:"
 msgstr "Saída de víd_eo:"
 
-#: ui/prefsdlg.c:268
+#: ui/prefsdlg.c:270
 msgid "MPlayer's -vo, e.g. xv or x11; empty: MPlayer's own choice"
 msgstr ""
 "O -vo do MPlayer, p. ex. xv ou x11; vazio: a escolha do próprio MPlayer"
 
-#: ui/prefsdlg.c:269
+#: ui/prefsdlg.c:271
 msgid "Audio ou_tput:"
 msgstr "Saída de á_udio:"
 
-#: ui/prefsdlg.c:270
+#: ui/prefsdlg.c:272
 msgid "MPlayer's -ao, e.g. pulse or alsa; empty: MPlayer's own choice"
 msgstr ""
 "O -ao do MPlayer, p. ex. pulse ou alsa; vazio: a escolha do próprio MPlayer"
 
-#: ui/prefsdlg.c:276
+#: ui/prefsdlg.c:278
 msgid "Audio"
 msgstr "Áudio"
 
-#: ui/prefsdlg.c:277
+#: ui/prefsdlg.c:279
 msgid "Music"
 msgstr "Música"
 
-#: ui/prefsdlg.c:279
+#: ui/prefsdlg.c:281
 msgid "kiplay-audio (light, gapless)"
 msgstr "kiplay-audio (leve, sem pausa entre faixas)"
 
-#: ui/prefsdlg.c:280
+#: ui/prefsdlg.c:282
 msgid "mpv, like the videos"
 msgstr "mpv, como os vídeos"
 
-#: ui/prefsdlg.c:281
+#: ui/prefsdlg.c:283
 msgid "Play music _with:"
 msgstr "Tocar música _com:"
 
-#: ui/prefsdlg.c:282
+#: ui/prefsdlg.c:284
 msgid "Output _device:"
 msgstr "_Dispositivo de saída:"
 
-#: ui/prefsdlg.c:283
+#: ui/prefsdlg.c:285
 msgid ""
 "For kiplay-audio: default (PulseAudio or PipeWire; ALSA when there is no "
 "sound server) or an ALSA device: hw:1, plughw:0,0..."
@@ -1412,11 +1419,11 @@ msgstr ""
 "Para o kiplay-audio: default (PulseAudio ou PipeWire; ALSA quando não há "
 "servidor de som) ou um dispositivo ALSA: hw:1, plughw:0,0..."
 
-#: ui/prefsdlg.c:286
+#: ui/prefsdlg.c:288
 msgid "MIDI _SoundFont:"
 msgstr "_SoundFont do MIDI:"
 
-#: ui/prefsdlg.c:287
+#: ui/prefsdlg.c:289
 msgid ""
 "A General MIDI .sf2 file for kiplay-audio. Empty: the first one found in /"
 "usr/share/sounds/sf2 (the small TimGM6mb first). The file is kept in memory, "
@@ -1426,15 +1433,15 @@ msgstr ""
 "em /usr/share/sounds/sf2 (o pequeno TimGM6mb primeiro). O arquivo fica na "
 "memória, com o dobro do seu tamanho, só enquanto um MIDI toca."
 
-#: ui/prefsdlg.c:291
+#: ui/prefsdlg.c:293
 msgid "Sound _buffer:"
 msgstr "_Buffer de som:"
 
-#: ui/prefsdlg.c:295
+#: ui/prefsdlg.c:297
 msgid "ms"
 msgstr "ms"
 
-#: ui/prefsdlg.c:297
+#: ui/prefsdlg.c:299
 msgid ""
 "How much sound kiplay-audio keeps ready ahead of the speakers. The default, "
 "500 ms, suits most machines."
@@ -1442,7 +1449,7 @@ msgstr ""
 "Quanto som o kiplay-audio deixa pronto à frente das caixas. O padrão, 500 "
 "ms, serve para a maioria das máquinas."
 
-#: ui/prefsdlg.c:299
+#: ui/prefsdlg.c:301
 msgid ""
 "Larger (1000-2000 ms): fewer wakeups, a little less CPU and more slack when "
 "the machine is busy (crackling or small skips); costs only a few hundred KB "
@@ -1457,75 +1464,75 @@ msgstr ""
 "volume responde antes no ALSA, mas o som falha com mais facilidade sob "
 "carga. Pausa, busca e a próxima faixa não mudam."
 
-#: ui/prefsdlg.c:305
+#: ui/prefsdlg.c:307
 msgid "Videos (mpv)"
 msgstr "Vídeos (mpv)"
 
-#: ui/prefsdlg.c:307
+#: ui/prefsdlg.c:309
 msgid "PulseAudio"
 msgstr "PulseAudio"
 
-#: ui/prefsdlg.c:308
+#: ui/prefsdlg.c:310
 msgid "PipeWire"
 msgstr "PipeWire"
 
-#: ui/prefsdlg.c:308
+#: ui/prefsdlg.c:310
 msgid "ALSA"
 msgstr "ALSA"
 
-#: ui/prefsdlg.c:308
+#: ui/prefsdlg.c:310
 msgid "JACK"
 msgstr "JACK"
 
-#: ui/prefsdlg.c:309
+#: ui/prefsdlg.c:311
 msgid "Audio _output:"
 msgstr "_Saída de áudio:"
 
-#: ui/prefsdlg.c:310 ui/prefsdlg.c:318
+#: ui/prefsdlg.c:312 ui/prefsdlg.c:320
 msgid "Preferred _languages:"
 msgstr "_Idiomas preferidos:"
 
-#: ui/prefsdlg.c:311
+#: ui/prefsdlg.c:313
 msgid "Language codes in order, e.g. ja,en"
 msgstr "Códigos de idioma em ordem, ex.: ja,en"
 
-#: ui/prefsdlg.c:316
+#: ui/prefsdlg.c:318
 msgid "Subtitles"
 msgstr "Legendas"
 
-#: ui/prefsdlg.c:317
+#: ui/prefsdlg.c:319
 msgid "Subtitles (mpv)"
 msgstr "Legendas (mpv)"
 
-#: ui/prefsdlg.c:319
+#: ui/prefsdlg.c:321
 msgid "Language codes in order, e.g. pt-BR,pt,en"
 msgstr "Códigos de idioma em ordem, ex.: pt-BR,pt,en"
 
-#: ui/prefsdlg.c:321
+#: ui/prefsdlg.c:323
 msgid "With the video's exact name"
 msgstr "Com o nome exato do vídeo"
 
-#: ui/prefsdlg.c:322
+#: ui/prefsdlg.c:324
 msgid "With names containing the video's"
 msgstr "Com nomes que contêm o do vídeo"
 
-#: ui/prefsdlg.c:324
+#: ui/prefsdlg.c:326
 msgid "Load subtitle _files:"
 msgstr "Carregar _arquivos de legenda:"
 
-#: ui/prefsdlg.c:325
+#: ui/prefsdlg.c:327
 msgid "_Font:"
 msgstr "_Fonte:"
 
-#: ui/prefsdlg.c:326
+#: ui/prefsdlg.c:328
 msgid "A font family, e.g. DejaVu Sans; empty: mpv's default"
 msgstr "Uma família de fontes, ex.: DejaVu Sans; vazio: a padrão do mpv"
 
-#: ui/prefsdlg.c:327
+#: ui/prefsdlg.c:329
 msgid "Font _size:"
 msgstr "_Tamanho da fonte:"
 
-#: ui/prefsdlg.c:328
+#: ui/prefsdlg.c:330
 msgid ""
 "Size 0 is mpv's default (55, scaled to a 720-line screen). Styled subtitles "
 "(ASS) keep their own fonts."
@@ -1533,23 +1540,23 @@ msgstr ""
 "Tamanho 0 é o padrão do mpv (55, numa tela de 720 linhas). Legendas com "
 "estilo (ASS) mantêm as próprias fontes."
 
-#: ui/prefsdlg.c:330
+#: ui/prefsdlg.c:332
 msgid "YouTube captions (srv3, json3)"
 msgstr "Legendas do YouTube (srv3, json3)"
 
-#: ui/prefsdlg.c:332
+#: ui/prefsdlg.c:334
 msgid "Thin, as on YouTube"
 msgstr "Fino, como no YouTube"
 
-#: ui/prefsdlg.c:333
+#: ui/prefsdlg.c:335
 msgid "Thick and blurred (easier to read)"
 msgstr "Grosso e borrado (mais fácil de ler)"
 
-#: ui/prefsdlg.c:334
+#: ui/prefsdlg.c:336
 msgid "Text _outline:"
 msgstr "_Contorno do texto:"
 
-#: ui/prefsdlg.c:335
+#: ui/prefsdlg.c:337
 msgid ""
 "Captions saved with their style are drawn as they look on YouTube, wherever "
 "the video's file name matches. Takes effect on the next file."
@@ -1558,40 +1565,40 @@ msgstr ""
 "quando o nome do arquivo bate com o do vídeo. Vale a partir do próximo "
 "arquivo."
 
-#: ui/prefsdlg.c:342
+#: ui/prefsdlg.c:344
 #, c-format
 msgid "Picture cache: %s"
 msgstr "Cache de imagens: %s"
 
-#: ui/prefsdlg.c:358
+#: ui/prefsdlg.c:360
 msgid "Recorded live chat"
 msgstr "Chat de live gravado"
 
-#: ui/prefsdlg.c:360
+#: ui/prefsdlg.c:362
 msgid "All messages"
 msgstr "Todas as mensagens"
 
-#: ui/prefsdlg.c:361
+#: ui/prefsdlg.c:363
 msgid "Super Chats and new members only"
 msgstr "Só Super Chats e novos membros"
 
-#: ui/prefsdlg.c:362
+#: ui/prefsdlg.c:364
 msgid "Super Chats, members, moderators and the channel"
 msgstr "Super Chats, membros, moderadores e o canal"
 
-#: ui/prefsdlg.c:364
+#: ui/prefsdlg.c:366
 msgid "Show the chat beside the video"
 msgstr "Mostrar o chat ao lado do vídeo"
 
-#: ui/prefsdlg.c:365
+#: ui/prefsdlg.c:367
 msgid "Panel _width:"
 msgstr "_Largura do painel:"
 
-#: ui/prefsdlg.c:366
+#: ui/prefsdlg.c:368
 msgid "_Show:"
 msgstr "_Mostrar:"
 
-#: ui/prefsdlg.c:367
+#: ui/prefsdlg.c:369
 msgid ""
 "The chat comes from the file next to the video (Title [ID].live_chat.json, "
 "saved by yt-dlp with --sub-langs live_chat). Channel emoji and avatars are "
@@ -1601,43 +1608,43 @@ msgstr ""
 "pelo yt-dlp com --sub-langs live_chat). Os emojis do canal e os avatares são "
 "baixados uma vez com o curl e ficam em ~/.cache/kiplay/chat."
 
-#: ui/prefsdlg.c:371
+#: ui/prefsdlg.c:373
 msgid "Pictures"
 msgstr "Imagens"
 
-#: ui/prefsdlg.c:376
+#: ui/prefsdlg.c:378
 msgid "C_lear the picture cache"
 msgstr "_Limpar o cache de imagens"
 
-#: ui/prefsdlg.c:386
+#: ui/prefsdlg.c:388
 msgid "Shortcuts"
 msgstr "Atalhos"
 
-#: ui/prefsdlg.c:391
+#: ui/prefsdlg.c:393
 msgid "Advanced"
 msgstr "Avançado"
 
-#: ui/prefsdlg.c:392
+#: ui/prefsdlg.c:394
 msgid "mpv"
 msgstr "mpv"
 
-#: ui/prefsdlg.c:393
+#: ui/prefsdlg.c:395
 msgid "_Program:"
 msgstr "_Programa:"
 
-#: ui/prefsdlg.c:394
+#: ui/prefsdlg.c:396
 msgid "Also read my mpv _configuration (~/.config/mpv/mpv.conf)"
 msgstr "Ler também a minha _configuração do mpv (~/.config/mpv/mpv.conf)"
 
-#: ui/prefsdlg.c:396
+#: ui/prefsdlg.c:398
 msgid "_Extra options:"
 msgstr "Opções _extras:"
 
-#: ui/prefsdlg.c:398
+#: ui/prefsdlg.c:400
 msgid "Passed to mpv as typed, e.g. --deband --scale=ewa_lanczos"
 msgstr "Passadas ao mpv como digitadas, ex.: --deband --scale=ewa_lanczos"
 
-#: ui/prefsdlg.c:399
+#: ui/prefsdlg.c:401
 msgid ""
 "Kiplay controls mpv's window, keys and on-screen controls; options that "
 "change those can break it."
@@ -1645,43 +1652,43 @@ msgstr ""
 "O Kiplay controla a janela, as teclas e os controles na tela do mpv; opções "
 "que mexem nisso podem quebrá-lo."
 
-#: ui/prefsdlg.c:401
+#: ui/prefsdlg.c:403
 msgid "MPlayer"
 msgstr "MPlayer"
 
-#: ui/prefsdlg.c:402
+#: ui/prefsdlg.c:404
 msgid "Pro_gram:"
 msgstr "Pro_grama:"
 
-#: ui/prefsdlg.c:403
+#: ui/prefsdlg.c:405
 msgid "Also read my MPlayer _configuration (~/.mplayer/config)"
 msgstr "Ler também a minha _configuração do MPlayer (~/.mplayer/config)"
 
-#: ui/prefsdlg.c:405
+#: ui/prefsdlg.c:407
 msgid "Extra _options:"
 msgstr "_Opções extras:"
 
-#: ui/prefsdlg.c:406
+#: ui/prefsdlg.c:408
 msgid "Passed to MPlayer as typed, e.g. -framedrop -sws 9"
 msgstr "Passadas ao MPlayer como digitadas, p. ex. -framedrop -sws 9"
 
-#: ui/prefsdlg.c:407
+#: ui/prefsdlg.c:409
 msgid "Used when Video > Play videos with is MPlayer."
 msgstr "Usado quando Vídeo > Reproduzir vídeos com é o MPlayer."
 
-#: ui/prefsdlg.c:408
+#: ui/prefsdlg.c:410
 msgid "yt-dlp"
 msgstr "yt-dlp"
 
-#: ui/prefsdlg.c:409
+#: ui/prefsdlg.c:411
 msgid "P_rogram:"
 msgstr "P_rograma:"
 
-#: ui/prefsdlg.c:410
+#: ui/prefsdlg.c:412
 msgid "Full path of the yt-dlp binary; empty looks for yt-dlp in PATH"
 msgstr "Caminho completo do binário do yt-dlp; vazio procura o yt-dlp no PATH"
 
-#: ui/prefsdlg.c:412
+#: ui/prefsdlg.c:414
 msgid ""
 "Used to download a YouTube video's subtitles when its file name ends with "
 "the video ID in square brackets."
