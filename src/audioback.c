@@ -1,13 +1,17 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
+#include <fcntl.h>
 #include <gio/gio.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/mman.h>
+#include <unistd.h>
 
 #include "backend_impl.h"
 #include "child.h"
 #include "lineio.h"
 #include "log.h"
+#include "../audio/levels.h"
 
 /* kiplay-audio (audio/), Kiplay's own music engine, behind kp_backend.
  * It talks over its stdin/stdout with the line protocol of audio/cmd.h;
@@ -20,8 +24,13 @@ typedef struct {
     kp_event_cb cb;
     void *ud;
     int volume;
+    bool want_levels; /* told to the engine now and when it restarts */
     kp_child *child;
     kp_lineio *io;
+    /* The meter's levels (audio/levels.h): our memory, the engine writes. */
+    int levels_fd;
+    ka_levels *levels;
+    int64_t levels_last; /* the last block read */
 } audioback;
 
 static void emit(audioback *a, kp_event_type type, double value, bool flag, const char *text)
@@ -110,14 +119,21 @@ static bool start(kp_backend *b, char **err)
     if (a->child)
         return true;
     const char *argv[] = {a->program, "-d", a->device, "-s", a->soundfont,
-                          "-b", a->buffer_ms, NULL};
-    a->child = kp_child_spawn(argv, G_SUBPROCESS_FLAGS_STDIN_PIPE | G_SUBPROCESS_FLAGS_STDOUT_PIPE,
-                              on_exit, a, err);
+                          "-b", a->buffer_ms, a->levels ? "-l" : NULL, "3", NULL};
+    if (a->levels) {
+        /* A new engine starts counting frames from 0. */
+        memset(a->levels, 0, sizeof *a->levels);
+        a->levels_last = -1;
+    }
+    a->child = kp_child_spawn_fd(argv, G_SUBPROCESS_FLAGS_STDIN_PIPE | G_SUBPROCESS_FLAGS_STDOUT_PIPE,
+                                 a->levels ? a->levels_fd : -1, on_exit, a, err);
     if (!a->child)
         return false;
     GSubprocess *p = kp_child_proc(a->child);
     kp_lineio_attach(a->io, g_subprocess_get_stdout_pipe(p), g_subprocess_get_stdin_pipe(p));
     send(a, "volume %d", a->volume);
+    if (a->want_levels)
+        send(a, "levels 1");
     return true;
 }
 
@@ -174,6 +190,80 @@ static void set_ticking(kp_backend *b, bool on)
     send((audioback *)b, "tick %d", on);
 }
 
+static void set_levels(kp_backend *b, bool on)
+{
+    audioback *a = (audioback *)b;
+    a->want_levels = on && a->levels;
+    if (a->child)
+        send(a, "levels %d", a->want_levels);
+    /* Off: forget the position, so the next look starts clean. */
+    a->levels_last = -1;
+}
+
+static int64_t monotonic_ns(void)
+{
+    struct timespec t;
+    clock_gettime(CLOCK_MONOTONIC, &t);
+    return t.tv_sec * 1000000000LL + t.tv_nsec;
+}
+
+static bool levels(kp_backend *b, int peak[2])
+{
+    audioback *a = (audioback *)b;
+    ka_levels *l = a->levels;
+    if (!l || !a->child)
+        return false;
+    unsigned seq = atomic_load_explicit(&l->seq, memory_order_acquire);
+    if (seq & 1)
+        return false;
+    uint32_t rate = l->rate, block = l->block, playing = l->playing;
+    int64_t heard = l->heard, stamp = l->stamp_ns;
+    atomic_thread_fence(memory_order_acquire);
+    if (atomic_load_explicit(&l->seq, memory_order_relaxed) != seq || !playing || !rate || !block)
+        return false;
+    /* On from the engine's last look, by the clock (at most a second). */
+    int64_t since = monotonic_ns() - stamp;
+    if (since > 1000000000LL)
+        since = 1000000000LL;
+    int64_t now = heard + since * rate / 1000000000LL;
+    if (now < 0)
+        return false;
+    int64_t cur = now / block, from = a->levels_last + 1;
+    if (from > cur || from < cur - 8)
+        from = cur > 8 ? cur - 8 : 0;
+    a->levels_last = cur;
+    peak[0] = peak[1] = 0;
+    for (int64_t i = from; i <= cur; i++) {
+        int slot = (int)(i % KA_LEVELS_BLOCKS);
+        int p0 = l->blocks[slot].peak[0], p1 = l->blocks[slot].peak[1];
+        if (atomic_load_explicit(&l->blocks[slot].id, memory_order_acquire) != i)
+            continue;
+        peak[0] = MAX(peak[0], p0);
+        peak[1] = MAX(peak[1], p1);
+    }
+    return true;
+}
+
+/* Shared memory for the levels, or nothing (then no meter). */
+static void levels_open(audioback *a)
+{
+    char name[64];
+    g_snprintf(name, sizeof name, "/kiplay-levels-%d-%p", (int)getpid(), (void *)a);
+    a->levels_fd = shm_open(name, O_RDWR | O_CREAT | O_EXCL | O_CLOEXEC, 0600);
+    if (a->levels_fd < 0)
+        return;
+    shm_unlink(name);
+    void *m = MAP_FAILED;
+    if (ftruncate(a->levels_fd, sizeof(ka_levels)) == 0)
+        m = mmap(NULL, sizeof(ka_levels), PROT_READ | PROT_WRITE, MAP_SHARED, a->levels_fd, 0);
+    if (m == MAP_FAILED) {
+        close(a->levels_fd);
+        a->levels_fd = -1;
+        return;
+    }
+    a->levels = m;
+}
+
 static void audioback_free(kp_backend *b)
 {
     audioback *a = (audioback *)b;
@@ -183,6 +273,10 @@ static void audioback_free(kp_backend *b)
         kp_child_stop(a->child);
     }
     kp_lineio_free(a->io);
+    if (a->levels) {
+        munmap(a->levels, sizeof *a->levels);
+        close(a->levels_fd);
+    }
     g_free(a->program);
     g_free(a->device);
     g_free(a->soundfont);
@@ -202,6 +296,8 @@ static const kp_backend_ops audio_ops = {
     .seek = seek,
     .set_volume = set_volume,
     .set_ticking = set_ticking,
+    .levels = levels,
+    .set_levels = set_levels,
     .free = audioback_free,
 };
 
@@ -218,5 +314,8 @@ kp_backend *kp_backend_new_audio(const kp_backend_opts *opts, kp_event_cb cb, vo
     a->cb = cb;
     a->ud = ud;
     a->io = kp_lineio_new("kiplay-audio", on_line, a);
+    a->levels_fd = -1;
+    levels_open(a);
+    a->want_levels = opts->levels && a->levels;
     return &a->base;
 }

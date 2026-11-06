@@ -3,6 +3,7 @@
 
 #include <signal.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "log.h"
 
@@ -34,13 +35,23 @@ static void on_wait(GObject *src, GAsyncResult *res, gpointer data)
 kp_child *kp_child_spawn(const char *const *argv, GSubprocessFlags flags, kp_child_exit_cb on_exit,
                          void *ud, char **err)
 {
+    return kp_child_spawn_fd(argv, flags, -1, on_exit, ud, err);
+}
+
+kp_child *kp_child_spawn_fd(const char *const *argv, GSubprocessFlags flags, int fd,
+                            kp_child_exit_cb on_exit, void *ud, char **err)
+{
     if (kp_log_debug_enabled()) {
         char *line = g_strjoinv(" ", (char **)argv);
         kp_log_debug("spawn: %s", line);
         g_free(line);
     }
     GError *gerr = NULL;
-    GSubprocess *proc = g_subprocess_newv(argv, flags, &gerr);
+    GSubprocessLauncher *l = g_subprocess_launcher_new(flags);
+    if (fd >= 0)
+        g_subprocess_launcher_take_fd(l, dup(fd), 3);
+    GSubprocess *proc = g_subprocess_launcher_spawnv(l, argv, &gerr);
+    g_object_unref(l);
     if (!proc) {
         if (err)
             *err = g_strdup(gerr->message);

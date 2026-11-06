@@ -83,6 +83,14 @@ static void on_chat(GtkCheckMenuItem *it, gpointer data)
     kp_layout_update_chat(app);
 }
 
+static void on_vu(GtkCheckMenuItem *it, gpointer data)
+{
+    kp_app *app = data;
+    bool on = gtk_check_menu_item_get_active(it);
+    kp_prefs_set_bool(app->prefs, "layout", "vu", on);
+    kp_vumeter_set_shown(app, on);
+}
+
 static void on_video_pos(GtkCheckMenuItem *it, gpointer data)
 {
     kp_app *app = data;
@@ -265,6 +273,11 @@ static GtkWidget *menu_bar(kp_app *app)
     g_signal_connect(app->chat_item, "toggled", G_CALLBACK(on_chat), app);
     kp_shortcuts_attach(app->chat_item, "chat");
     gtk_menu_shell_append(GTK_MENU_SHELL(m), app->chat_item);
+    app->vu_item = gtk_check_menu_item_new_with_mnemonic(_("_VU meter"));
+    gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(app->vu_item),
+                                   kp_prefs_get_bool(app->prefs, "layout", "vu", false));
+    g_signal_connect(app->vu_item, "toggled", G_CALLBACK(on_vu), app);
+    gtk_menu_shell_append(GTK_MENU_SHELL(m), app->vu_item);
     separator(m);
     static const char *const video_labels[] = {N_("Video _above the playlists"),
                                                N_("Video on the _left"),

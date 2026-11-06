@@ -18,6 +18,9 @@ typedef void (*kp_child_exit_cb)(void *ud, const char *why);
 /* flags: G_SUBPROCESS_FLAGS_STDIN_PIPE etc. NULL with *err (g_free it). */
 kp_child *kp_child_spawn(const char *const *argv, GSubprocessFlags flags, kp_child_exit_cb on_exit,
                          void *ud, char **err);
+/* The same, and the child gets a copy of fd as its fd 3 (fd stays ours). */
+kp_child *kp_child_spawn_fd(const char *const *argv, GSubprocessFlags flags, int fd,
+                            kp_child_exit_cb on_exit, void *ud, char **err);
 /* SIGTERM (it should save nothing; the backends hold no state), no more
  * callbacks. */
 void kp_child_stop(kp_child *c);

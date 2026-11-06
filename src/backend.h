@@ -86,6 +86,8 @@ typedef struct {
     const char *soundfont;
     /* kiplay-audio: sound buffer in ms (KP_AUDIO_BUFFER_MS_*); 0 = the default. */
     int buffer_ms;
+    /* kiplay-audio: keep the levels for kp_backend_levels from the start. */
+    bool levels;
     /* Options from the preferences (kp_mpv_pref_args), may be NULL. */
     const char *const *args;
     /* Extra arguments as typed by the user (shell quoting), may be NULL. */
@@ -166,6 +168,12 @@ void kp_backend_overlay(kp_backend *b, const char *path, int x, int y, int w, in
 /* Keeps this fraction of the window's width at the right free of video
  * (0 = none), for something drawn there. */
 void kp_backend_set_margin_right(kp_backend *b, double ratio);
+/* The peaks (0..255 of full scale, left and right) of what sounded since
+ * the last call, for a meter; false when it isn't playing or can't say
+ * (mpv). Only the music engine started with KP_VU=1, for now. */
+bool kp_backend_levels(kp_backend *b, int peak[2]);
+/* Asks the engine to keep the levels (or not: then it costs nothing). */
+void kp_backend_set_levels(kp_backend *b, bool on);
 
 /* For tests: one line of mpv's JSON IPC to events, as the backend would
  * deliver them. */

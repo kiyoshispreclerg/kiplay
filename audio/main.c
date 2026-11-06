@@ -10,7 +10,7 @@
  * one to the other through `shared` under its mutex; events go to stdout,
  * one line each (cmd.h has the protocol).
  *
- *   kiplay-audio [-d default|ALSA_DEVICE] [-s SOUNDFONT] [-b BUFFER_MS]
+ *   kiplay-audio [-d default|ALSA_DEVICE] [-s SOUNDFONT] [-b BUFFER_MS] [-l FD]
  *   kiplay-audio --tags     reads tags instead (tags.h), for the playlist */
 #include <errno.h>
 #include <libavformat/avformat.h>
@@ -22,10 +22,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/mman.h>
 #include <time.h>
 
 #include "cmd.h"
 #include "dec.h"
+#include "levels.h"
 #include "midi.h"
 #include "out.h"
 #include "tags.h"
@@ -119,6 +121,87 @@ static void apply_volume(int16_t *s, long frames, int volume)
     int q = (int)(g * g * g * 32768.0);
     for (long i = 0; i < frames * KA_CHANNELS; i++)
         s[i] = (int16_t)((s[i] * q) >> 15);
+}
+
+/* ---- the meter's levels (levels.h) -------------------------------------- */
+
+static ka_levels *levels; /* NULL without -l */
+static atomic_bool levels_on; /* "levels 1": the peaks are kept */
+static int64_t lv_frames; /* frames written, ever */
+static int64_t lv_block = -1;
+static int lv_peak[2];
+
+static void levels_store(void)
+{
+    int slot = (int)(lv_block % KA_LEVELS_BLOCKS);
+    for (int c = 0; c < 2; c++)
+        levels->blocks[slot].peak[c] = (uint8_t)(lv_peak[c] >= 32640 ? 255 : lv_peak[c] >> 7);
+    atomic_store_explicit(&levels->blocks[slot].id, lv_block, memory_order_release);
+}
+
+/* The peaks of what is about to be written (before the volume: the meter
+ * shows the music, not the knob). */
+static void levels_feed(engine *e, const int16_t *s, long n)
+{
+    if (!levels || n <= 0)
+        return;
+    if (!atomic_load_explicit(&levels_on, memory_order_relaxed)) {
+        lv_frames += n; /* the clock goes on: levels_stamp counts them */
+        return;
+    }
+    uint32_t rate = (uint32_t)ka_out_rate(e->out);
+    if (rate != levels->rate) {
+        /* Another block size: the old ids mean other frames. */
+        atomic_fetch_add_explicit(&levels->seq, 1, memory_order_acq_rel);
+        levels->rate = rate;
+        levels->block = rate / 50 ? rate / 50 : 1;
+        for (int i = 0; i < KA_LEVELS_BLOCKS; i++)
+            atomic_store_explicit(&levels->blocks[i].id, -1, memory_order_relaxed);
+        atomic_fetch_add_explicit(&levels->seq, 1, memory_order_release);
+        lv_block = -1;
+    }
+    long block = levels->block;
+    while (n > 0) {
+        int64_t id = lv_frames / block;
+        if (id != lv_block) {
+            lv_block = id;
+            lv_peak[0] = lv_peak[1] = 0;
+        }
+        long k = block - (long)(lv_frames % block);
+        if (k > n)
+            k = n;
+        int l = lv_peak[0], r = lv_peak[1];
+        for (long i = 0; i < k; i++) {
+            int a = s[2 * i], b = s[2 * i + 1];
+            a = a < 0 ? -a : a;
+            b = b < 0 ? -b : b;
+            l = a > l ? a : l;
+            r = b > r ? b : r;
+        }
+        lv_peak[0] = l;
+        lv_peak[1] = r;
+        levels_store(); /* a part of a block is stored too, and again later */
+        s += 2 * k;
+        n -= k;
+        lv_frames += k;
+    }
+}
+
+/* Where the device is, after each wakeup. */
+static void levels_stamp(engine *e)
+{
+    if (!levels)
+        return;
+    uint32_t playing = atomic_load_explicit(&levels_on, memory_order_relaxed) && e->dec &&
+                       e->out && e->playing && !e->paused;
+    if (!playing && !levels->playing)
+        return;
+    int64_t heard = playing ? lv_frames - ka_out_delay(e->out) : 0;
+    atomic_fetch_add_explicit(&levels->seq, 1, memory_order_acq_rel);
+    levels->playing = playing;
+    levels->heard = heard;
+    levels->stamp_ns = now_ns();
+    atomic_fetch_add_explicit(&levels->seq, 1, memory_order_release);
 }
 
 static void announce(engine *e)
@@ -269,6 +352,8 @@ static void play_some(engine *e, int16_t *buf)
         finished(e);
         return;
     }
+    if (n > 0)
+        levels_feed(e, buf, n);
     if (n > 0 && !e->device_volume)
         apply_volume(buf, n, e->volume);
     if (n < 0 || !ka_out_write(e->out, buf, n)) {
@@ -379,6 +464,7 @@ static void *engine_thread(void *arg)
 
         if (e.playing && !e.paused)
             play_some(&e, buf);
+        levels_stamp(&e);
         if (ticking && e.dec && now_ns() - e.last_tick_ns >= TICK_NS) {
             e.last_tick_ns = now_ns();
             event("time %.3f", position(&e));
@@ -432,6 +518,9 @@ static void request(const ka_cmd *c)
     case KA_CMD_TICK:
         shared.ticking = c->num != 0;
         break;
+    case KA_CMD_LEVELS:
+        atomic_store_explicit(&levels_on, c->num != 0, memory_order_relaxed);
+        break;
     case KA_CMD_QUIT:
         shared.quit = true;
         break;
@@ -451,12 +540,16 @@ int main(int argc, char **argv)
             ka_midi_set_soundfont(argv[++i]);
         else if (!strcmp(argv[i], "-b") && i + 1 < argc)
             buffer_ms = atoi(argv[++i]);
-        else if (!strcmp(argv[i], "--tags")) {
+        else if (!strcmp(argv[i], "-l") && i + 1 < argc) {
+            void *m = mmap(NULL, sizeof(ka_levels), PROT_READ | PROT_WRITE, MAP_SHARED,
+                           atoi(argv[++i]), 0);
+            levels = m == MAP_FAILED ? NULL : m;
+        } else if (!strcmp(argv[i], "--tags")) {
             signal(SIGPIPE, SIG_DFL);
             av_log_set_level(AV_LOG_QUIET);
             return ka_tags_serve();
         } else {
-            fprintf(stderr, "usage: kiplay-audio [-d default|ALSA_DEVICE] [-s SOUNDFONT] [-b MS] | --tags\n");
+            fprintf(stderr, "usage: kiplay-audio [-d default|ALSA_DEVICE] [-s SOUNDFONT] [-b MS] [-l FD] | --tags\n");
             return 2;
         }
     }

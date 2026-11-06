@@ -72,6 +72,17 @@ void kp_backend_step_frame(kp_backend *b, bool back)
         b->ops->step_frame(b, back);
 }
 
+void kp_backend_set_levels(kp_backend *b, bool on)
+{
+    if (b->ops->set_levels)
+        b->ops->set_levels(b, on);
+}
+
+bool kp_backend_levels(kp_backend *b, int peak[2])
+{
+    return b->ops->levels && b->ops->levels(b, peak);
+}
+
 void kp_backend_set_volume(kp_backend *b, int volume)
 {
     b->ops->set_volume(b, volume);

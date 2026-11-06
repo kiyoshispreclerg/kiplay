@@ -31,7 +31,7 @@ bool ka_cmd_parse(const char *line, ka_cmd *cmd)
         ka_cmd_type type;
     } simple[] = {
         {"pause", KA_CMD_PAUSE}, {"seek", KA_CMD_SEEK},   {"seekrel", KA_CMD_SEEKREL},
-        {"volume", KA_CMD_VOLUME}, {"tick", KA_CMD_TICK},
+        {"volume", KA_CMD_VOLUME}, {"tick", KA_CMD_TICK},   {"levels", KA_CMD_LEVELS},
     };
     const char *a;
     memset(cmd, 0, sizeof *cmd);

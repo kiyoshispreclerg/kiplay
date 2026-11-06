@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: kiplay\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-06 15:21-0300\n"
+"POT-Creation-Date: 2026-11-06 15:48-0300\n"
 "PO-Revision-Date: 2026-10-09 16:23-0300\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -96,31 +96,31 @@ msgstr "aviso: "
 msgid "error: "
 msgstr "erro: "
 
-#: ui/window.c:134 ui/prefsdlg.c:238
+#: ui/window.c:142 ui/prefsdlg.c:238
 msgid "_Number"
 msgstr "_Número"
 
-#: ui/window.c:134 ui/prefsdlg.c:238
+#: ui/window.c:142 ui/prefsdlg.c:238
 msgid "_Artist"
 msgstr "_Artista"
 
-#: ui/window.c:134 ui/prefsdlg.c:238
+#: ui/window.c:142 ui/prefsdlg.c:238
 msgid "Al_bum"
 msgstr "Ál_bum"
 
-#: ui/window.c:135 ui/prefsdlg.c:239
+#: ui/window.c:143 ui/prefsdlg.c:239
 msgid "_Length"
 msgstr "_Duração"
 
-#: ui/window.c:135 ui/prefsdlg.c:239
+#: ui/window.c:143 ui/prefsdlg.c:239
 msgid "_Path"
 msgstr "_Caminho"
 
-#: ui/window.c:135 ui/jump.c:141 ui/prefsdlg.c:239
+#: ui/window.c:143 ui/jump.c:141 ui/prefsdlg.c:239
 msgid "_Queue"
 msgstr "_Fila"
 
-#: ui/window.c:173
+#: ui/window.c:181
 msgid ""
 "Light audio and video player for KiDesktop, with YouTube's styled captions "
 "and recorded live chat."
@@ -128,188 +128,192 @@ msgstr ""
 "Reprodutor leve de áudio e vídeo para o KiDesktop, com as legendas "
 "estilizadas do YouTube e o chat de lives gravadas."
 
-#: ui/window.c:198 ui/download.c:171 ui/prefsdlg.c:461
+#: ui/window.c:206 ui/download.c:171 ui/prefsdlg.c:461
 #, c-format
 msgid "could not save the settings: %s"
 msgstr "não foi possível salvar a configuração: %s"
 
-#: ui/window.c:212
+#: ui/window.c:220
 msgid "_File"
 msgstr "_Arquivo"
 
-#: ui/window.c:213
+#: ui/window.c:221
 msgid "_Add files..."
 msgstr "_Adicionar arquivos..."
 
-#: ui/window.c:214
+#: ui/window.c:222
 msgid "Add _folder..."
 msgstr "Adicionar _pasta..."
 
-#: ui/window.c:216
+#: ui/window.c:224
 msgid "_Import playlist..."
 msgstr "_Importar playlist..."
 
-#: ui/window.c:217 ui/playlists.c:1240
+#: ui/window.c:225 ui/playlists.c:1240
 msgid "_Export playlist..."
 msgstr "_Exportar playlist..."
 
-#: ui/window.c:219
+#: ui/window.c:227
 msgid "_Download..."
 msgstr "_Baixar..."
 
-#: ui/window.c:221 ui/window.c:315 ui/desktop.c:176
+#: ui/window.c:229 ui/window.c:328 ui/desktop.c:176
 msgid "_Quit"
 msgstr "_Sair"
 
-#: ui/window.c:223
+#: ui/window.c:231
 msgid "_Playlist"
 msgstr "_Playlist"
 
-#: ui/window.c:224
+#: ui/window.c:232
 msgid "_New"
 msgstr "_Nova"
 
-#: ui/window.c:225 ui/playlists.c:1239
+#: ui/window.c:233 ui/playlists.c:1239
 msgid "_Properties..."
 msgstr "_Propriedades..."
 
-#: ui/window.c:226 ui/download.c:201 ui/download.c:505
+#: ui/window.c:234 ui/download.c:201 ui/download.c:505
 msgid "_Close"
 msgstr "_Fechar"
 
-#: ui/window.c:228
+#: ui/window.c:236
 msgid "_Jump to file..."
 msgstr "_Ir para arquivo..."
 
-#: ui/window.c:229
+#: ui/window.c:237
 msgid "_Search panel"
 msgstr "_Painel de busca"
 
-#: ui/window.c:230 ui/playlists.c:937
+#: ui/window.c:238 ui/playlists.c:937
 msgid "_Queue / unqueue"
 msgstr "Pôr na _fila / tirar"
 
-#: ui/window.c:231 ui/playlists.c:942
+#: ui/window.c:239 ui/playlists.c:942
 msgid "Remove _selected"
 msgstr "Remover _selecionadas"
 
-#: ui/window.c:233
+#: ui/window.c:241
 msgid "Play_back"
 msgstr "_Reprodução"
 
-#: ui/window.c:234 ui/window.c:299 ui/desktop.c:169
+#: ui/window.c:242 ui/window.c:312 ui/desktop.c:169
 msgid "_Play / Pause"
 msgstr "_Tocar / Pausar"
 
-#: ui/window.c:235 ui/window.c:300 ui/desktop.c:170
+#: ui/window.c:243 ui/window.c:313 ui/desktop.c:170
 msgid "_Stop"
 msgstr "_Parar"
 
-#: ui/window.c:236 ui/window.c:301 ui/desktop.c:171
+#: ui/window.c:244 ui/window.c:314 ui/desktop.c:171
 msgid "P_revious"
 msgstr "_Anterior"
 
-#: ui/window.c:237 ui/window.c:302 ui/desktop.c:172
+#: ui/window.c:245 ui/window.c:315 ui/desktop.c:172
 msgid "_Next"
 msgstr "_Próxima"
 
-#: ui/window.c:238
+#: ui/window.c:246
 msgid "Next _frame"
 msgstr "Próximo _quadro"
 
-#: ui/window.c:239
+#: ui/window.c:247
 msgid "Previous f_rame"
 msgstr "Quadro _anterior"
 
-#: ui/window.c:240
+#: ui/window.c:248
 msgid "Stop _after this track"
 msgstr "_Parar após esta faixa"
 
-#: ui/window.c:247
+#: ui/window.c:255
 msgid "_View"
 msgstr "_Exibir"
 
-#: ui/window.c:248
+#: ui/window.c:256
 msgid "_Video area"
 msgstr "Área de _vídeo"
 
-#: ui/window.c:253 ui/window.c:308
+#: ui/window.c:261 ui/window.c:321
 msgid "C_ompact mode"
 msgstr "Modo c_ompacto"
 
-#: ui/window.c:257
+#: ui/window.c:265
 msgid "_Playlists"
 msgstr "_Playlists"
 
-#: ui/window.c:262
+#: ui/window.c:270
 msgid "_Chat"
 msgstr "_Chat"
 
-#: ui/window.c:269
+#: ui/window.c:276
+msgid "_VU meter"
+msgstr "Medidor de _VU"
+
+#: ui/window.c:282
 msgid "Video _above the playlists"
 msgstr "Vídeo _acima das playlists"
 
-#: ui/window.c:270
+#: ui/window.c:283
 msgid "Video on the _left"
 msgstr "Vídeo à _esquerda"
 
-#: ui/window.c:271
+#: ui/window.c:284
 msgid "Video on the _right"
 msgstr "Vídeo à _direita"
 
-#: ui/window.c:275
+#: ui/window.c:288
 msgid "Controls at the _bottom"
 msgstr "Controles no _rodapé"
 
-#: ui/window.c:276
+#: ui/window.c:289
 msgid "Controls at the _top"
 msgstr "Controles no _topo"
 
-#: ui/window.c:280
+#: ui/window.c:293
 msgid "Playlist _columns"
 msgstr "_Colunas da playlist"
 
-#: ui/window.c:286
+#: ui/window.c:299
 msgid "_Options"
 msgstr "_Opções"
 
-#: ui/window.c:287 ui/window.c:314
+#: ui/window.c:300 ui/window.c:327
 msgid "_Preferences..."
 msgstr "_Preferências..."
 
-#: ui/window.c:289
+#: ui/window.c:302
 msgid "_Help"
 msgstr "Aj_uda"
 
-#: ui/window.c:290
+#: ui/window.c:303
 msgid "_About"
 msgstr "_Sobre"
 
-#: ui/window.c:306
+#: ui/window.c:319
 msgid "Leave _fullscreen"
 msgstr "Sair da tela _cheia"
 
-#: ui/window.c:306 ui/tracks.c:407
+#: ui/window.c:319 ui/tracks.c:407
 msgid "_Fullscreen"
 msgstr "Tela _cheia"
 
-#: ui/window.c:308
+#: ui/window.c:321
 msgid "Leave c_ompact mode"
 msgstr "Sair do modo c_ompacto"
 
-#: ui/window.c:311
+#: ui/window.c:324
 msgid "Hide c_hat"
 msgstr "Ocultar c_hat"
 
-#: ui/window.c:311
+#: ui/window.c:324
 msgid "Show c_hat"
 msgstr "Mostrar c_hat"
 
-#: ui/window.c:482
+#: ui/window.c:495
 msgid "out of memory"
 msgstr "memória insuficiente"
 
-#: ui/window.c:487
+#: ui/window.c:500
 msgid "cannot find the settings folder (is $HOME set?)"
 msgstr "não achei a pasta de configuração ($HOME está definido?)"
 
@@ -487,55 +491,55 @@ msgstr "Nova playlist"
 msgid "%d%%"
 msgstr "%d%%"
 
-#: ui/controls.c:213 ui/shortcuts.c:76
+#: ui/controls.c:214 ui/shortcuts.c:76
 msgid "Previous"
 msgstr "Anterior"
 
-#: ui/controls.c:215
+#: ui/controls.c:216
 msgid "Play"
 msgstr "Tocar"
 
-#: ui/controls.c:216
+#: ui/controls.c:217
 msgid "Pause"
 msgstr "Pausar"
 
-#: ui/controls.c:220 ui/shortcuts.c:75
+#: ui/controls.c:221 ui/shortcuts.c:75
 msgid "Stop"
 msgstr "Parar"
 
-#: ui/controls.c:223 ui/shortcuts.c:77
+#: ui/controls.c:224 ui/shortcuts.c:77
 msgid "Next"
 msgstr "Próxima"
 
-#: ui/controls.c:225 ui/shortcuts.c:85
+#: ui/controls.c:226 ui/shortcuts.c:85
 msgid "Repeat"
 msgstr "Repetir"
 
-#: ui/controls.c:227 ui/shortcuts.c:86
+#: ui/controls.c:228 ui/shortcuts.c:86
 msgid "Shuffle"
 msgstr "Aleatório"
 
-#: ui/controls.c:230
+#: ui/controls.c:231
 msgid "Show / hide the playlists"
 msgstr "Mostrar / ocultar as playlists"
 
-#: ui/controls.c:249 ui/shortcuts.c:89
+#: ui/controls.c:250 ui/shortcuts.c:89
 msgid "Mute"
 msgstr "Mudo"
 
-#: ui/controls.c:258
+#: ui/controls.c:259
 msgid "Volume"
 msgstr "Volume"
 
-#: ui/player.c:459
+#: ui/player.c:460
 msgid "Cannot run the music engine (kiplay-audio)"
 msgstr "Não foi possível rodar o motor de música (kiplay-audio)"
 
-#: ui/player.c:460
+#: ui/player.c:461
 msgid "Cannot run the player program (mpv)"
 msgstr "Não foi possível rodar o programa que toca (mpv)"
 
-#: ui/player.c:463
+#: ui/player.c:464
 msgid ""
 "Reinstall Kiplay, or play music through mpv with [playback] engine = mpv in "
 "kiplay.ini."
@@ -543,40 +547,40 @@ msgstr ""
 "Reinstale o Kiplay, ou toque as músicas pelo mpv com [playback] engine = mpv "
 "no kiplay.ini."
 
-#: ui/player.c:465
+#: ui/player.c:466
 msgid "Install mpv, or set its path in kiplay.ini ([mpv] program = ...)."
 msgstr ""
 "Instale o mpv ou informe o caminho dele no kiplay.ini ([mpv] program = ...)."
 
-#: ui/player.c:494 ui/subdl.c:108
+#: ui/player.c:495 ui/subdl.c:108
 #, c-format
 msgid "cannot read the captions %s: %s"
 msgstr "não foi possível ler as legendas %s: %s"
 
-#: ui/player.c:573
+#: ui/player.c:574
 #, c-format
 msgid "Resuming at %s"
 msgstr "Continuando em %s"
 
-#: ui/player.c:741
+#: ui/player.c:742
 msgid "Muted"
 msgstr "Mudo"
 
-#: ui/player.c:741
+#: ui/player.c:742
 msgid "Sound on"
 msgstr "Som ligado"
 
-#: ui/player.c:843
+#: ui/player.c:844
 #, c-format
 msgid "Could not play %s"
 msgstr "Não foi possível tocar %s"
 
-#: ui/player.c:932
+#: ui/player.c:933
 #, c-format
 msgid "the player program stopped (%s)"
 msgstr "o programa que toca parou (%s)"
 
-#: ui/player.c:935
+#: ui/player.c:936
 msgid "The player program keeps stopping; giving up for now."
 msgstr "O programa que toca continua parando; desisti por enquanto."
 

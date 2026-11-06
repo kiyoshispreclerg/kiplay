@@ -12,6 +12,7 @@
  *   queue [<path>]                 play this right after, no gap (none: clear)
  *   stop | pause 0|1 | seek <s> | seekrel <s> | volume <0..100>
  *   tick 0|1                       send "time" 4x a second while playing
+ *   levels 0|1                     keep the meter's levels (levels.h; -l FD)
  *   quit
  *
  * Events: loaded, duration <s>, tags <Artist - Title>, time <s>,
@@ -28,6 +29,7 @@ typedef enum {
     KA_CMD_SEEKREL,
     KA_CMD_VOLUME,
     KA_CMD_TICK,
+    KA_CMD_LEVELS,
     KA_CMD_QUIT,
 } ka_cmd_type;
 

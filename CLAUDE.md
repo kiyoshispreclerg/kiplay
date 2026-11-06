@@ -124,6 +124,7 @@ PULSE_SINK=kpbench tools/bench-compare.sh -k DIR -a CÓPIA[:nome] CENÁRIOS.tsv 
 | `ui/plmodel.c` | `GtkTreeModel` virtual sobre o `kp_playlist` (sem cópia; `GtkTreeDragSource` para o arrastar do GTK 2) |
 | `ui/jump.c` | Ctrl+J: busca na playlist visível, toca ou enfileira |
 | `ui/controls.c` | barra de controle: botões, barra de tempo (pula para o clique), separador, mudo (segue o `playing.muted`), volume em slider com a porcentagem |
+| `ui/vumeter.c`, `audio/levels.h` | VU (Exibir > VU, `[layout] vu`): picos do `kiplay-audio` por memória compartilhada (`-l FD`, comando `levels 0|1`), desenho a 30 quadros/s só tocando e só com o motor de música (custo no `docs/BENCH.md`) |
 | `data/` | `.desktop` e ícone (achado em `../data` quando roda do `build/`) |
 | `po/` | `kiplay.pot`, `LINGUAS`, `POTFILES.in`, um `.po` por idioma |
 | `tools/fill_po.py`, `tools/lsan.supp` | traduções em lote; vazamentos conhecidos do GTK/fontconfig |

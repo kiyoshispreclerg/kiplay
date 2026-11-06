@@ -47,6 +47,44 @@ Só o motor (`kiplay-audio` sozinho, antes → depois), CPU em 15 s:
 | SNES | 1,46% | 1,20% (a emulação do SPC700 em si) |
 | Master System FM | não tocava | 2,40% |
 
+## Medidor de nível (VU), 06/11/2026
+
+Custo do VU da barra de controle (Exibir > VU; as medidas foram feitas com o protótipo, 4 px por barra, 2 px a menos que o de agora) contra a
+visualização da barra preta inferior do Audacious (`[qtui]
+infoarea_show_vis`; na interface Qt do 4.2 ela é a única, um espectro de
+~12 barras). Mesmo MP3 (aba 3, entrada 1), janela de 1280×780, sink nulo,
+cada caso sozinho num Xvfb, 8 s de espera e 20 s de medida, 3 rodadas
+(variação de ±0,05 ponto). "X" é a CPU do servidor X (o desenho cai em
+parte nele); despertares são as trocas de contexto voluntárias de todas as
+threads do programa e dos filhos.
+
+| | CPU do programa | CPU do X | despertares/s | memória |
+|---|---|---|---|---|
+| Kiplay | 0,60% | 0,07% | 20 | 16,9 MB |
+| Kiplay com VU | 0,90% | 0,18% | 50 | 17,0 MB |
+| Audacious sem a visualização | 0,63% | 0,02% | 33 | 43,3 MB |
+| Audacious com a visualização | 1,30% | 0,38% | 117 | 43,5 MB |
+
+O VU custa ao Kiplay +0,41 ponto (programa + X) e a visualização custa
+ao Audacious +1,03: 2,5 vezes menos. Como o protótipo é feito:
+
+- o `kiplay-audio` guarda o pico de cada bloco de 20 ms do que escreve
+  numa memória compartilhada (`audio/levels.h`, fd passado com `-l`, só
+  depois do comando `levels 1`: com o VU escondido o motor não faz nada) e,
+  a cada despertar que já tinha, onde o dispositivo está: nenhuma linha
+  a mais no pipe, nenhum despertar a mais;
+- a janela lê a memória a 30 quadros/s só enquanto o motor toca e a barra
+  está na tela, e desenha (retângulos do GDK, sem Cairo nem double
+  buffer) só quando uma barra anda um pixel.
+
+Medido aos pedaços: o timer e a leitura custam ~0,08 ponto; o resto é o
+desenho pelo GTK (com o double buffer do GTK 2 eram 1,02% + 0,27% no X; a
+20 quadros/s, ~0,87% + 0,15%). No Xvfb o X desenha por software: no X de
+verdade, com compositor, os dois pagam mais no servidor.
+
+Fica de fora: o mpv (vídeo, ou música que vá para ele) não dá os níveis
+de graça; seria pelo filtro `astats` com propriedades observadas, a medir.
+
 ## O que se vê
 
 - **Memória**: o Kiplay usa 2 a 2,5 vezes menos, e abre em um terço do
