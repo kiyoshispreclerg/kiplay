@@ -420,15 +420,19 @@ static kp_backend *create(kp_app *app, bool audio)
         g_free(program);
         return b;
     }
-    o.program = kp_prefs_get_str(app->prefs, "mpv", "program", "mpv");
+    bool mplayer = !strcmp(kp_video_backend(app->prefs), "mplayer");
+    const char *sect = mplayer ? "mplayer" : "mpv";
+    o.program = kp_prefs_get_str(app->prefs, sect, "program", sect);
     o.wid = kp_videowin_xid(app);
-    o.use_config = kp_prefs_get_bool(app->prefs, "mpv", "use_config", false);
-    o.extra = kp_prefs_get_str(app->prefs, "mpv", "extra", NULL);
-    char **args = kp_mpv_pref_args(app->prefs);
+    o.use_config = kp_prefs_get_bool(app->prefs, sect, "use_config", false);
+    o.extra = kp_prefs_get_str(app->prefs, sect, "extra", NULL);
+    o.sub_langs = kp_prefs_get_str(app->prefs, "subtitles", "languages", NULL);
+    char **args = mplayer ? kp_mplayer_pref_args(app->prefs) : kp_mpv_pref_args(app->prefs);
     o.args = (const char *const *)args;
     g_free(app->playing.mpv_signature);
     app->playing.mpv_signature = kp_mpv_pref_signature(app->prefs);
-    kp_backend *b = kp_backend_new_mpv(&o, on_mpv_event, app);
+    kp_backend *b = mplayer ? kp_backend_new_mplayer(&o, on_mpv_event, app)
+                            : kp_backend_new_mpv(&o, on_mpv_event, app);
     g_strfreev(args);
     return b;
 }
@@ -458,12 +462,16 @@ static bool ensure_backend(kp_app *app, bool audio)
     GtkWidget *d = gtk_message_dialog_new(GTK_WINDOW(app->window), GTK_DIALOG_MODAL,
                                           GTK_MESSAGE_ERROR, GTK_BUTTONS_CLOSE, "%s",
                                           audio ? _("Cannot run the music engine (kiplay-audio)")
-                                                : _("Cannot run the player program (mpv)"));
+                                                : !strcmp(kp_video_backend(app->prefs), "mplayer")
+                                                      ? _("Cannot run the player program (MPlayer)")
+                                                      : _("Cannot run the player program (mpv)"));
     gtk_message_dialog_format_secondary_text(
         GTK_MESSAGE_DIALOG(d), "%s\n\n%s", err,
         audio ? _("Reinstall Kiplay, or play music through mpv with [playback] engine = mpv in "
                   "kiplay.ini.")
-              : _("Install mpv, or set its path in kiplay.ini ([mpv] program = ...)."));
+              : !strcmp(kp_video_backend(app->prefs), "mplayer")
+                    ? _("Install MPlayer, or set its path in kiplay.ini ([mplayer] program = ...).")
+                    : _("Install mpv, or set its path in kiplay.ini ([mpv] program = ...)."));
     gtk_dialog_run(GTK_DIALOG(d));
     gtk_widget_destroy(d);
     g_free(err);

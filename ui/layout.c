@@ -157,7 +157,7 @@ void kp_layout_apply(kp_app *app)
             /* In fullscreen it stays in the layout, hidden: mpv draws it
              * (chatpanel.c's overlay) so that mpv's window alone covers
              * the output. */
-            gtk_widget_set_visible(app->chat, !app->fullscreen);
+            gtk_widget_set_visible(app->chat, !kp_chat_overlaid(app));
             occupant = placeholder;
         } else {
             gtk_container_remove(GTK_CONTAINER(slot), placeholder);
@@ -228,7 +228,7 @@ static void show_parts(kp_app *app)
     gtk_widget_set_visible(app->side, others && app->playlists_shown);
     gtk_widget_set_visible(app->status, others);
     if (chat_in_layout)
-        gtk_widget_set_visible(app->chat, !app->fullscreen);
+        gtk_widget_set_visible(app->chat, !kp_chat_overlaid(app));
 }
 
 void kp_layout_set_fullscreen(kp_app *app, bool on)

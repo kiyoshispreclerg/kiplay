@@ -13,6 +13,7 @@
 #include "chatlog.h"
 #include "i18n.h"
 #include "log.h"
+#include "mpvopts.h"
 #include "sidecar.h"
 
 /* The recorded live chat as a panel beside the video: the messages whose
@@ -469,7 +470,7 @@ void kp_chat_overlay_update(kp_app *app)
     if (!p)
         return;
     const kp_playing *pl = &app->playing;
-    bool want = app->fullscreen && kp_chat_wanted(app) && pl->mpv && pl->backend == pl->mpv &&
+    bool want = kp_chat_overlaid(app) && kp_chat_wanted(app) && pl->mpv && pl->backend == pl->mpv &&
                 pl->has_video;
     if (want) {
         /* Here, not in kp_chat_init: the video area is made after it. */
@@ -495,6 +496,11 @@ void kp_chat_overlay_update(kp_app *app)
 }
 
 /* ---- the file ------------------------------------------------------------- */
+
+bool kp_chat_overlaid(const kp_app *app)
+{
+    return app->fullscreen && !strcmp(kp_video_backend(app->prefs), "mpv");
+}
 
 bool kp_chat_wanted(const kp_app *app)
 {

@@ -51,14 +51,57 @@ char **kp_mpv_pref_args(const kp_prefs *p)
     return (char **)g_ptr_array_free(a, FALSE);
 }
 
+const char *kp_video_backend(const kp_prefs *p)
+{
+    return !g_strcmp0(kp_prefs_get_str(p, "video", "backend", "mpv"), "mplayer") ? "mplayer"
+                                                                                 : "mpv";
+}
+
+static void add_opt(GPtrArray *a, const char *option, const char *value)
+{
+    if (value && *value) {
+        g_ptr_array_add(a, g_strdup(option));
+        g_ptr_array_add(a, g_strdup(value));
+    }
+}
+
+char **kp_mplayer_pref_args(const kp_prefs *p)
+{
+    GPtrArray *a = g_ptr_array_new();
+    add_opt(a, "-vo", kp_prefs_get_str(p, "mplayer", "vo", NULL));
+    add_opt(a, "-ao", kp_prefs_get_str(p, "mplayer", "ao", NULL));
+    const char *alang = kp_prefs_get_str(p, "audio", "languages", NULL);
+    if (alang) {
+        char *l = lang_list(alang);
+        add_opt(a, "-alang", l);
+        g_free(l);
+    }
+    const char *slang = kp_prefs_get_str(p, "subtitles", "languages", NULL);
+    if (slang) {
+        char *l = lang_list(slang);
+        add_opt(a, "-slang", l);
+        g_free(l);
+    }
+    /* A fontconfig name; the size is MPlayer's own scale (percent of the
+     * screen height), not mpv's pixels, so it is left alone. */
+    add_opt(a, "-font", kp_prefs_get_str(p, "subtitles", "font", NULL));
+    if (kp_prefs_get_choice(p, "subtitles", "auto",
+                            (const char *const[]){"exact", "fuzzy", "no", NULL}, 0) == 2)
+        g_ptr_array_add(a, g_strdup("-noautosub"));
+    g_ptr_array_add(a, NULL);
+    return (char **)g_ptr_array_free(a, FALSE);
+}
+
 char *kp_mpv_pref_signature(const kp_prefs *p)
 {
-    char **args = kp_mpv_pref_args(p);
+    bool mplayer = !strcmp(kp_video_backend(p), "mplayer");
+    char **args = mplayer ? kp_mplayer_pref_args(p) : kp_mpv_pref_args(p);
     char *joined = g_strjoinv("\n", args);
-    char *sig = g_strdup_printf("%s\n%s\n%d\n%s", joined,
-                                kp_prefs_get_str(p, "mpv", "program", "mpv"),
-                                kp_prefs_get_bool(p, "mpv", "use_config", false),
-                                kp_prefs_get_str(p, "mpv", "extra", ""));
+    const char *sect = mplayer ? "mplayer" : "mpv";
+    char *sig = g_strdup_printf("%s\n%s\n%s\n%d\n%s", sect, joined,
+                                kp_prefs_get_str(p, sect, "program", sect),
+                                kp_prefs_get_bool(p, sect, "use_config", false),
+                                kp_prefs_get_str(p, sect, "extra", ""));
     g_free(joined);
     g_strfreev(args);
     return sig;

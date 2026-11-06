@@ -152,11 +152,23 @@ use_config = false
 # extra options, as in SMPlayer
 extra = --deband
 
+[mplayer]
+program = mplayer
+use_config = false
+extra = -framedrop
+# MPlayer's own -vo / -ao names (mpv's [video] vo and [audio] ao don't apply)
+vo = xv
+ao = pulse
+
 [tools]
 # yt-dlp (the Linux binary), to download YouTube subtitles; empty: looked up in PATH
 ytdlp = ~/Downloads/yt-dlp_linux
 
 [video]
+# mpv (default, everything) or mplayer (slave mode: no tracks menu, no
+# gapless, no chat drawn over a fullscreen video; subtitle files next to the
+# video, YouTube's styled ones included, do show)
+backend = mpv
 hwdec = auto-safe
 
 [subtitles]

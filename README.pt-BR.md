@@ -151,11 +151,23 @@ use_config = false
 # opções extras, como no SMPlayer
 extra = --deband
 
+[mplayer]
+program = mplayer
+use_config = false
+extra = -framedrop
+# os nomes -vo / -ao do próprio MPlayer ([video] vo e [audio] ao do mpv não valem)
+vo = xv
+ao = pulse
+
 [tools]
 # yt-dlp (binário do Linux) para baixar legendas do YouTube; vazio: procura no PATH
 ytdlp = ~/Downloads/yt-dlp_linux
 
 [video]
+# mpv (padrão, tudo) ou mplayer (modo slave: sem menu de faixas, sem
+# gapless, sem o chat desenhado sobre o vídeo em tela cheia; as legendas ao
+# lado do vídeo, as do YouTube com estilo inclusive, aparecem)
+backend = mpv
 hwdec = auto-safe
 
 [subtitles]

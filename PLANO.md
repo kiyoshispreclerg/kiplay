@@ -684,7 +684,34 @@ identificadores em inglês; interface pelo gettext com msgids em inglês.
      Stickers como imagem; só vale com vídeo (mpv); os pulos com o vídeo
      pausado só atualizam o chat quando o mpv manda o tempo.
 7. **Danmaku**.
-8. **Backend MPlayer**, provando que a interface é mesmo plugável.
+8. **Backend MPlayer** *(feita)*, provando que a interface é mesmo plugável.
+   - `src/mplayer.c`: `mplayer -slave -idle -quiet -identify -wid`, comandos
+     pelo stdin e `ID_*`/`ANS_*` pelo stdout, na mesma `kp_backend_ops`; o
+     resto do programa não mudou (só `create()` no `player.c` escolhe,
+     `[video] backend = mpv|mplayer`, e `[mplayer] program/use_config/extra/vo/ao`).
+   - Sem eventos, então: o começo do arquivo é a linha `Starting playback...`
+     (as `ID_LENGTH`, `ID_VIDEO_ID` e `ID_CLIP_INFO_*` antes dela dão duração,
+     se há vídeo e tags); o tempo e o **fim do arquivo** vêm da mesma
+     pergunta, `get_property time_pos` a cada 250 ms (no `-idle` ele não
+     imprime `ID_EXIT=EOF`; sem arquivo a resposta é `ANS_ERROR`). Respostas
+     de antes de um `loadfile` são descartadas (`polls_stale`).
+   - Armadilha: todo comando sem o prefixo `pausing_keep` tira o MPlayer da
+     pausa, e ele não tem `set_property pause`: a pausa é alternância com o
+     estado guardado aqui. `-softvol` para o volume não mexer no mixer.
+   - Legendas ao lado do vídeo (inclusive as do YouTube em ASS): `sub_load`
+     de cada uma e `sub_select` com o número do `ID_FILE_SUB_ID`; a escolhida
+     é a primeira no idioma de `[subtitles] languages`, senão a primeira.
+   - Sem `KP_CAP_TRACKS` nem gapless: menus de faixa, atraso e proporção
+     ficam cinza; sem sobreposição, então em tela cheia o painel do chat
+     continua na janela (`kp_chat_overlaid`). Sem voltar um quadro.
+   - Conferido no Xvfb (`vo = x11` e `gl`) com vídeo, pausa, busca, fim do
+     arquivo, chat lateral e as legendas en/ja do 3DMV da Akirose;
+     `tests/unit/test_mplayer.c` roda um MPlayer de verdade.
+   - Limites do MPlayer 1.4 do Debian, não nossos: não abre VP9 em mp4
+     (fourcc `vp09`, nem forçando `-vc ffvp9`), então vídeos do YouTube em
+     VP9 ficam só com som; `x11` com `-wid` estica a imagem (sem
+     letterbox; `xv`/`gl` mantêm a proporção); o `vo` padrão (`vdpau`) cai
+     no Xvfb. Falta conferir no X real.
 9. **Direto das plataformas**: link → yt-dlp → mpv, legendas e chat no
    cache; chat ao vivo pelo código do kikarinhas.
 10. **Extras**: danmaku do Bilibili (`.xml`) e do Niconico, chat da Twitch

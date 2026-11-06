@@ -364,6 +364,9 @@ void kp_chat_prefs_changed(kp_app *app);
 void kp_chat_toggle(kp_app *app);
 /* A chat is loaded and shown: layout.c gives it room beside the video. */
 bool kp_chat_wanted(const kp_app *app);
+/* The chat is drawn by the video program over its own window (fullscreen
+ * with mpv, the only one with an overlay) instead of by the panel. */
+bool kp_chat_overlaid(const kp_app *app);
 /* In fullscreen the chat is drawn by mpv over its own window (and the
  * panel leaves the layout); call after fullscreen, the chat or the
  * engine changed. */

@@ -246,7 +246,13 @@ static void interface_tab(dialog *d, GtkWidget *nb)
 static void video_tab(dialog *d, GtkWidget *nb)
 {
     GtkWidget *p = page(nb, _("Video"));
-    GtkWidget *t = section(p, _("Decoding and output (mpv)"));
+    GtkWidget *t = section(p, _("Video player"));
+    static const char *const backends[] = {"mpv", "mplayer", NULL};
+    static const char *const backend_labels[] = {N_("mpv (all features)"),
+                                                 N_("MPlayer (basic: no tracks menu, no "
+                                                    "gapless, no chat over fullscreen)")};
+    choice(d, t, _("_Play videos with:"), "video", "backend", backends, backend_labels, "mpv");
+    t = section(p, _("Decoding and output (mpv)"));
     static const char *const hwdec[] = {"", "auto-safe", "vaapi", "vdpau", NULL};
     static const char *const hwdec_labels[] = {N_("Off (mpv's default)"), N_("Automatic, safe"),
                                                N_("VA-API"), N_("VDPAU")};
@@ -256,7 +262,13 @@ static void video_tab(dialog *d, GtkWidget *nb)
                                             N_("xv (old graphics cards)"),
                                             N_("x11 (software, slowest)")};
     choice(d, t, _("Video _output:"), "video", "vo", vo, vo_labels, "");
-    note(t, _("Changes here restart mpv; the video goes on where it was."));
+    note(t, _("Changes here restart the player; the video goes on where it was."));
+    t = section(p, _("Output (MPlayer)"));
+    GtkWidget *mvo = entry(d, t, _("Video o_utput:"), "mplayer", "vo", "");
+    gtk_widget_set_tooltip_text(mvo, _("MPlayer's -vo, e.g. xv or x11; empty: MPlayer's own choice"));
+    GtkWidget *mao = entry(d, t, _("Audio ou_tput:"), "mplayer", "ao", "");
+    gtk_widget_set_tooltip_text(mao, _("MPlayer's -ao, e.g. pulse or alsa; empty: MPlayer's own "
+                                       "choice"));
 }
 
 static void audio_tab(dialog *d, GtkWidget *nb)
@@ -386,6 +398,13 @@ static void advanced_tab(dialog *d, GtkWidget *nb)
                                 _("Passed to mpv as typed, e.g. --deband --scale=ewa_lanczos"));
     note(t, _("Kiplay controls mpv's window, keys and on-screen controls; options that change "
               "those can break it."));
+    t = section(p, _("MPlayer"));
+    entry(d, t, _("Pro_gram:"), "mplayer", "program", "mplayer");
+    check(d, t, _("Also read my MPlayer _configuration (~/.mplayer/config)"), "mplayer",
+          "use_config", false);
+    GtkWidget *mextra = entry(d, t, _("Extra _options:"), "mplayer", "extra", "");
+    gtk_widget_set_tooltip_text(mextra, _("Passed to MPlayer as typed, e.g. -framedrop -sws 9"));
+    note(t, _("Used when Video > Play videos with is MPlayer."));
     t = section(p, _("yt-dlp"));
     GtkWidget *ytdlp = entry(d, t, _("P_rogram:"), "tools", "ytdlp", "");
     gtk_widget_set_tooltip_text(ytdlp, _("Full path of the yt-dlp binary; empty looks for "

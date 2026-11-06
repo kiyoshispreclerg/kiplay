@@ -6,7 +6,8 @@
 
 /* The external player that decodes and draws: one process kept alive
  * between files, behind the same calls whatever it is: mpv --idle (audio
- * and video) or kiplay-audio (Kiplay's own small music engine). Everything runs on the GLib main loop and never blocks: the
+ * and video), MPlayer -slave -idle or kiplay-audio (Kiplay's own small
+ * music engine). Everything runs on the GLib main loop and never blocks: the
  * process is spawned asynchronously, commands are queued until it listens
  * and written without blocking, and what it says comes back as events.
  *
@@ -88,6 +89,9 @@ typedef struct {
     int buffer_ms;
     /* kiplay-audio: the KP_LEVELS_* to keep from the start. */
     unsigned levels;
+    /* MPlayer: the subtitle languages in order of preference ("pt,en"), to
+     * pick among the files of kp_load_opts.sub_files; may be NULL. */
+    const char *sub_langs;
     /* Options from the preferences (kp_mpv_pref_args), may be NULL. */
     const char *const *args;
     /* Extra arguments as typed by the user (shell quoting), may be NULL. */
@@ -100,6 +104,8 @@ typedef struct kp_backend kp_backend;
 
 /* Nothing starts until kp_backend_start. opts is copied. */
 kp_backend *kp_backend_new_mpv(const kp_backend_opts *opts, kp_event_cb cb, void *ud);
+/* MPlayer in slave mode: no tracks, no gapless, no overlay (see mplayer.c). */
+kp_backend *kp_backend_new_mplayer(const kp_backend_opts *opts, kp_event_cb cb, void *ud);
 kp_backend *kp_backend_new_audio(const kp_backend_opts *opts, kp_event_cb cb, void *ud);
 const char *kp_backend_name(const kp_backend *b);
 unsigned kp_backend_caps(const kp_backend *b);

@@ -18,8 +18,18 @@
 /* NULL-terminated argv fragment; g_strfreev it. Never NULL. */
 char **kp_mpv_pref_args(const kp_prefs *p);
 
+/* The same preferences as MPlayer options ([video] hwdec and [subtitles]
+ * auto have no MPlayer equivalent; [mplayer] vo and ao replace [video] vo
+ * and [audio] ao, whose names are mpv's). NULL-terminated; g_strfreev it. */
+char **kp_mplayer_pref_args(const kp_prefs *p);
+
+/* Which program draws the video: "mpv" (default) or "mplayer"
+ * ([video] backend). */
+const char *kp_video_backend(const kp_prefs *p);
+
 /* Everything that only takes effect when mpv starts (the options above,
- * [mpv] program, use_config and extra), as one string: when it changes,
+ * [mpv] program, use_config and extra, or the MPlayer ones when it is
+ * the video backend), as one string: when it changes,
  * a running mpv has to be restarted. g_free it. */
 char *kp_mpv_pref_signature(const kp_prefs *p);
 

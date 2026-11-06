@@ -20,6 +20,7 @@ LIB_SRC = src/log.c \
       src/media.c \
       src/search.c \
       src/mpv.c \
+      src/mplayer.c \
       src/mpvopts.c \
       src/filesettings.c \
       src/mpris.c \
