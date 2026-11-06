@@ -30,8 +30,8 @@ typedef struct {
     void (*show_text)(kp_backend *b, const char *text);
     void (*overlay)(kp_backend *b, const char *path, int x, int y, int w, int h, int stride);
     void (*set_margin_right)(kp_backend *b, double ratio);
-    bool (*levels)(kp_backend *b, int peak[2]);
-    void (*set_levels)(kp_backend *b, bool on);
+    bool (*levels)(kp_backend *b, kp_levels *out);
+    void (*set_levels)(kp_backend *b, unsigned what);
     void (*free)(kp_backend *b);
 } kp_backend_ops;
 

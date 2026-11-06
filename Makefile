@@ -44,7 +44,7 @@ APP_SRC = src/main.c \
       ui/jump.c \
       ui/searchpanel.c \
       ui/controls.c \
-      ui/vumeter.c \
+      ui/meters.c \
       ui/fsbar.c \
       ui/player.c \
       ui/shortcuts.c \

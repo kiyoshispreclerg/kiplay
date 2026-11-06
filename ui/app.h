@@ -113,7 +113,7 @@ typedef struct {
     GtkWidget *status;   /* label at the bottom */
     GtkWidget *chat;     /* the chat panel (chatpanel.c); beside the video when wanted */
     GtkWidget *chat_item; /* View > Chat */
-    GtkWidget *vu_item;   /* View > VU meter */
+    GtkWidget *vu_item, *spectrum_item; /* View > VU meter, Spectrum */
     bool chat_available; /* the playing video has a chat file, indexed */
     bool chat_shown;     /* what View > Chat says */
 
@@ -246,12 +246,14 @@ void kp_controls_set_volume(kp_app *app, int volume);
 /* The mute button follows app->playing.muted. */
 void kp_controls_mute_changed(kp_app *app);
 
-/* vumeter.c: the level meter, View > VU meter. */
-GtkWidget *kp_vumeter_new(kp_app *app);
-/* Shows or hides it (and tells the engine); the pref is the caller's. */
-void kp_vumeter_set_shown(kp_app *app, bool on);
-/* Starts its timer if the music engine plays (kp_controls_update). */
-void kp_vumeter_update(kp_app *app);
+/* meters.c: View > VU meter and View > Spectrum on the transport bar. */
+GtkWidget *kp_meters_new(kp_app *app);
+/* KP_LEVELS_* the prefs ([layout] vu, spectrum) ask for. */
+unsigned kp_meters_wanted(kp_app *app);
+/* The prefs changed: shows or hides them and tells the engine. */
+void kp_meters_changed(kp_app *app);
+/* Starts their timer if the music engine plays (kp_controls_update). */
+void kp_meters_update(kp_app *app);
 
 /* player.c: plays the playlists through the backend. */
 /* kiplay-audio next to the kiplay binary (a build tree), else in PATH. */

@@ -123,29 +123,99 @@ static void apply_volume(int16_t *s, long frames, int volume)
         s[i] = (int16_t)((s[i] * q) >> 15);
 }
 
-/* ---- the meter's levels (levels.h) -------------------------------------- */
+/* ---- the meters' levels (levels.h) --------------------------------------- */
 
 static ka_levels *levels; /* NULL without -l */
-static atomic_bool levels_on; /* "levels 1": the peaks are kept */
+static atomic_int levels_what; /* "levels N": KA_LEVELS_* to keep */
 static int64_t lv_frames; /* frames written, ever */
-static int64_t lv_block = -1;
-static int lv_peak[2];
+static double lv_sq[2];   /* sum of squares in the block being written */
 
-static void levels_store(void)
+/* The last FFT_N frames, mono, oldest at lv_pos. */
+#define FFT_N 512
+static float lv_ring[FFT_N];
+static int lv_pos;
+
+static float fft_win[FFT_N], fft_cos[FFT_N / 2], fft_sin[FFT_N / 2];
+static uint16_t fft_rev[FFT_N];
+static float band_edge[KA_LEVELS_BANDS + 1]; /* in bins, logarithmic */
+
+static void fft_init(void)
 {
-    int slot = (int)(lv_block % KA_LEVELS_BLOCKS);
-    for (int c = 0; c < 2; c++)
-        levels->blocks[slot].peak[c] = (uint8_t)(lv_peak[c] >= 32640 ? 255 : lv_peak[c] >> 7);
-    atomic_store_explicit(&levels->blocks[slot].id, lv_block, memory_order_release);
+    int bits = 0;
+    while ((1 << bits) < FFT_N)
+        bits++;
+    for (int i = 0; i < FFT_N; i++) {
+        int r = 0;
+        for (int b = 0; b < bits; b++)
+            r |= ((i >> b) & 1) << (bits - 1 - b);
+        fft_rev[i] = (uint16_t)r;
+        fft_win[i] = 1.0f - 0.85f * cosf(2 * (float)M_PI * i / FFT_N);
+    }
+    for (int i = 0; i < FFT_N / 2; i++) {
+        fft_cos[i] = cosf(2 * (float)M_PI * i / FFT_N);
+        fft_sin[i] = sinf(2 * (float)M_PI * i / FFT_N);
+    }
+    /* Equal steps on a log scale from 0 to the 256 bins: each band an
+     * octave or so, the way ears (and Audacious' bars) split it. */
+    for (int i = 0; i <= KA_LEVELS_BANDS; i++)
+        band_edge[i] = powf(FFT_N / 2 + 1, (float)i / KA_LEVELS_BANDS) - 1;
 }
 
-/* The peaks of what is about to be written (before the volume: the meter
- * shows the music, not the knob). */
+/* The bands of the last FFT_N frames into a block: dB of full scale,
+ * 4 steps a dB from -64 (0 = -64 dB or less, 255 = about 0). */
+static void spectrum(uint8_t out[KA_LEVELS_BANDS])
+{
+    float re[FFT_N], im[FFT_N], mag[FFT_N / 2];
+    for (int i = 0; i < FFT_N; i++) {
+        int j = fft_rev[i];
+        re[j] = lv_ring[(lv_pos + i) % FFT_N] * fft_win[i];
+        im[j] = 0;
+    }
+    for (int len = 2; len <= FFT_N; len <<= 1) {
+        int half = len / 2, step = FFT_N / len;
+        for (int i = 0; i < FFT_N; i += len)
+            for (int j = 0; j < half; j++) {
+                float wr = fft_cos[j * step], wi = -fft_sin[j * step];
+                int a = i + j, b = a + half;
+                float tr = re[b] * wr - im[b] * wi, ti = re[b] * wi + im[b] * wr;
+                re[b] = re[a] - tr;
+                im[b] = im[a] - ti;
+                re[a] += tr;
+                im[a] += ti;
+            }
+    }
+    /* Amplitude per bin, without DC: a full-scale sine is about 0.5. */
+    for (int i = 0; i < FFT_N / 2; i++)
+        mag[i] = 2 * hypotf(re[i + 1], im[i + 1]) / FFT_N;
+    for (int band = 0; band < KA_LEVELS_BANDS; band++) {
+        /* The bins inside the band, the ones on its edges in part. */
+        float x0 = band_edge[band], x1 = band_edge[band + 1], n = 0;
+        int a = (int)ceilf(x0), b = (int)floorf(x1);
+        if (b < a)
+            n = mag[b] * (x1 - x0);
+        else {
+            if (a > 0)
+                n += mag[a - 1] * (a - x0);
+            for (; a < b; a++)
+                n += mag[a];
+            if (b < FFT_N / 2)
+                n += mag[b] * (x1 - b);
+        }
+        float db = n > 0 ? 20 * log10f(n) : -64;
+        float v = (db + 64) * 4;
+        out[band] = (uint8_t)(v < 0 ? 0 : v > 255 ? 255 : v);
+    }
+}
+
+/* What is about to be written, before the volume (the meters show the
+ * music, not the knob): the loudness, the ring for the spectrum, and both
+ * stored at the end of each block. */
 static void levels_feed(engine *e, const int16_t *s, long n)
 {
     if (!levels || n <= 0)
         return;
-    if (!atomic_load_explicit(&levels_on, memory_order_relaxed)) {
+    int what = atomic_load_explicit(&levels_what, memory_order_relaxed);
+    if (!what) {
         lv_frames += n; /* the clock goes on: levels_stamp counts them */
         return;
     }
@@ -158,32 +228,44 @@ static void levels_feed(engine *e, const int16_t *s, long n)
         for (int i = 0; i < KA_LEVELS_BLOCKS; i++)
             atomic_store_explicit(&levels->blocks[i].id, -1, memory_order_relaxed);
         atomic_fetch_add_explicit(&levels->seq, 1, memory_order_release);
-        lv_block = -1;
+        lv_sq[0] = lv_sq[1] = 0;
     }
     long block = levels->block;
     while (n > 0) {
-        int64_t id = lv_frames / block;
-        if (id != lv_block) {
-            lv_block = id;
-            lv_peak[0] = lv_peak[1] = 0;
-        }
         long k = block - (long)(lv_frames % block);
-        if (k > n)
+        bool ends = k <= n;
+        if (!ends)
             k = n;
-        int l = lv_peak[0], r = lv_peak[1];
+        int64_t l = 0, r = 0;
         for (long i = 0; i < k; i++) {
             int a = s[2 * i], b = s[2 * i + 1];
-            a = a < 0 ? -a : a;
-            b = b < 0 ? -b : b;
-            l = a > l ? a : l;
-            r = b > r ? b : r;
+            if (what & KA_LEVELS_SPECTRUM) {
+                lv_ring[lv_pos] = (a + b) * (1.0f / 65536);
+                lv_pos = (lv_pos + 1) % FFT_N;
+            }
+            l += a * a;
+            r += b * b;
         }
-        lv_peak[0] = l;
-        lv_peak[1] = r;
-        levels_store(); /* a part of a block is stored too, and again later */
+        lv_sq[0] += (double)l;
+        lv_sq[1] += (double)r;
         s += 2 * k;
         n -= k;
         lv_frames += k;
+        if (ends) {
+            int64_t id = lv_frames / block - 1;
+            int slot = (int)(id % KA_LEVELS_BLOCKS);
+            for (int c = 0; c < 2; c++) {
+                double ms = lv_sq[c] / ((double)block * 32768 * 32768);
+                double v = ms > 0 ? (10 * log10(ms) + 64) * 4 : 0;
+                levels->blocks[slot].vu[c] = (uint8_t)(v < 0 ? 0 : v > 255 ? 255 : v);
+            }
+            lv_sq[0] = lv_sq[1] = 0;
+            if (what & KA_LEVELS_SPECTRUM)
+                spectrum(levels->blocks[slot].band);
+            else
+                memset(levels->blocks[slot].band, 0, KA_LEVELS_BANDS);
+            atomic_store_explicit(&levels->blocks[slot].id, id, memory_order_release);
+        }
     }
 }
 
@@ -192,7 +274,7 @@ static void levels_stamp(engine *e)
 {
     if (!levels)
         return;
-    uint32_t playing = atomic_load_explicit(&levels_on, memory_order_relaxed) && e->dec &&
+    uint32_t playing = atomic_load_explicit(&levels_what, memory_order_relaxed) && e->dec &&
                        e->out && e->playing && !e->paused;
     if (!playing && !levels->playing)
         return;
@@ -519,7 +601,8 @@ static void request(const ka_cmd *c)
         shared.ticking = c->num != 0;
         break;
     case KA_CMD_LEVELS:
-        atomic_store_explicit(&levels_on, c->num != 0, memory_order_relaxed);
+        atomic_store_explicit(&levels_what, (int)c->num & (KA_LEVELS_VU | KA_LEVELS_SPECTRUM),
+                              memory_order_relaxed);
         break;
     case KA_CMD_QUIT:
         shared.quit = true;
@@ -544,6 +627,8 @@ int main(int argc, char **argv)
             void *m = mmap(NULL, sizeof(ka_levels), PROT_READ | PROT_WRITE, MAP_SHARED,
                            atoi(argv[++i]), 0);
             levels = m == MAP_FAILED ? NULL : m;
+            if (levels)
+                fft_init();
         } else if (!strcmp(argv[i], "--tags")) {
             signal(SIGPIPE, SIG_DFL);
             av_log_set_level(AV_LOG_QUIET);

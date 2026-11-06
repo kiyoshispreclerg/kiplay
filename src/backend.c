@@ -72,15 +72,15 @@ void kp_backend_step_frame(kp_backend *b, bool back)
         b->ops->step_frame(b, back);
 }
 
-void kp_backend_set_levels(kp_backend *b, bool on)
+void kp_backend_set_levels(kp_backend *b, unsigned what)
 {
     if (b->ops->set_levels)
-        b->ops->set_levels(b, on);
+        b->ops->set_levels(b, what);
 }
 
-bool kp_backend_levels(kp_backend *b, int peak[2])
+bool kp_backend_levels(kp_backend *b, kp_levels *out)
 {
-    return b->ops->levels && b->ops->levels(b, peak);
+    return b->ops->levels && b->ops->levels(b, out);
 }
 
 void kp_backend_set_volume(kp_backend *b, int volume)

@@ -32,7 +32,7 @@ TEST(parses_commands)
     CHECK_INT_EQ(c.type, KA_CMD_SEEKREL);
     CHECK(c.num == -5);
     CHECK(ka_cmd_parse("pause 1", &c) && c.type == KA_CMD_PAUSE && c.num == 1);
-    CHECK(ka_cmd_parse("levels 1", &c) && c.type == KA_CMD_LEVELS && c.num == 1);
+    CHECK(ka_cmd_parse("levels 3", &c) && c.type == KA_CMD_LEVELS && c.num == 3);
     CHECK(ka_cmd_parse("stop", &c) && c.type == KA_CMD_STOP);
     CHECK(!ka_cmd_parse("stopx", &c));
     CHECK(!ka_cmd_parse("load abc /x", &c));

@@ -182,7 +182,7 @@ void kp_controls_update(kp_app *app)
         gtk_range_set_value(GTK_RANGE(app->seek), seekable ? p->position : 0);
         update_time_label(app, p->position);
     }
-    kp_vumeter_update(app);
+    kp_meters_update(app);
 }
 
 void kp_controls_set_volume(kp_app *app, int volume)
@@ -265,7 +265,7 @@ GtkWidget *kp_controls_new(kp_app *app)
     gtk_label_set_width_chars(GTK_LABEL(app->volume_label), 4);
     gtk_misc_set_alignment(GTK_MISC(app->volume_label), 1, 0.5);
     gtk_box_pack_start(GTK_BOX(bar), app->volume_label, FALSE, FALSE, 2);
-    gtk_box_pack_start(GTK_BOX(bar), kp_vumeter_new(app), FALSE, FALSE, 4);
+    gtk_box_pack_start(GTK_BOX(bar), kp_meters_new(app), FALSE, FALSE, 4);
     /* Set before the signal: starting up is not turning the volume. */
     gtk_range_set_value(GTK_RANGE(app->volume),
                         kp_prefs_get_int(app->prefs, "playback", "volume", 100, 0, 100));

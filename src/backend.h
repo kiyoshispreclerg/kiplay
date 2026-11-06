@@ -86,8 +86,8 @@ typedef struct {
     const char *soundfont;
     /* kiplay-audio: sound buffer in ms (KP_AUDIO_BUFFER_MS_*); 0 = the default. */
     int buffer_ms;
-    /* kiplay-audio: keep the levels for kp_backend_levels from the start. */
-    bool levels;
+    /* kiplay-audio: the KP_LEVELS_* to keep from the start. */
+    unsigned levels;
     /* Options from the preferences (kp_mpv_pref_args), may be NULL. */
     const char *const *args;
     /* Extra arguments as typed by the user (shell quoting), may be NULL. */
@@ -168,12 +168,19 @@ void kp_backend_overlay(kp_backend *b, const char *path, int x, int y, int w, in
 /* Keeps this fraction of the window's width at the right free of video
  * (0 = none), for something drawn there. */
 void kp_backend_set_margin_right(kp_backend *b, double ratio);
-/* The peaks (0..255 of full scale, left and right) of what sounded since
- * the last call, for a meter; false when it isn't playing or can't say
- * (mpv). Only the music engine started with KP_VU=1, for now. */
-bool kp_backend_levels(kp_backend *b, int peak[2]);
-/* Asks the engine to keep the levels (or not: then it costs nothing). */
-void kp_backend_set_levels(kp_backend *b, bool on);
+/* For the VU meter and the spectrum: what sounded since the last call. */
+#define KP_SPECTRUM_BANDS 12
+#define KP_LEVELS_VU 1     /* the VU meter's loudness (RMS) */
+#define KP_LEVELS_SPECTRUM 2 /* the bands (an FFT in the engine) */
+typedef struct {
+    int vu[2];                     /* left, right RMS: (dB of full scale + 64) * 4, 0..255 */
+    int band[KP_SPECTRUM_BANDS];   /* low to high: (dB of full scale + 64) * 4, 0..255 */
+} kp_levels;
+/* false when it isn't playing or can't say (mpv: only the music engine
+ * has levels); only what was asked with kp_backend_set_levels is filled. */
+bool kp_backend_levels(kp_backend *b, kp_levels *out);
+/* What the engine keeps, KP_LEVELS_* (0: nothing, and it costs nothing). */
+void kp_backend_set_levels(kp_backend *b, unsigned what);
 
 /* For tests: one line of mpv's JSON IPC to events, as the backend would
  * deliver them. */

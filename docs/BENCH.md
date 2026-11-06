@@ -47,40 +47,49 @@ Só o motor (`kiplay-audio` sozinho, antes → depois), CPU em 15 s:
 | SNES | 1,46% | 1,20% (a emulação do SPC700 em si) |
 | Master System FM | não tocava | 2,40% |
 
-## Medidor de nível (VU), 06/11/2026
+## VU e espectro, 06/11/2026
 
-Custo do VU da barra de controle (Exibir > VU; as medidas foram feitas com o protótipo, 4 px por barra, 2 px a menos que o de agora) contra a
-visualização da barra preta inferior do Audacious (`[qtui]
-infoarea_show_vis`; na interface Qt do 4.2 ela é a única, um espectro de
-~12 barras). Mesmo MP3 (aba 3, entrada 1), janela de 1280×780, sink nulo,
-cada caso sozinho num Xvfb, 8 s de espera e 20 s de medida, 3 rodadas
-(variação de ±0,05 ponto). "X" é a CPU do servidor X (o desenho cai em
-parte nele); despertares são as trocas de contexto voluntárias de todas as
-threads do programa e dos filhos.
+Custo dos medidores da barra de controle (Exibir > Medidor de VU e
+Exibir > Espectro, os dois desligados por padrão) contra a visualização da
+barra preta inferior do Audacious (`[qtui] infoarea_show_vis`; na
+interface Qt do 4.2 ela é a única, um espectro de ~12 barras). Mesmo MP3
+(aba 3, entrada 1), janela de 1280×780, sink nulo, cada caso sozinho num
+Xvfb, 8 s de espera e 20 s de medida, média de 3 rodadas (variação de
+±0,05 ponto). "X" é a CPU do servidor X (o desenho cai em parte nele);
+despertares são as trocas de contexto voluntárias de todas as threads do
+programa e dos filhos.
 
-| | CPU do programa | CPU do X | despertares/s | memória |
-|---|---|---|---|---|
-| Kiplay | 0,60% | 0,07% | 20 | 16,9 MB |
-| Kiplay com VU | 0,90% | 0,18% | 50 | 17,0 MB |
-| Audacious sem a visualização | 0,63% | 0,02% | 33 | 43,3 MB |
-| Audacious com a visualização | 1,30% | 0,38% | 117 | 43,5 MB |
+| | CPU do programa | CPU do X | custo (programa + X) | despertares/s | memória |
+|---|---|---|---|---|---|
+| Kiplay | 0,58% | 0,03% | — | 20 | 17,2 MB |
+| Kiplay com VU | 0,80% | 0,17% | +0,35 | 50 | 17,2 MB |
+| Kiplay com espectro | 0,88% | 0,22% | +0,48 | 50 | 17,0 MB |
+| Kiplay com os dois | 0,90% | 0,27% | +0,55 | 50 | 17,2 MB |
+| Audacious sem a visualização | 0,63% | 0,05% | — | 27 | 43,3 MB |
+| Audacious com a visualização | 1,28% | 0,40% | +1,00 | 110 | 43,5 MB |
 
-O VU custa ao Kiplay +0,41 ponto (programa + X) e a visualização custa
-ao Audacious +1,03: 2,5 vezes menos. Como o protótipo é feito:
+O espectro do Kiplay custa metade do do Audacious. Como é feito:
 
-- o `kiplay-audio` guarda o pico de cada bloco de 20 ms do que escreve
-  numa memória compartilhada (`audio/levels.h`, fd passado com `-l`, só
-  depois do comando `levels 1`: com o VU escondido o motor não faz nada) e,
-  a cada despertar que já tinha, onde o dispositivo está: nenhuma linha
-  a mais no pipe, nenhum despertar a mais;
-- a janela lê a memória a 30 quadros/s só enquanto o motor toca e a barra
-  está na tela, e desenha (retângulos do GDK, sem Cairo nem double
-  buffer) só quando uma barra anda um pixel.
+- o `kiplay-audio` guarda, para cada bloco de 20 ms que escreve, o RMS de
+  cada canal (VU) e 12 bandas de uma FFT de 512 pontos (espectro, ~20 µs
+  por bloco) numa memória compartilhada (`audio/levels.h`, fd passado
+  com `-l`), e a cada despertar que já tinha, onde o dispositivo está:
+  nenhuma linha a mais no pipe, nenhum despertar a mais. Só calcula o que
+  o comando `levels N` pede; com os dois escondidos não faz nada;
+- a janela lê a memória a 30 quadros/s só enquanto o motor toca e algum
+  medidor está na tela, e desenha (retângulos do GDK, sem Cairo nem
+  double buffer, direto no timer em vez de um expose) só quando uma barra
+  anda um pixel.
 
-Medido aos pedaços: o timer e a leitura custam ~0,08 ponto; o resto é o
-desenho pelo GTK (com o double buffer do GTK 2 eram 1,02% + 0,27% no X; a
-20 quadros/s, ~0,87% + 0,15%). No Xvfb o X desenha por software: no X de
-verdade, com compositor, os dois pagam mais no servidor.
+O VU mostra o RMS, não o pico: com o pico, músicas masterizadas no
+máximo (o set de hardstyle) ficavam o tempo todo no fim da barra.
+
+Medido aos pedaços (com o VU, num protótipo de barras mais finas): o
+timer e a leitura custam ~0,08 ponto; o resto é o desenho. O double
+buffer do GTK 2 custava ~0,2 ponto e o caminho do expose (invalidar,
+processar a região) ~0,2. A 20 quadros/s cairia mais ~0,1. No Xvfb o X
+desenha por software: no X de verdade, com compositor, os dois pagam mais
+no servidor.
 
 Fica de fora: o mpv (vídeo, ou música que vá para ele) não dá os níveis
 de graça; seria pelo filtro `astats` com propriedades observadas, a medir.

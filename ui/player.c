@@ -404,7 +404,7 @@ static kp_backend *create(kp_app *app, bool audio)
 {
     int volume = kp_prefs_get_int(app->prefs, "playback", "volume", 100, 0, 100);
     kp_backend_opts o = {.volume = app->playing.muted ? 0 : volume,
-                         .levels = kp_prefs_get_bool(app->prefs, "layout", "vu", false)};
+                         .levels = kp_meters_wanted(app)};
     if (audio) {
         char *program = kp_engine_path();
         o.program = program;

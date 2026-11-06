@@ -24,10 +24,10 @@ typedef struct {
     kp_event_cb cb;
     void *ud;
     int volume;
-    bool want_levels; /* told to the engine now and when it restarts */
+    unsigned want_levels; /* KP_LEVELS_*: told now and when it restarts */
     kp_child *child;
     kp_lineio *io;
-    /* The meter's levels (audio/levels.h): our memory, the engine writes. */
+    /* The meters' levels (audio/levels.h): our memory, the engine writes. */
     int levels_fd;
     ka_levels *levels;
     int64_t levels_last; /* the last block read */
@@ -133,7 +133,7 @@ static bool start(kp_backend *b, char **err)
     kp_lineio_attach(a->io, g_subprocess_get_stdout_pipe(p), g_subprocess_get_stdin_pipe(p));
     send(a, "volume %d", a->volume);
     if (a->want_levels)
-        send(a, "levels 1");
+        send(a, "levels %u", a->want_levels);
     return true;
 }
 
@@ -190,12 +190,12 @@ static void set_ticking(kp_backend *b, bool on)
     send((audioback *)b, "tick %d", on);
 }
 
-static void set_levels(kp_backend *b, bool on)
+static void set_levels(kp_backend *b, unsigned what)
 {
     audioback *a = (audioback *)b;
-    a->want_levels = on && a->levels;
+    a->want_levels = a->levels ? what : 0;
     if (a->child)
-        send(a, "levels %d", a->want_levels);
+        send(a, "levels %u", a->want_levels);
     /* Off: forget the position, so the next look starts clean. */
     a->levels_last = -1;
 }
@@ -207,7 +207,11 @@ static int64_t monotonic_ns(void)
     return t.tv_sec * 1000000000LL + t.tv_nsec;
 }
 
-static bool levels(kp_backend *b, int peak[2])
+_Static_assert(KP_SPECTRUM_BANDS == KA_LEVELS_BANDS && KP_LEVELS_VU == KA_LEVELS_VU &&
+                   KP_LEVELS_SPECTRUM == KA_LEVELS_SPECTRUM,
+               "the levels are the engine's");
+
+static bool levels(kp_backend *b, kp_levels *out)
 {
     audioback *a = (audioback *)b;
     ka_levels *l = a->levels;
@@ -232,14 +236,19 @@ static bool levels(kp_backend *b, int peak[2])
     if (from > cur || from < cur - 8)
         from = cur > 8 ? cur - 8 : 0;
     a->levels_last = cur;
-    peak[0] = peak[1] = 0;
+    memset(out, 0, sizeof *out);
     for (int64_t i = from; i <= cur; i++) {
         int slot = (int)(i % KA_LEVELS_BLOCKS);
-        int p0 = l->blocks[slot].peak[0], p1 = l->blocks[slot].peak[1];
+        uint8_t vu[2], band[KA_LEVELS_BANDS];
+        memcpy(vu, l->blocks[slot].vu, sizeof vu);
+        memcpy(band, l->blocks[slot].band, sizeof band);
+        /* Checked after the copy: the engine may be reusing the slot. */
         if (atomic_load_explicit(&l->blocks[slot].id, memory_order_acquire) != i)
             continue;
-        peak[0] = MAX(peak[0], p0);
-        peak[1] = MAX(peak[1], p1);
+        for (int c = 0; c < 2; c++)
+            out->vu[c] = MAX(out->vu[c], vu[c]);
+        for (int k = 0; k < KP_SPECTRUM_BANDS; k++)
+            out->band[k] = MAX(out->band[k], band[k]);
     }
     return true;
 }
@@ -316,6 +325,6 @@ kp_backend *kp_backend_new_audio(const kp_backend_opts *opts, kp_event_cb cb, vo
     a->io = kp_lineio_new("kiplay-audio", on_line, a);
     a->levels_fd = -1;
     levels_open(a);
-    a->want_levels = opts->levels && a->levels;
+    a->want_levels = a->levels ? opts->levels : 0;
     return &a->base;
 }

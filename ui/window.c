@@ -83,12 +83,24 @@ static void on_chat(GtkCheckMenuItem *it, gpointer data)
     kp_layout_update_chat(app);
 }
 
-static void on_vu(GtkCheckMenuItem *it, gpointer data)
+/* View > VU meter and Spectrum: the key is the item's. */
+static void on_meter(GtkCheckMenuItem *it, gpointer data)
 {
     kp_app *app = data;
-    bool on = gtk_check_menu_item_get_active(it);
-    kp_prefs_set_bool(app->prefs, "layout", "vu", on);
-    kp_vumeter_set_shown(app, on);
+    kp_prefs_set_bool(app->prefs, "layout", g_object_get_data(G_OBJECT(it), "kp-key"),
+                      gtk_check_menu_item_get_active(it));
+    kp_meters_changed(app);
+}
+
+static GtkWidget *meter_item(GtkWidget *m, kp_app *app, const char *label, const char *key)
+{
+    GtkWidget *it = gtk_check_menu_item_new_with_mnemonic(label);
+    g_object_set_data(G_OBJECT(it), "kp-key", (gpointer)key);
+    gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(it),
+                                   kp_prefs_get_bool(app->prefs, "layout", key, false));
+    g_signal_connect(it, "toggled", G_CALLBACK(on_meter), app);
+    gtk_menu_shell_append(GTK_MENU_SHELL(m), it);
+    return it;
 }
 
 static void on_video_pos(GtkCheckMenuItem *it, gpointer data)
@@ -273,11 +285,8 @@ static GtkWidget *menu_bar(kp_app *app)
     g_signal_connect(app->chat_item, "toggled", G_CALLBACK(on_chat), app);
     kp_shortcuts_attach(app->chat_item, "chat");
     gtk_menu_shell_append(GTK_MENU_SHELL(m), app->chat_item);
-    app->vu_item = gtk_check_menu_item_new_with_mnemonic(_("_VU meter"));
-    gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(app->vu_item),
-                                   kp_prefs_get_bool(app->prefs, "layout", "vu", false));
-    g_signal_connect(app->vu_item, "toggled", G_CALLBACK(on_vu), app);
-    gtk_menu_shell_append(GTK_MENU_SHELL(m), app->vu_item);
+    app->vu_item = meter_item(m, app, _("_VU meter"), "vu");
+    app->spectrum_item = meter_item(m, app, _("_Spectrum"), "spectrum");
     separator(m);
     static const char *const video_labels[] = {N_("Video _above the playlists"),
                                                N_("Video on the _left"),
