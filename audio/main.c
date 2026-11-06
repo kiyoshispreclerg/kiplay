@@ -148,9 +148,14 @@ static bool ensure_out(engine *e, int rate)
 
 static void close_dec(engine *e)
 {
+    /* A pause held by the device outlives the file: let go of it, or the
+     * next file would play into a stopped stream. */
+    if (e->paused && !e->pause_by_drop && e->out)
+        ka_out_pause(e->out, false);
     ka_dec_close(e->dec);
     e->dec = NULL;
     e->playing = e->paused = false;
+    e->pause_by_drop = false;
 }
 
 static void do_load(engine *e, const char *path, double start)
