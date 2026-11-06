@@ -57,11 +57,9 @@ static gboolean on_hide_timer(gpointer data)
             set_cursor_hidden(app, true);
         return G_SOURCE_REMOVE;
     }
-    GtkWidget *vol = gtk_scale_button_get_popup(GTK_SCALE_BUTTON(app->volume));
-    /* Kept while it is being used: pointer on it, seek bar held, volume
-     * slider open. */
-    if (pointer_inside(popup) || app->seek_dragging ||
-        (vol && gtk_widget_get_visible(gtk_widget_get_toplevel(vol))))
+    /* Kept while it is being used: pointer on it, seek bar or volume
+     * slider held (a drag can leave the bar). */
+    if (pointer_inside(popup) || app->seek_dragging || gtk_widget_has_grab(app->volume))
         return G_SOURCE_CONTINUE;
     hide_timer = 0;
     gtk_widget_hide(popup);

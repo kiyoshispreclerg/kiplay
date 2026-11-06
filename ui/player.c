@@ -726,6 +726,7 @@ void kp_player_set_volume(kp_app *app, int volume)
     if (app->playing.muted) {
         app->playing.muted = false;
         kp_tracks_mute_changed(app);
+        kp_controls_mute_changed(app);
     }
     send_volume(app);
     kp_desktop_update(app);
@@ -736,6 +737,7 @@ void kp_player_toggle_mute(kp_app *app)
     app->playing.muted = !app->playing.muted;
     send_volume(app);
     kp_tracks_mute_changed(app);
+    kp_controls_mute_changed(app);
     kp_player_message(app, app->playing.muted ? _("Muted") : _("Sound on"));
 }
 

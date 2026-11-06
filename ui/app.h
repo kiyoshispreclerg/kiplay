@@ -117,7 +117,7 @@ typedef struct {
     bool chat_shown;     /* what View > Chat says */
 
     /* Transport bar widgets the player updates. */
-    GtkWidget *seek, *time_label, *volume, *play_btn, *pause_btn;
+    GtkWidget *seek, *time_label, *volume, *volume_label, *mute_btn, *play_btn, *pause_btn;
     GtkWidget *stop_after_item; /* Playback > Stop after this track */
     GtkWidget *repeat_btn, *shuffle_btn, *playlists_btn;
     GtkWidget *playlists_item; /* View > Playlists */
@@ -238,10 +238,12 @@ void kp_playlists_move_selected(kp_app *app, int delta);
 GtkWidget *kp_controls_new(kp_app *app);
 /* Time label and seek bar from app->playing. */
 void kp_controls_update(kp_app *app);
-/* The volume button moves by delta (percent); the player follows. */
+/* The volume slider moves by delta (percent); the player follows. */
 void kp_controls_change_volume(kp_app *app, int delta);
-/* Sets the volume button (0..100); the player follows. */
+/* Sets the volume slider (0..100); the player follows. */
 void kp_controls_set_volume(kp_app *app, int volume);
+/* The mute button follows app->playing.muted. */
+void kp_controls_mute_changed(kp_app *app);
 
 /* player.c: plays the playlists through the backend. */
 /* kiplay-audio next to the kiplay binary (a build tree), else in PATH. */

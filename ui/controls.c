@@ -4,8 +4,9 @@
 #include "util.h"
 
 /* The transport bar: previous, play/pause, stop, next, repeat, shuffle,
- * the seek bar with the time, and the volume. Repeat, shuffle and the
- * volume are remembered in the prefs. */
+ * the seek bar with the time, the mute button and the volume slider.
+ * Repeat, shuffle and the volume are remembered in the prefs; the mute
+ * state is the player's (app->playing.muted), the button only shows it. */
 
 /* stock: a GTK stock id, or (for the toggles) a themed icon name. */
 static GtkWidget *icon_button(const char *stock, const char *tip, bool toggle)
@@ -48,10 +49,71 @@ static void on_playlists_toggled(GtkToggleButton *b, gpointer data)
                                    gtk_toggle_button_get_active(b));
 }
 
-static void on_volume(GtkScaleButton *b, gdouble v, gpointer data)
+static bool mute_updating; /* the button set by us, not clicked */
+
+/* The icon follows the level, like the volume button it replaced. */
+static void update_mute_icon(kp_app *app)
 {
-    (void)b;
-    kp_player_set_volume(data, (int)(v * 100 + 0.5));
+    int v = (int)(gtk_range_get_value(GTK_RANGE(app->volume)) + 0.5);
+    const char *icon = app->playing.muted || v == 0 ? "audio-volume-muted"
+                       : v < 34                     ? "audio-volume-low"
+                       : v < 67                     ? "audio-volume-medium"
+                                                    : "audio-volume-high";
+    gtk_image_set_from_icon_name(GTK_IMAGE(gtk_bin_get_child(GTK_BIN(app->mute_btn))), icon,
+                                 GTK_ICON_SIZE_BUTTON);
+}
+
+static void on_mute(GtkToggleButton *b, gpointer data)
+{
+    kp_app *app = data;
+    if (!mute_updating && gtk_toggle_button_get_active(b) != app->playing.muted)
+        kp_player_toggle_mute(app);
+}
+
+void kp_controls_mute_changed(kp_app *app)
+{
+    if (!app->mute_btn)
+        return;
+    mute_updating = true;
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(app->mute_btn), app->playing.muted);
+    mute_updating = false;
+    update_mute_icon(app);
+}
+
+static void update_volume_label(kp_app *app)
+{
+    char text[16];
+    /* TRANSLATORS: the volume beside its slider. */
+    g_snprintf(text, sizeof text, _("%d%%"), (int)(gtk_range_get_value(GTK_RANGE(app->volume)) + 0.5));
+    gtk_label_set_text(GTK_LABEL(app->volume_label), text);
+}
+
+static void on_volume(GtkRange *r, gpointer data)
+{
+    kp_app *app = data;
+    update_volume_label(app);
+    kp_player_set_volume(app, (int)(gtk_range_get_value(r) + 0.5));
+    update_mute_icon(app);
+}
+
+/* Like the seek bar: the left button jumps to the click (and drags). */
+static gboolean on_volume_button(GtkWidget *w, GdkEventButton *ev, gpointer data)
+{
+    (void)w;
+    (void)data;
+    if (ev->button == 1)
+        ev->button = 2;
+    return FALSE;
+}
+
+static gboolean on_volume_scroll(GtkWidget *w, GdkEventScroll *ev, gpointer data)
+{
+    (void)w;
+    if (ev->direction == GDK_SCROLL_UP || ev->direction == GDK_SCROLL_RIGHT)
+        kp_controls_change_volume(data, 5);
+    else
+        kp_controls_change_volume(data, -5);
+    return TRUE;
 }
 
 /* The seek bar follows the playback unless the user holds it; the jump
@@ -124,13 +186,13 @@ void kp_controls_update(kp_app *app)
 
 void kp_controls_set_volume(kp_app *app, int volume)
 {
-    /* The button tells the player through its value-changed signal. */
-    gtk_scale_button_set_value(GTK_SCALE_BUTTON(app->volume), CLAMP(volume, 0, 100) / 100.0);
+    /* The slider tells the player through its value-changed signal. */
+    gtk_range_set_value(GTK_RANGE(app->volume), CLAMP(volume, 0, 100));
 }
 
 void kp_controls_change_volume(kp_app *app, int delta)
 {
-    int v = (int)(gtk_scale_button_get_value(GTK_SCALE_BUTTON(app->volume)) * 100 + 0.5);
+    int v = (int)(gtk_range_get_value(GTK_RANGE(app->volume)) + 0.5);
     kp_controls_set_volume(app, v + delta);
 }
 
@@ -182,11 +244,32 @@ GtkWidget *kp_controls_new(kp_app *app)
     app->time_label = gtk_label_new("--:-- / --:--");
     gtk_box_pack_start(GTK_BOX(bar), app->time_label, FALSE, FALSE, 4);
 
-    app->volume = gtk_volume_button_new();
-    gtk_scale_button_set_value(GTK_SCALE_BUTTON(app->volume),
-                               kp_prefs_get_int(app->prefs, "playback", "volume", 100, 0, 100) / 100.0);
-    g_signal_connect(app->volume, "value-changed", G_CALLBACK(on_volume), app);
+    gtk_box_pack_start(GTK_BOX(bar), gtk_vseparator_new(), FALSE, FALSE, 2);
+
+    app->mute_btn = icon_button("audio-volume-high", _("Mute"), true);
+    g_signal_connect(app->mute_btn, "toggled", G_CALLBACK(on_mute), app);
+    gtk_box_pack_start(GTK_BOX(bar), app->mute_btn, FALSE, FALSE, 0);
+
+    /* Smaller than the seek bar: a fixed width, the percent on its right. */
+    app->volume = gtk_hscale_new_with_range(0, 100, 1);
+    gtk_scale_set_draw_value(GTK_SCALE(app->volume), FALSE);
+    gtk_scale_set_digits(GTK_SCALE(app->volume), 0);
+    gtk_widget_set_size_request(app->volume, 90, -1);
+    gtk_widget_set_tooltip_text(app->volume, _("Volume"));
+    g_signal_connect(app->volume, "button-press-event", G_CALLBACK(on_volume_button), app);
+    g_signal_connect(app->volume, "button-release-event", G_CALLBACK(on_volume_button), app);
+    g_signal_connect(app->volume, "scroll-event", G_CALLBACK(on_volume_scroll), app);
     gtk_box_pack_start(GTK_BOX(bar), app->volume, FALSE, FALSE, 0);
+    app->volume_label = gtk_label_new(NULL);
+    gtk_label_set_width_chars(GTK_LABEL(app->volume_label), 4);
+    gtk_misc_set_alignment(GTK_MISC(app->volume_label), 1, 0.5);
+    gtk_box_pack_start(GTK_BOX(bar), app->volume_label, FALSE, FALSE, 2);
+    /* Set before the signal: starting up is not turning the volume. */
+    gtk_range_set_value(GTK_RANGE(app->volume),
+                        kp_prefs_get_int(app->prefs, "playback", "volume", 100, 0, 100));
+    update_volume_label(app);
+    g_signal_connect(app->volume, "value-changed", G_CALLBACK(on_volume), app);
+    update_mute_icon(app);
 
     /* In an event box: a right click on the bar opens the window's menu. */
     GtkWidget *box = gtk_event_box_new();

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: kiplay\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-01 11:31-0300\n"
+"POT-Creation-Date: 2026-11-06 15:21-0300\n"
 "PO-Revision-Date: 2026-10-09 16:23-0300\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -481,47 +481,61 @@ msgstr "Playlist 1"
 msgid "New playlist"
 msgstr "Nova playlist"
 
-#: ui/controls.c:151 ui/shortcuts.c:76
+#. TRANSLATORS: the volume beside its slider.
+#: ui/controls.c:87
+#, c-format
+msgid "%d%%"
+msgstr "%d%%"
+
+#: ui/controls.c:213 ui/shortcuts.c:76
 msgid "Previous"
 msgstr "Anterior"
 
-#: ui/controls.c:153
+#: ui/controls.c:215
 msgid "Play"
 msgstr "Tocar"
 
-#: ui/controls.c:154
+#: ui/controls.c:216
 msgid "Pause"
 msgstr "Pausar"
 
-#: ui/controls.c:158 ui/shortcuts.c:75
+#: ui/controls.c:220 ui/shortcuts.c:75
 msgid "Stop"
 msgstr "Parar"
 
-#: ui/controls.c:161 ui/shortcuts.c:77
+#: ui/controls.c:223 ui/shortcuts.c:77
 msgid "Next"
 msgstr "Próxima"
 
-#: ui/controls.c:163 ui/shortcuts.c:85
+#: ui/controls.c:225 ui/shortcuts.c:85
 msgid "Repeat"
 msgstr "Repetir"
 
-#: ui/controls.c:165 ui/shortcuts.c:86
+#: ui/controls.c:227 ui/shortcuts.c:86
 msgid "Shuffle"
 msgstr "Aleatório"
 
-#: ui/controls.c:168
+#: ui/controls.c:230
 msgid "Show / hide the playlists"
 msgstr "Mostrar / ocultar as playlists"
 
-#: ui/player.c:460
+#: ui/controls.c:249 ui/shortcuts.c:89
+msgid "Mute"
+msgstr "Mudo"
+
+#: ui/controls.c:258
+msgid "Volume"
+msgstr "Volume"
+
+#: ui/player.c:459
 msgid "Cannot run the music engine (kiplay-audio)"
 msgstr "Não foi possível rodar o motor de música (kiplay-audio)"
 
-#: ui/player.c:461
+#: ui/player.c:460
 msgid "Cannot run the player program (mpv)"
 msgstr "Não foi possível rodar o programa que toca (mpv)"
 
-#: ui/player.c:464
+#: ui/player.c:463
 msgid ""
 "Reinstall Kiplay, or play music through mpv with [playback] engine = mpv in "
 "kiplay.ini."
@@ -529,40 +543,40 @@ msgstr ""
 "Reinstale o Kiplay, ou toque as músicas pelo mpv com [playback] engine = mpv "
 "no kiplay.ini."
 
-#: ui/player.c:466
+#: ui/player.c:465
 msgid "Install mpv, or set its path in kiplay.ini ([mpv] program = ...)."
 msgstr ""
 "Instale o mpv ou informe o caminho dele no kiplay.ini ([mpv] program = ...)."
 
-#: ui/player.c:495 ui/subdl.c:108
+#: ui/player.c:494 ui/subdl.c:108
 #, c-format
 msgid "cannot read the captions %s: %s"
 msgstr "não foi possível ler as legendas %s: %s"
 
-#: ui/player.c:574
+#: ui/player.c:573
 #, c-format
 msgid "Resuming at %s"
 msgstr "Continuando em %s"
 
-#: ui/player.c:740
+#: ui/player.c:741
 msgid "Muted"
 msgstr "Mudo"
 
-#: ui/player.c:740
+#: ui/player.c:741
 msgid "Sound on"
 msgstr "Som ligado"
 
-#: ui/player.c:842
+#: ui/player.c:843
 #, c-format
 msgid "Could not play %s"
 msgstr "Não foi possível tocar %s"
 
-#: ui/player.c:931
+#: ui/player.c:932
 #, c-format
 msgid "the player program stopped (%s)"
 msgstr "o programa que toca parou (%s)"
 
-#: ui/player.c:934
+#: ui/player.c:935
 msgid "The player program keeps stopping; giving up for now."
 msgstr "O programa que toca continua parando; desisti por enquanto."
 
@@ -626,10 +640,6 @@ msgstr "Aumentar o volume"
 #: ui/shortcuts.c:88
 msgid "Volume down"
 msgstr "Diminuir o volume"
-
-#: ui/shortcuts.c:89
-msgid "Mute"
-msgstr "Mudo"
 
 #: ui/shortcuts.c:90
 msgid "Next audio track"
@@ -1354,7 +1364,9 @@ msgstr "ms"
 msgid ""
 "How much sound kiplay-audio keeps ready ahead of the speakers. The default, "
 "500 ms, suits most machines."
-msgstr "Quanto som o kiplay-audio deixa pronto à frente das caixas. O padrão, 500 ms, serve para a maioria das máquinas."
+msgstr ""
+"Quanto som o kiplay-audio deixa pronto à frente das caixas. O padrão, 500 "
+"ms, serve para a maioria das máquinas."
 
 #: ui/prefsdlg.c:287
 msgid ""
@@ -1363,7 +1375,13 @@ msgid ""
 "of memory. With a plain ALSA device, volume changes take that long to be "
 "heard. Smaller (100-300 ms): volume reacts sooner on ALSA, but sound breaks "
 "up more easily under load. Pause, seek and the next track are not affected."
-msgstr "Maior (1000–2000 ms): o motor acorda menos, gasta um pouco menos de CPU e tem mais folga quando a máquina está ocupada (estalos ou pequenos pulos); custa só algumas centenas de KB de memória. Num dispositivo ALSA direto, mudar o volume demora esse tempo para ser ouvido. Menor (100–300 ms): o volume responde antes no ALSA, mas o som falha com mais facilidade sob carga. Pausa, busca e a próxima faixa não mudam."
+msgstr ""
+"Maior (1000–2000 ms): o motor acorda menos, gasta um pouco menos de CPU e "
+"tem mais folga quando a máquina está ocupada (estalos ou pequenos pulos); "
+"custa só algumas centenas de KB de memória. Num dispositivo ALSA direto, "
+"mudar o volume demora esse tempo para ser ouvido. Menor (100–300 ms): o "
+"volume responde antes no ALSA, mas o som falha com mais facilidade sob "
+"carga. Pausa, busca e a próxima faixa não mudam."
 
 #: ui/prefsdlg.c:293
 msgid "Videos (mpv)"

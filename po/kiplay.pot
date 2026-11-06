@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: kiplay\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-01 11:31-0300\n"
+"POT-Creation-Date: 2026-11-06 15:21-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -459,85 +459,99 @@ msgstr ""
 msgid "New playlist"
 msgstr ""
 
-#: ui/controls.c:151 ui/shortcuts.c:76
+#. TRANSLATORS: the volume beside its slider.
+#: ui/controls.c:87
+#, c-format
+msgid "%d%%"
+msgstr ""
+
+#: ui/controls.c:213 ui/shortcuts.c:76
 msgid "Previous"
 msgstr ""
 
-#: ui/controls.c:153
+#: ui/controls.c:215
 msgid "Play"
 msgstr ""
 
-#: ui/controls.c:154
+#: ui/controls.c:216
 msgid "Pause"
 msgstr ""
 
-#: ui/controls.c:158 ui/shortcuts.c:75
+#: ui/controls.c:220 ui/shortcuts.c:75
 msgid "Stop"
 msgstr ""
 
-#: ui/controls.c:161 ui/shortcuts.c:77
+#: ui/controls.c:223 ui/shortcuts.c:77
 msgid "Next"
 msgstr ""
 
-#: ui/controls.c:163 ui/shortcuts.c:85
+#: ui/controls.c:225 ui/shortcuts.c:85
 msgid "Repeat"
 msgstr ""
 
-#: ui/controls.c:165 ui/shortcuts.c:86
+#: ui/controls.c:227 ui/shortcuts.c:86
 msgid "Shuffle"
 msgstr ""
 
-#: ui/controls.c:168
+#: ui/controls.c:230
 msgid "Show / hide the playlists"
 msgstr ""
 
-#: ui/player.c:460
+#: ui/controls.c:249 ui/shortcuts.c:89
+msgid "Mute"
+msgstr ""
+
+#: ui/controls.c:258
+msgid "Volume"
+msgstr ""
+
+#: ui/player.c:459
 msgid "Cannot run the music engine (kiplay-audio)"
 msgstr ""
 
-#: ui/player.c:461
+#: ui/player.c:460
 msgid "Cannot run the player program (mpv)"
 msgstr ""
 
-#: ui/player.c:464
+#: ui/player.c:463
 msgid ""
 "Reinstall Kiplay, or play music through mpv with [playback] engine = mpv in "
 "kiplay.ini."
 msgstr ""
 
-#: ui/player.c:466
+#: ui/player.c:465
 msgid "Install mpv, or set its path in kiplay.ini ([mpv] program = ...)."
 msgstr ""
 
-#: ui/player.c:495 ui/subdl.c:108
+#: ui/player.c:494 ui/subdl.c:108
 #, c-format
 msgid "cannot read the captions %s: %s"
 msgstr ""
 
-#: ui/player.c:574
+#: ui/player.c:573
 #, c-format
 msgid "Resuming at %s"
 msgstr ""
 
-#: ui/player.c:740
+#: ui/player.c:741
 msgid "Muted"
 msgstr ""
 
-#: ui/player.c:740
+#: ui/player.c:741
 msgid "Sound on"
 msgstr ""
 
-#: ui/player.c:842
+#: ui/player.c:843
 #, c-format
 msgid "Could not play %s"
 msgstr ""
 
-#: ui/player.c:931
+#: ui/player.c:932
 #, c-format
 msgid "the player program stopped (%s)"
 msgstr ""
 
-#: ui/player.c:934
+#: ui/player.c:935
 msgid "The player program keeps stopping; giving up for now."
 msgstr ""
 
@@ -600,10 +614,6 @@ msgstr ""
 
 #: ui/shortcuts.c:88
 msgid "Volume down"
-msgstr ""
-
-#: ui/shortcuts.c:89
-msgid "Mute"
 msgstr ""
 
 #: ui/shortcuts.c:90
