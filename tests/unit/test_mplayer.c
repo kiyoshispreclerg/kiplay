@@ -9,6 +9,8 @@
 
 #include "../harness.h"
 #include "backend.h"
+#include "mpvopts.h"
+#include "prefs.h"
 
 /* MPlayer in slave mode: the real program, since what it prints is the
  * whole interface. */
@@ -198,8 +200,26 @@ TEST(plays_with_real_mplayer)
     g_free(dir);
 }
 
+/* No mpv to run: MPlayer takes over, but only if it can run itself. */
+TEST(falls_back_when_mpv_is_missing)
+{
+    char *dir = g_dir_make_tmp("kp-test-XXXXXX", NULL);
+    char *ini = g_build_filename(dir, "kiplay.ini", NULL);
+    g_file_set_contents(ini, "[mpv]\nprogram = /nonexistent/mpv\n[mplayer]\nprogram = /bin/true\n",
+                        -1, NULL);
+    kp_prefs *p = kp_prefs_load(ini);
+    CHECK_STR_EQ(kp_video_backend(p), "mplayer");
+    CHECK(kp_video_fallback(p));
+    kp_prefs_free(p);
+    g_remove(ini);
+    g_rmdir(dir);
+    g_free(ini);
+    g_free(dir);
+}
+
 int main(void)
 {
+    RUN(falls_back_when_mpv_is_missing);
     RUN(plays_with_real_mplayer);
     return harness_report();
 }

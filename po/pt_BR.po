@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: kiplay\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-06 17:25-0300\n"
+"POT-Creation-Date: 2026-11-06 17:54-0300\n"
 "PO-Revision-Date: 2026-10-09 16:23-0300\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -535,19 +535,34 @@ msgstr "Mudo"
 msgid "Volume"
 msgstr "Volume"
 
-#: ui/player.c:464
+#: ui/player.c:427
+msgid "mpv was not found; playing video with MPlayer"
+msgstr "o mpv não foi encontrado; tocando vídeo com o MPlayer"
+
+#: ui/player.c:430
+msgid "mpv was not found: playing with MPlayer"
+msgstr "O mpv não foi encontrado: tocando com o MPlayer"
+
+#: ui/player.c:433
+msgid ""
+"The experience will not be the expected one: no tracks menu, no gapless, no "
+"chat over a fullscreen video, and some formats may not play. Install mpv for "
+"the full Kiplay."
+msgstr "A experiência não será a esperada: sem menu de faixas, sem gapless, sem chat sobre o vídeo em tela cheia, e alguns formatos podem não tocar. Instale o mpv para ter o Kiplay completo."
+
+#: ui/player.c:479
 msgid "Cannot run the music engine (kiplay-audio)"
 msgstr "Não foi possível rodar o motor de música (kiplay-audio)"
 
-#: ui/player.c:466
+#: ui/player.c:481
 msgid "Cannot run the player program (MPlayer)"
 msgstr "Não consegui executar o programa que toca (MPlayer)"
 
-#: ui/player.c:467
+#: ui/player.c:482
 msgid "Cannot run the player program (mpv)"
 msgstr "Não foi possível rodar o programa que toca (mpv)"
 
-#: ui/player.c:470
+#: ui/player.c:485
 msgid ""
 "Reinstall Kiplay, or play music through mpv with [playback] engine = mpv in "
 "kiplay.ini."
@@ -555,45 +570,47 @@ msgstr ""
 "Reinstale o Kiplay, ou toque as músicas pelo mpv com [playback] engine = mpv "
 "no kiplay.ini."
 
-#: ui/player.c:473
+#: ui/player.c:488
 msgid ""
 "Install MPlayer, or set its path in kiplay.ini ([mplayer] program = ...)."
-msgstr "Instale o MPlayer, ou ponha o caminho dele no kiplay.ini ([mplayer] program = ...)."
+msgstr ""
+"Instale o MPlayer, ou ponha o caminho dele no kiplay.ini ([mplayer] program "
+"= ...)."
 
-#: ui/player.c:474
+#: ui/player.c:489
 msgid "Install mpv, or set its path in kiplay.ini ([mpv] program = ...)."
 msgstr ""
 "Instale o mpv ou informe o caminho dele no kiplay.ini ([mpv] program = ...)."
 
-#: ui/player.c:503 ui/subdl.c:108
+#: ui/player.c:518 ui/subdl.c:108
 #, c-format
 msgid "cannot read the captions %s: %s"
 msgstr "não foi possível ler as legendas %s: %s"
 
-#: ui/player.c:582
+#: ui/player.c:597
 #, c-format
 msgid "Resuming at %s"
 msgstr "Continuando em %s"
 
-#: ui/player.c:750
+#: ui/player.c:765
 msgid "Muted"
 msgstr "Mudo"
 
-#: ui/player.c:750
+#: ui/player.c:765
 msgid "Sound on"
 msgstr "Som ligado"
 
-#: ui/player.c:852
+#: ui/player.c:867
 #, c-format
 msgid "Could not play %s"
 msgstr "Não foi possível tocar %s"
 
-#: ui/player.c:941
+#: ui/player.c:956
 #, c-format
 msgid "the player program stopped (%s)"
 msgstr "o programa que toca parou (%s)"
 
-#: ui/player.c:944
+#: ui/player.c:959
 msgid "The player program keeps stopping; giving up for now."
 msgstr "O programa que toca continua parando; desisti por enquanto."
 
@@ -1285,7 +1302,9 @@ msgstr "mpv (todos os recursos)"
 
 #: ui/prefsdlg.c:252
 msgid "MPlayer (basic: no tracks menu, no gapless, no chat over fullscreen)"
-msgstr "MPlayer (básico: sem menu de faixas, sem gapless, sem chat sobre a tela cheia)"
+msgstr ""
+"MPlayer (básico: sem menu de faixas, sem gapless, sem chat sobre a tela "
+"cheia)"
 
 #: ui/prefsdlg.c:254
 msgid "_Play videos with:"
@@ -1349,7 +1368,8 @@ msgstr "Saída de víd_eo:"
 
 #: ui/prefsdlg.c:268
 msgid "MPlayer's -vo, e.g. xv or x11; empty: MPlayer's own choice"
-msgstr "O -vo do MPlayer, p. ex. xv ou x11; vazio: a escolha do próprio MPlayer"
+msgstr ""
+"O -vo do MPlayer, p. ex. xv ou x11; vazio: a escolha do próprio MPlayer"
 
 #: ui/prefsdlg.c:269
 msgid "Audio ou_tput:"
@@ -1357,7 +1377,8 @@ msgstr "Saída de á_udio:"
 
 #: ui/prefsdlg.c:270
 msgid "MPlayer's -ao, e.g. pulse or alsa; empty: MPlayer's own choice"
-msgstr "O -ao do MPlayer, p. ex. pulse ou alsa; vazio: a escolha do próprio MPlayer"
+msgstr ""
+"O -ao do MPlayer, p. ex. pulse ou alsa; vazio: a escolha do próprio MPlayer"
 
 #: ui/prefsdlg.c:276
 msgid "Audio"

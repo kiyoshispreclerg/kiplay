@@ -421,6 +421,21 @@ static kp_backend *create(kp_app *app, bool audio)
         return b;
     }
     bool mplayer = !strcmp(kp_video_backend(app->prefs), "mplayer");
+    static bool warned;
+    if (mplayer && !warned && kp_video_fallback(app->prefs)) {
+        warned = true;
+        kp_log_warn(_("mpv was not found; playing video with MPlayer"));
+        GtkWidget *d = gtk_message_dialog_new(
+            GTK_WINDOW(app->window), GTK_DIALOG_MODAL, GTK_MESSAGE_WARNING, GTK_BUTTONS_CLOSE,
+            "%s", _("mpv was not found: playing with MPlayer"));
+        gtk_message_dialog_format_secondary_text(
+            GTK_MESSAGE_DIALOG(d), "%s",
+            _("The experience will not be the expected one: no tracks menu, no gapless, no "
+              "chat over a fullscreen video, and some formats may not play. Install mpv for "
+              "the full Kiplay."));
+        gtk_dialog_run(GTK_DIALOG(d));
+        gtk_widget_destroy(d);
+    }
     const char *sect = mplayer ? "mplayer" : "mpv";
     o.program = kp_prefs_get_str(app->prefs, sect, "program", sect);
     o.wid = kp_videowin_xid(app);

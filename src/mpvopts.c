@@ -51,10 +51,37 @@ char **kp_mpv_pref_args(const kp_prefs *p)
     return (char **)g_ptr_array_free(a, FALSE);
 }
 
+static bool runs(const char *program)
+{
+    if (strchr(program, '/'))
+        return g_file_test(program, G_FILE_TEST_IS_EXECUTABLE);
+    char *found = g_find_program_in_path(program);
+    g_free(found);
+    return found != NULL;
+}
+
+bool kp_video_fallback(const kp_prefs *p)
+{
+    if (!g_strcmp0(kp_prefs_get_str(p, "video", "backend", "mpv"), "mplayer"))
+        return false;
+    /* Asked once per program name: the answer holds until Kiplay restarts. */
+    static char *checked;
+    static bool fallback;
+    const char *mpv = kp_prefs_get_str(p, "mpv", "program", "mpv");
+    if (g_strcmp0(checked, mpv) != 0) {
+        g_free(checked);
+        checked = g_strdup(mpv);
+        fallback = !runs(mpv) && runs(kp_prefs_get_str(p, "mplayer", "program", "mplayer"));
+    }
+    return fallback;
+}
+
 const char *kp_video_backend(const kp_prefs *p)
 {
-    return !g_strcmp0(kp_prefs_get_str(p, "video", "backend", "mpv"), "mplayer") ? "mplayer"
-                                                                                 : "mpv";
+    if (!g_strcmp0(kp_prefs_get_str(p, "video", "backend", "mpv"), "mplayer") ||
+        kp_video_fallback(p))
+        return "mplayer";
+    return "mpv";
 }
 
 static void add_opt(GPtrArray *a, const char *option, const char *value)

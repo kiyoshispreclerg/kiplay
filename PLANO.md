@@ -701,6 +701,9 @@ identificadores em inglês; interface pelo gettext com msgids em inglês.
    - Legendas ao lado do vídeo (inclusive as do YouTube em ASS): `sub_load`
      de cada uma e `sub_select` com o número do `ID_FILE_SUB_ID`; a escolhida
      é a primeira no idioma de `[subtitles] languages`, senão a primeira.
+   - Escape final: sem um mpv que rode (`[mpv] program` fora do PATH) e com
+     MPlayer instalado, `kp_video_backend` devolve mplayer e o Kiplay avisa
+     uma vez por execução que a experiência não será a esperada.
    - Sem `KP_CAP_TRACKS` nem gapless: menus de faixa, atraso e proporção
      ficam cinza; sem sobreposição, então em tela cheia o painel do chat
      continua na janela (`kp_chat_overlaid`). Sem voltar um quadro.

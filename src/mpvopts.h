@@ -2,6 +2,8 @@
 #ifndef KP_MPVOPTS_H
 #define KP_MPVOPTS_H
 
+#include <stdbool.h>
+
 #include "prefs.h"
 
 /* The preferences that become mpv options (Preferences > Video, Audio,
@@ -23,9 +25,12 @@ char **kp_mpv_pref_args(const kp_prefs *p);
  * and [audio] ao, whose names are mpv's). NULL-terminated; g_strfreev it. */
 char **kp_mplayer_pref_args(const kp_prefs *p);
 
-/* Which program draws the video: "mpv" (default) or "mplayer"
- * ([video] backend). */
+/* Which program draws the video: "mpv" (default) or "mplayer" ([video]
+ * backend). Without a runnable mpv, MPlayer takes over if it is installed. */
 const char *kp_video_backend(const kp_prefs *p);
+
+/* true when kp_video_backend is MPlayer only because mpv is missing. */
+bool kp_video_fallback(const kp_prefs *p);
 
 /* Everything that only takes effect when mpv starts (the options above,
  * [mpv] program, use_config and extra, or the MPlayer ones when it is

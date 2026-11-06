@@ -166,7 +166,8 @@ ytdlp = ~/Downloads/yt-dlp_linux
 [video]
 # mpv (padrão, tudo) ou mplayer (modo slave: sem menu de faixas, sem
 # gapless, sem o chat desenhado sobre o vídeo em tela cheia; as legendas ao
-# lado do vídeo, as do YouTube com estilo inclusive, aparecem)
+# lado do vídeo, as do YouTube com estilo inclusive, aparecem). Sem um mpv
+# que rode, o MPlayer é usado mesmo assim (com um aviso), se estiver instalado
 backend = mpv
 hwdec = auto-safe
 

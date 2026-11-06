@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: kiplay\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-06 17:26-0300\n"
+"POT-Creation-Date: 2026-11-06 17:54-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -513,62 +513,77 @@ msgstr ""
 msgid "Volume"
 msgstr ""
 
-#: ui/player.c:464
+#: ui/player.c:427
+msgid "mpv was not found; playing video with MPlayer"
+msgstr ""
+
+#: ui/player.c:430
+msgid "mpv was not found: playing with MPlayer"
+msgstr ""
+
+#: ui/player.c:433
+msgid ""
+"The experience will not be the expected one: no tracks menu, no gapless, no "
+"chat over a fullscreen video, and some formats may not play. Install mpv for "
+"the full Kiplay."
+msgstr ""
+
+#: ui/player.c:479
 msgid "Cannot run the music engine (kiplay-audio)"
 msgstr ""
 
-#: ui/player.c:466
+#: ui/player.c:481
 msgid "Cannot run the player program (MPlayer)"
 msgstr ""
 
-#: ui/player.c:467
+#: ui/player.c:482
 msgid "Cannot run the player program (mpv)"
 msgstr ""
 
-#: ui/player.c:470
+#: ui/player.c:485
 msgid ""
 "Reinstall Kiplay, or play music through mpv with [playback] engine = mpv in "
 "kiplay.ini."
 msgstr ""
 
-#: ui/player.c:473
+#: ui/player.c:488
 msgid ""
 "Install MPlayer, or set its path in kiplay.ini ([mplayer] program = ...)."
 msgstr ""
 
-#: ui/player.c:474
+#: ui/player.c:489
 msgid "Install mpv, or set its path in kiplay.ini ([mpv] program = ...)."
 msgstr ""
 
-#: ui/player.c:503 ui/subdl.c:108
+#: ui/player.c:518 ui/subdl.c:108
 #, c-format
 msgid "cannot read the captions %s: %s"
 msgstr ""
 
-#: ui/player.c:582
+#: ui/player.c:597
 #, c-format
 msgid "Resuming at %s"
 msgstr ""
 
-#: ui/player.c:750
+#: ui/player.c:765
 msgid "Muted"
 msgstr ""
 
-#: ui/player.c:750
+#: ui/player.c:765
 msgid "Sound on"
 msgstr ""
 
-#: ui/player.c:852
+#: ui/player.c:867
 #, c-format
 msgid "Could not play %s"
 msgstr ""
 
-#: ui/player.c:941
+#: ui/player.c:956
 #, c-format
 msgid "the player program stopped (%s)"
 msgstr ""
 
-#: ui/player.c:944
+#: ui/player.c:959
 msgid "The player program keeps stopping; giving up for now."
 msgstr ""
 

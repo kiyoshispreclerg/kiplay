@@ -167,7 +167,8 @@ ytdlp = ~/Downloads/yt-dlp_linux
 [video]
 # mpv (default, everything) or mplayer (slave mode: no tracks menu, no
 # gapless, no chat drawn over a fullscreen video; subtitle files next to the
-# video, YouTube's styled ones included, do show)
+# video, YouTube's styled ones included, do show). Without a runnable mpv,
+# MPlayer is used anyway (with a warning) if it is installed
 backend = mpv
 hwdec = auto-safe
 
