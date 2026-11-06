@@ -14,13 +14,28 @@
  * window changes (Damage). The window is clipped to the area, so the part
  * beyond it takes no clicks either.
  *
+ * The density is the one the toolkit (gtk2-ng) renders the main window at
+ * and announces there, _X_DENSITY_SCALE [num, den]. For the compositor to
+ * sample the video window, we announce it on the main window too:
+ *
+ *   _X_DENSITY_SOURCES  CARDINAL[5n]  [x, y, width, height, window]...
+ *
+ * "In this rectangle (the main window's logical coordinates) show this
+ * redirected window, rendered at _X_DENSITY_SCALE: its pixel (0, 0) at the
+ * rectangle's corner, clipped to it." The compositor follows its contents
+ * by Damage on that window, as with any window. It is written once the
+ * window has been drawn at a new size or density (contents first,
+ * announcement after) and deleted when the video isn't dense or shown.
+ *
  * It selects no input, so clicks and the wheel go on to the area, as they
  * did when mpv's window sat right in it. The X server destroys it (and
  * the damage and pictures on it) with the area's window; we only forget
  * the XIDs then. */
 #include <math.h>
 #include <stdlib.h>
+#include <string.h>
 
+#include <X11/Xatom.h>
 #include <X11/Xlib.h>
 #include <X11/extensions/Xcomposite.h>
 #include <X11/extensions/Xdamage.h>
@@ -34,20 +49,32 @@
 #define MAX_DENSITY 8.0
 
 static struct {
+    kp_app *app;
     GtkWidget *video;
     Window win;
     int w, h;       /* the window's size now: the area's, times the density */
     double density; /* 0: not redirected */
     bool usable;    /* the server has Composite and Damage */
+    bool forced;    /* KP_VIDEO_DENSITY: the main window's density is ignored */
     int damage_event;
     Damage damage;
     Picture src, dst; /* the window, the area */
     guint copy_idle;
+    Atom scale_atom, sources_atom;
+    bool announce;  /* write _X_DENSITY_SOURCES after the next frame */
+    bool announced; /* it is on the main window */
+    long sources[5];
 } vw;
 
 static Display *dpy(void)
 {
     return GDK_WINDOW_XDISPLAY(vw.video->window);
+}
+
+static Window main_xid(void)
+{
+    GdkWindow *w = vw.app->window->window;
+    return w ? GDK_WINDOW_XID(w) : None;
 }
 
 /* The window's contents, scaled down, into the area. */
@@ -68,6 +95,49 @@ static gboolean copy_later(gpointer data)
     return G_SOURCE_REMOVE;
 }
 
+/* _X_DENSITY_SOURCES: the area and the window while dense and shown,
+ * nothing otherwise. */
+static void update_sources(void)
+{
+    Window top = main_xid();
+    if (!top)
+        return;
+    Display *d = dpy();
+    /* Not while layout.c parks the area in its hidden holder, nor in its
+     * new place before it gets a size there (GTK's 1x1 at -1, -1). */
+    const GtkAllocation *a = &vw.video->allocation;
+    bool wanted = vw.damage && gtk_widget_get_mapped(vw.video) &&
+                  gtk_widget_get_toplevel(vw.video) == vw.app->window && a->width > 1 &&
+                  a->height > 1;
+    long v[5] = {0};
+    if (wanted) {
+        int x, y;
+        Window child;
+        if (!XTranslateCoordinates(d, GDK_WINDOW_XID(vw.video->window), top, 0, 0, &x, &y,
+                                   &child))
+            wanted = false;
+        v[0] = x;
+        v[1] = y;
+        v[2] = a->width;
+        v[3] = a->height;
+        v[4] = (long)vw.win;
+    }
+    if (!wanted) {
+        if (vw.announced)
+            XDeleteProperty(d, top, vw.sources_atom);
+        vw.announced = false;
+        return;
+    }
+    if (vw.announced && memcmp(v, vw.sources, sizeof v) == 0)
+        return;
+    XChangeProperty(d, top, vw.sources_atom, XA_CARDINAL, 32, PropModeReplace,
+                    (unsigned char *)v, 5);
+    memcpy(vw.sources, v, sizeof v);
+    vw.announced = true;
+    kp_log_debug("videowin: sources %ld,%ld %ldx%ld 0x%lx", v[0], v[1], v[2], v[3],
+                 (unsigned long)v[4]);
+}
+
 /* The source picture maps area pixels to window pixels. */
 static void set_transform(void)
 {
@@ -79,18 +149,20 @@ static void set_transform(void)
     XRenderSetPictureFilter(dpy(), vw.src, s == 1 ? FilterNearest : FilterGood, NULL, 0);
 }
 
-static void fit(void)
+/* Whether the window changed size. */
+static bool fit(void)
 {
     if (!vw.win || !gtk_widget_get_realized(vw.video))
-        return;
+        return false;
     double s = vw.density > 0 ? vw.density : 1;
     int w = MAX((int)ceil(vw.video->allocation.width * s), 1);
     int h = MAX((int)ceil(vw.video->allocation.height * s), 1);
     if (w == vw.w && h == vw.h)
-        return;
+        return false;
     vw.w = w;
     vw.h = h;
     XResizeWindow(dpy(), vw.win, (unsigned)w, (unsigned)h);
+    return true;
 }
 
 static void on_allocate(GtkWidget *video, GtkAllocation *a, gpointer data)
@@ -98,7 +170,20 @@ static void on_allocate(GtkWidget *video, GtkAllocation *a, gpointer data)
     (void)video;
     (void)a;
     (void)data;
-    fit();
+    /* A new size is announced once mpv has drawn at it; a move right
+     * away. */
+    if (fit() && vw.damage)
+        vw.announce = true;
+    else if (!vw.announce)
+        update_sources();
+}
+
+static void on_map_changed(GtkWidget *video, gpointer data)
+{
+    (void)video;
+    (void)data;
+    if (vw.win)
+        update_sources();
 }
 
 /* Whatever GTK draws or the server clears in the area stays out of the
@@ -121,10 +206,42 @@ static void on_unrealize(GtkWidget *video, gpointer data)
     vw.win = 0;
     vw.damage = 0;
     vw.src = vw.dst = 0;
+    vw.w = vw.h = 0;
+    vw.density = 0;
+    vw.announce = false;
     if (vw.copy_idle) {
         g_source_remove(vw.copy_idle);
         vw.copy_idle = 0;
     }
+    if (vw.announced && main_xid())
+        XDeleteProperty(dpy(), main_xid(), vw.sources_atom);
+    vw.announced = false;
+}
+
+/* _X_DENSITY_SCALE on the main window, 0 when absent or 1/1. */
+static double main_density(void)
+{
+    Window top = main_xid();
+    if (!top)
+        return 0;
+    Atom type;
+    int format;
+    unsigned long n, after;
+    unsigned char *data = NULL;
+    double s = 0;
+    gdk_error_trap_push();
+    if (XGetWindowProperty(dpy(), top, vw.scale_atom, 0, 2, False, XA_CARDINAL, &type, &format,
+                           &n, &after, &data) == Success &&
+        type == XA_CARDINAL && format == 32 && n == 2) {
+        /* format 32 comes back as longs */
+        long num = ((long *)data)[0], den = ((long *)data)[1];
+        if (num > den && den > 0)
+            s = (double)num / (double)den;
+    }
+    if (data)
+        XFree(data);
+    (void)gdk_error_trap_pop();
+    return s;
 }
 
 static GdkFilterReturn filter(GdkXEvent *xev, GdkEvent *ev, gpointer data)
@@ -136,8 +253,15 @@ static GdkFilterReturn filter(GdkXEvent *xev, GdkEvent *ev, gpointer data)
         ((XDamageNotifyEvent *)e)->damage == vw.damage) {
         XDamageSubtract(e->xany.display, vw.damage, None, None);
         copy();
+        if (vw.announce) {
+            vw.announce = false;
+            update_sources();
+        }
         return GDK_FILTER_REMOVE;
     }
+    if (e->type == PropertyNotify && !vw.forced && vw.win && e->xproperty.atom == vw.scale_atom &&
+        e->xproperty.window == main_xid())
+        kp_videowin_set_density(main_density());
     return GDK_FILTER_CONTINUE;
 }
 
@@ -211,8 +335,13 @@ void kp_videowin_set_density(double density)
     if (vw.damage)
         set_transform();
     fit();
-    if (vw.damage)
+    if (vw.damage) {
         copy();
+        vw.announce = true; /* once mpv has drawn at the new size */
+    } else {
+        vw.announce = false;
+        update_sources(); /* gone */
+    }
     gdk_flush();
     kp_log_debug("videowin: density %g, %dx%d", vw.density, vw.w, vw.h);
 }
@@ -221,6 +350,7 @@ unsigned long kp_videowin_xid(kp_app *app)
 {
     if (vw.win)
         return vw.win;
+    vw.app = app;
     vw.video = app->video;
     gtk_widget_realize(vw.video);
     Display *d = dpy();
@@ -233,16 +363,22 @@ unsigned long kp_videowin_xid(kp_app *app)
                     XCompositeQueryVersion(d, &major, &minor) &&
                     (major > 0 || minor >= 2) &&
                     XDamageQueryExtension(d, &vw.damage_event, &error_base);
+        vw.scale_atom = XInternAtom(d, "_X_DENSITY_SCALE", False);
+        vw.sources_atom = XInternAtom(d, "_X_DENSITY_SOURCES", False);
         g_signal_connect_after(vw.video, "size-allocate", G_CALLBACK(on_allocate), NULL);
         g_signal_connect_after(vw.video, "expose-event", G_CALLBACK(on_expose), NULL);
+        g_signal_connect_after(vw.video, "map", G_CALLBACK(on_map_changed), NULL);
+        g_signal_connect_after(vw.video, "unmap", G_CALLBACK(on_map_changed), NULL);
         g_signal_connect(vw.video, "unrealize", G_CALLBACK(on_unrealize), NULL);
         gdk_window_add_filter(NULL, filter, NULL);
-        /* KP_VIDEO_DENSITY=S: redirected at density S from the start, to
-         * try the window without a compositor asking (1: redirected at
-         * the area's size). */
+        /* KP_VIDEO_DENSITY=S: redirected at density S, whatever the main
+         * window is at, to try it without a compositor asking (1:
+         * redirected at the area's size). */
         const char *env = g_getenv("KP_VIDEO_DENSITY");
-        if (env && *env)
+        if (env && *env) {
+            vw.forced = true;
             vw.density = g_ascii_strtod(env, NULL);
+        }
     }
 
     vw.w = MAX(vw.video->allocation.width, 1);
@@ -255,7 +391,7 @@ unsigned long kp_videowin_xid(kp_app *app)
     kp_log_debug("videowin: 0x%lx in the area's 0x%lx, %dx%d", (unsigned long)vw.win,
                  (unsigned long)GDK_WINDOW_XID(vw.video->window), vw.w, vw.h);
 
-    double wanted = vw.density;
+    double wanted = vw.forced ? vw.density : main_density();
     vw.density = 0;
     kp_videowin_set_density(wanted);
     gdk_flush();
