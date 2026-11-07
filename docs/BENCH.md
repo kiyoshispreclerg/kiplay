@@ -65,10 +65,14 @@ programa e dos filhos.
 | Kiplay com VU | 0,80% | 0,17% | +0,35 | 50 | 17,2 MB |
 | Kiplay com espectro | 0,88% | 0,22% | +0,48 | 50 | 17,0 MB |
 | Kiplay com os dois | 0,90% | 0,27% | +0,55 | 50 | 17,2 MB |
+| Kiplay com os dois (expose, ver abaixo) | 1,05% | 0,33% | +0,87 | — | — |
 | Audacious sem a visualização | 0,63% | 0,05% | — | 27 | 43,3 MB |
 | Audacious com a visualização | 1,28% | 0,40% | +1,00 | 110 | 43,5 MB |
 
-O espectro do Kiplay custa metade do do Audacious. Como é feito:
+Com o desenho direto, o espectro do Kiplay custava metade do do Audacious.
+Depois da correção do desenho (abaixo), os dois medidores juntos custam
++0,87, ainda abaixo do +1,00 da visualização do Audacious (que é só o
+espectro; não medido de novo). Como é feito:
 
 - o `kiplay-audio` guarda, para cada bloco de 20 ms que escreve, o RMS de
   cada canal (VU) e 12 bandas de uma FFT de 512 pontos (espectro, ~20 µs
@@ -78,8 +82,16 @@ O espectro do Kiplay custa metade do do Audacious. Como é feito:
   o comando `levels N` pede; com os dois escondidos não faz nada;
 - a janela lê a memória a 30 quadros/s só enquanto o motor toca e algum
   medidor está na tela, e desenha (retângulos do GDK, sem Cairo nem
-  double buffer, direto no timer em vez de um expose) só quando uma barra
-  anda um pixel.
+  Pango) só quando uma barra anda um pixel, pelo expose normal
+  (`queue_draw`, double buffer ligado).
+
+Primeiro o desenho era direto na janela X, com o double buffer desligado:
+com o VU ou o espectro visível, o gtk2-ng não conseguia renderizar a
+janela principal na densidade do compositor e ela ficava borrada. Voltar
+ao expose com double buffer corrigiu e custou ~0,35 ponto (0,23 no
+programa, 0,11 no X): com os dois medidores, 1,05% + 0,33% de X contra
+0,82% + 0,22% (desligados: ~0,51 no total), mesmo MP3, sink nulo, 20 s de
+medida, 3 rodadas, Xvfb.
 
 O VU mostra o RMS, não o pico: com o pico, músicas masterizadas no
 máximo (o set de hardstyle) ficavam o tempo todo no fim da barra.

@@ -14,7 +14,7 @@
  * shared memory (kp_backend_levels; the engine does the FFT) while that
  * engine plays, and an area is drawn only when one of its bars moved by a
  * pixel (docs/BENCH.md has the cost). Plain GDK rectangles: no Cairo, no
- * Pango. The video engines (mpv, MPlayer) give no levels, so by default
+ * Pango, drawn through the normal double-buffered expose. The video engines (mpv, MPlayer) give no levels, so by default
  * ([layout] meters_autohide) the meters go away while something plays on
  * one of them, and come back with the music. */
 
@@ -62,7 +62,7 @@ static int to_px(double db, int size)
     return (int)(CLAMP(f, 0, 1) * size + 0.5);
 }
 
-/* No double buffer on either: each paints its whole area, opaque. */
+/* Each paints its whole area, opaque. */
 static gboolean on_vu_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
     (void)ev;
@@ -100,16 +100,13 @@ static gboolean on_sp_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
     return TRUE;
 }
 
-/* Drawn right away, not through an expose: no invalidation, no region
- * work, the same rectangles. */
+/* Through the normal expose path, double buffered: drawing straight on
+ * the X window (as an earlier version did, to save work) keeps a
+ * density-scaling toolkit (gtk2-ng) from rendering the whole window denser. */
 static void redraw(GtkWidget *w)
 {
-    if (!gtk_widget_is_drawable(w))
-        return;
-    if (w == vu_area)
-        on_vu_expose(w, NULL, NULL);
-    else
-        on_sp_expose(w, NULL, NULL);
+    if (gtk_widget_is_drawable(w))
+        gtk_widget_queue_draw(w);
 }
 
 /* One bar: the new level or the shown one falling; true if it moved a
@@ -185,8 +182,6 @@ static GtkWidget *meter_area(int w, int h, GCallback expose)
     GtkWidget *a = gtk_drawing_area_new();
     gtk_widget_set_no_show_all(a, TRUE);
     gtk_widget_set_size_request(a, w, h);
-    /* Opaque rectangles: no flicker, and no offscreen pixmap per frame. */
-    gtk_widget_set_double_buffered(a, FALSE);
     g_signal_connect(a, "expose-event", expose, NULL);
     return a;
 }
