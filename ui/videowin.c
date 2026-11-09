@@ -27,6 +27,12 @@
  * window has been drawn at a new size or density (contents first,
  * announcement after) and deleted when the video isn't dense or shown.
  *
+ * Not in fullscreen (kp_videowin_set_plain): the compositor then showed the
+ * source as a cropped, enlarged piece of the picture (kicomp, 9/8 density on
+ * a 1280x800 output), so the video is a plain 1x window there and the
+ * compositor magnifies it with the rest of the window. Back to dense on
+ * leaving fullscreen.
+ *
  * It selects no input, so clicks and the wheel go on to the area, as they
  * did when mpv's window sat right in it. The X server destroys it (and
  * the damage and pictures on it) with the area's window; we only forget
@@ -56,6 +62,8 @@ static struct {
     double density; /* 0: not redirected */
     bool usable;    /* the server has Composite and Damage */
     bool forced;    /* KP_VIDEO_DENSITY: the main window's density is ignored */
+    double wanted;  /* the density asked for, whether or not plain holds it back */
+    bool plain;     /* fullscreen: no redirection, whatever the density */
     int damage_event;
     Damage damage;
     Picture src, dst; /* the window, the area */
@@ -313,7 +321,7 @@ static void unredirect(void)
     }
 }
 
-void kp_videowin_set_density(double density)
+static void apply_density(double density)
 {
     if (density < 1)
         density = 0;
@@ -344,6 +352,20 @@ void kp_videowin_set_density(double density)
     }
     gdk_flush();
     kp_log_debug("videowin: density %g, %dx%d", vw.density, vw.w, vw.h);
+}
+
+void kp_videowin_set_density(double density)
+{
+    vw.wanted = density;
+    apply_density(vw.plain ? 0 : density);
+}
+
+void kp_videowin_set_plain(bool plain)
+{
+    if (plain == vw.plain)
+        return;
+    vw.plain = plain;
+    apply_density(plain ? 0 : vw.wanted);
 }
 
 unsigned long kp_videowin_xid(kp_app *app)

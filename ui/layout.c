@@ -240,6 +240,7 @@ void kp_layout_set_fullscreen(kp_app *app, bool on)
     else
         restore_divider = true;
     app->fullscreen = on;
+    kp_videowin_set_plain(on);
     if (!on)
         kp_fsbar_detach(app);
     kp_layout_update_video(app); /* may lay it all out again */
