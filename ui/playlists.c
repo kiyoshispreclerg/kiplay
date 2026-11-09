@@ -720,6 +720,39 @@ void kp_playlists_remove_selected(kp_app *app)
     kp_playlists_update_status(app);
 }
 
+bool kp_playlists_replace(kp_app *app, int id, const char *location, long hint,
+                          char *const *locs, const kp_tags *tags, size_t n, long heard)
+{
+    page_t *pg = page_for(app, id);
+    kp_playlist *pl = pg ? list_of(pg) : NULL;
+    long at = pl ? kp_playlist_find_entry(pl, location, hint) : -1;
+    if (at < 0)
+        return false;
+    bool playing = id == app->playing.playlist_id && app->playing.index == at &&
+                   app->playing.location == kp_playlist_get(pl, (size_t)at)->location;
+    kp_playlist_remove(pl, (size_t)at);
+    kp_plmodel_deleted(pg->model, at);
+    for (size_t i = 0; i < n; i++)
+        kp_playlist_insert(pl, (size_t)at + i, locs[i], &tags[i]);
+    kp_plmodel_inserted(pg->model, at, (long)n);
+    if (id == app->playing.playlist_id && app->playing.index > at)
+        app->playing.index += (long)n - 1;
+    else if (playing) {
+        /* The original plays on; "next" is the piece after the one being
+         * heard. */
+        long k = heard < 0 ? 0 : heard >= (long)n ? (long)n - 1 : heard;
+        app->playing.index = at + k;
+        app->playing.location = NULL;
+        kp_playlists_mark_playing(app, id, -1);
+    }
+    kp_player_playlist_changed(app, id);
+    schedule_save(app);
+    kp_playlists_update_status(app);
+    if (pg->view)
+        select_rows(pg, at, (long)n);
+    return true;
+}
+
 void kp_playlists_toggle_queue(kp_app *app)
 {
     page_t *pg = current_page(app);
@@ -943,6 +976,8 @@ static void row_menu(kp_app *app, page_t *pg, GdkEventButton *ev)
     row_menu_separator(m);
     row_menu_item(m, _("Open containing _folder"), kp_playlists_open_folder, app, NULL,
                   n > 0 && local);
+    row_menu_item(m, _("Spl_it into tracks…"), kp_split_dialog, app, NULL,
+                  n == 1 && kp_split_possible(app));
     gtk_widget_show_all(m);
     g_signal_connect(m, "selection-done", G_CALLBACK(gtk_widget_destroy), NULL);
     gtk_menu_popup(GTK_MENU(m), NULL, NULL, NULL, NULL, ev->button, ev->time);

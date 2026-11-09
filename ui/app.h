@@ -212,6 +212,11 @@ void kp_playlists_select(kp_app *app, int id, long index);
 /* The queue changed: redraw the numbers. */
 void kp_playlists_queue_changed(kp_app *app);
 void kp_playlists_remove_selected(kp_app *app);
+/* The entry (its location string, kp_entry_ref) gives way to n others in
+ * its place, with their tags; heard is the one of them being heard if the
+ * entry plays (for "next"). false if the entry isn't there any more. */
+bool kp_playlists_replace(kp_app *app, int id, const char *location, long hint,
+                          char *const *locs, const kp_tags *tags, size_t n, long heard);
 /* Saves changed playlists and the tab order. */
 void kp_playlists_save(kp_app *app);
 /* Updates the status line for the visible playlist. */
@@ -262,6 +267,8 @@ void kp_player_init(kp_app *app);
 void kp_player_free(kp_app *app);
 /* Plays entry index of the playlist with that id. */
 void kp_player_play_at(kp_app *app, int id, long index);
+/* Plays that entry from seconds in (just a seek if it is the one loaded). */
+void kp_player_play_from(kp_app *app, int id, long index, double seconds);
 /* Plays a playlist from the track it was last at (the first if none). */
 void kp_player_play_playlist(kp_app *app, int id);
 /* The Play button: resume, or start the selection / where it stopped. */
@@ -330,6 +337,13 @@ bool kp_subdl_possible(kp_app *app);
 /* download.c: File > Download...: links to yt-dlp (set in Preferences > Advanced),
  * with options and a progress bar, in a modal window. */
 void kp_download_dialog(kp_app *app);
+
+/* split.c: "Split into tracks..." on a playlist entry: times typed (or
+ * from the file's chapters), a preview that plays each start, the cut by
+ * kiplay-audio --split. */
+void kp_split_dialog(kp_app *app);
+/* The selection is one local audio file that can be cut. */
+bool kp_split_possible(kp_app *app);
 
 /* shortcuts.c: the keyboard commands (Preferences > Shortcuts). */
 void kp_shortcuts_load(kp_app *app);

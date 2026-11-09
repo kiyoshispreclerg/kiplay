@@ -8,8 +8,8 @@ e chat de live gravado (lateral e danmaku). Leia o `PLANO.md` antes de
 começar uma fase (arquitetura, estado, medições) e o `docs/FORMATOS.md`
 antes de mexer num leitor.
 
-Fase atual: 6 e 8 feitas (chat lateral; backend MPlayer). Próxima: 7
-(danmaku).
+Fase atual: 6, 8 e 11 feitas (chat lateral; backend MPlayer; separar em
+faixas, para a 0.3.0). Próxima: 7 (danmaku).
 
 O usuário escreve em português (pt-BR) e quer as respostas em português.
 Comentários e identificadores no código, em inglês. A interface é
@@ -40,6 +40,8 @@ build/proto/audio [-d null] [-m] ARQUIVO     # protótipo da fase 0 (o motor de 
 printf 'tick 1\nload 0 ARQ\n' | build/kiplay-audio -d null   # o motor à mão (protocolo em audio/cmd.h)
 tools/bench-audio.sh [-d null|default] [-s S] ARQ...       # motor × mpv: memória e CPU
 printf 'ARQ\n' | build/kiplay-audio --tags                   # o leitor de tags à mão
+build/kiplay-audio --split-info ARQ                          # duração, modo (exact/copy), capítulos
+printf 'src ARQ\npiece 0\t30\tTítulo\t\t\tSAÍDA.mp3\npiece 30\t-1\t\t\t\tSAÍDA2.mp3\ngo\n' | build/kiplay-audio --split   # o corte à mão (protocolo em audio/split.h)
 tools/audpl2m3u8.py [--no-tags] DIR    # playlists do Audacious → DIR/kiplay (XDG_CONFIG_HOME de teste)
 PULSE_SINK=kpbench tools/bench-compare.sh -k DIR -a CÓPIA[:nome] CENÁRIOS.tsv   # Kiplay × Audacious
 ```
@@ -153,6 +155,9 @@ PULSE_SINK=kpbench tools/bench-compare.sh -k DIR -a CÓPIA[:nome] CENÁRIOS.tsv 
 | `src/ytdlp.c`, `ui/subdl.c` | legendas do YouTube pelo yt-dlp (`[tools] ytdlp`): lista os idiomas (`-J`), baixa ao lado do vídeo, `sub-add` no mpv; diálogo e menus |
 | `src/ytdl.c`, `ui/download.c` | Arquivo → Baixar...: opções → linha de comando do yt-dlp (`kp_ytdl_argv`), saída lida por linha sem bloquear (`kp_ytdl_start`), progresso (`kp_ytdl_progress_feed`); janela modal com barra, `[download]` no ini |
 | `src/sidecar.c` | arquivos ao lado do vídeo (legendas, chat), conversão para ASS em `~/.cache/kiplay/subs` |
+| `src/splitspec.c` | "Separar em faixas": o texto dos tempos (descrição de vídeo, capítulos, `info.json`) → pedaços; nomes dos arquivos |
+| `audio/split.c` | `kiplay-audio --split-info`/`--split`: corte por cópia de pacotes (com perdas) ou recodificando no mesmo formato (sem perdas, amostra exata); tags, capa, `.part` até o fim |
+| `ui/split.c` | a janela de separar em faixas: texto, prévia com ▶ por faixa, tags, pasta, troca na playlist (`kp_playlists_replace`) |
 | `src/ytsub_ass.c` | kp_ytsub → ASS: `\an`+`\pos`, cores, bordas; caixa (layer 0) e texto (layer 1) |
 | `proto/subconv.c` | srv3 → ASS na linha de comando |
 | `proto/embed.c` | mpv `--wid` numa `GtkDrawingArea`, IPC pelo GIO |

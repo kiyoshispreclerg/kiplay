@@ -101,7 +101,7 @@ too.
 
 Shortcuts are changed in Options → Preferences → Shortcuts (up to two
 keys per command). A right click on the video or the control bar opens a
-menu with the essentials (handy in compact mode and fullscreen), including the audio and subtitle tracks of the video. A right click on a playlist row: play, queue, cut/copy/paste, remove and open the file's folder.
+menu with the essentials (handy in compact mode and fullscreen), including the audio and subtitle tracks of the video. A right click on a playlist row: play, queue, cut/copy/paste, remove, open the file's folder and split into tracks.
 
 **YouTube subtitles:** if a video's name ends with its ID in square brackets
 (`Title [dQw4w9WgXcQ].mp4`, as yt-dlp writes it), the Subtitles menu and the
@@ -120,6 +120,26 @@ subtitle download above understands), subtitles, thumbnail, playlist items
 you choose. While it runs the choices are locked, a progress bar follows
 yt-dlp's output (item N of M in a playlist) and only Cancel works. The choices
 are remembered in `[download]`; the yt-dlp path is the same `[tools] ytdlp`.
+
+**Splitting into tracks:** right click on a track → "Split into tracks..."
+cuts one audio file (an album in one file, a DJ set, a live show) into
+several. You type one time per line, as video descriptions mark chapters
+(`0:00 Intro`, `[12:34] Title`, `1:02:03 - Title`; a list of lengths such
+as `Title (3:45)` that adds up to the file's length works too); the text
+starts with the file's own chapters, or those of the yt-dlp `.info.json` or
+`.description` beside it. Whatever comes before the first time is a track
+too. A list shows each track with its tags, and its ▶ button plays the
+original from where that track starts, to check the cut. Tags: from the
+text (as the title, the artist or the album, or "Artist - Title" for both),
+the original's, or typed one by one in the list; the rest of the
+original's tags, the cover included, go along, with the track number. The
+files go next to the original (or in a new folder named after it) as
+`01 - Title.ext`, and can take its place in the playlist. Nothing is
+re-encoded where that would cost quality: lossy formats (MP3, AAC, Opus,
+Vorbis) are cut by copying their packets, so each cut lands within some
+25 ms of its time; lossless ones (FLAC, WAV, ALAC, WavPack) are cut on the
+exact sample. The original is never changed and an existing file is never
+replaced. Videos, game music and MIDI can't be split.
 
 Kiplay remembers, for each video, where it stopped, the audio and
 subtitle tracks chosen, the delays and the aspect ratio (in

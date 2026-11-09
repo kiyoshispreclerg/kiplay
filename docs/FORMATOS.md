@@ -152,3 +152,29 @@ entrada começa em `uri=` e é seguida de `title=`, `artist=`, `album=`,
   Ogg Vorbis 7.393, AAC 1.176, NES/Famicom ~1.400, Super Nintendo 897,
   Sega (Genesis, Master System, CD) ~330, MIDI 273, Game Boy 251, FLAC 98,
   WMA 35, Opus 22, WAV 13.
+
+## Tempos de faixas (descrições, capítulos)
+
+O que "Separar em faixas" lê (`src/splitspec.c`), como aparece em descrições
+de vídeos e listas de faixas:
+
+```
+0:00 Intro                  [12:34] Título           01. Título - 3:45
+00:01:02 - Título           1:02:03.5 – Título        0:00 - 3:45 Título
+Título (4:10)               #3 Título 5:00            02 - Título 7:00
+```
+
+- Um tempo por linha: `m:ss`, `mm:ss`, `h:mm:ss`, com fração opcional
+  (`.5`); minutos podem passar de 59 (`75:30`). O primeiro tempo da linha
+  vale; um segundo logo depois (faixa `0:00 - 3:45`) é o fim e sai do texto.
+- Não é tempo: segundos acima de 59, quatro partes, grudado em letra ou
+  número (`v1:30`, `12:345`, `1.000.000`).
+- O título é a linha sem o tempo, sem colchetes/parênteses do tempo, sem
+  separadores nas pontas (`-`, `–`, `—`, `|`, `:`, `•`...) e sem número de
+  faixa no começo (`1.`, `01)`, `#3`, `02 - `; `99 Luftballons` fica).
+- Durações em vez de inícios: quando a lista só faz sentido assim (fora de
+  ordem, ou o primeiro não é 0) e a soma bate com a duração do arquivo.
+- `info.json` do yt-dlp: `chapters` é uma lista de
+  `{"start_time": 0.0, "end_time": 14.5, "title": "..."}` (números com
+  ponto: ler no locale C); `description` é o texto da descrição. O
+  `.description` (`--write-description`) é o mesmo texto puro.

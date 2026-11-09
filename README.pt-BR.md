@@ -99,7 +99,7 @@ playlist do Kiplay", esta também para pastas.
 
 Os atalhos se trocam em Opções → Preferências → Atalhos (até duas teclas
 por comando). Clique direito no vídeo ou na barra de controle abre um menu
-com o essencial (útil no modo compacto e na tela cheia), inclusive as faixas de áudio e legendas do vídeo. Clique direito numa faixa da playlist: tocar, pôr na fila, recortar/copiar/colar, remover e abrir a pasta do arquivo.
+com o essencial (útil no modo compacto e na tela cheia), inclusive as faixas de áudio e legendas do vídeo. Clique direito numa faixa da playlist: tocar, pôr na fila, recortar/copiar/colar, remover, abrir a pasta do arquivo e separar em faixas.
 
 **Legendas do YouTube:** se o nome do vídeo termina com o ID entre colchetes
 (`Título [dQw4w9WgXcQ].mp4`, como o yt-dlp grava), o menu Legendas e o clique
@@ -119,6 +119,26 @@ que vai rodar aparece conforme você escolhe. Enquanto roda, as opções ficam
 travadas, uma barra de progresso acompanha a saída do yt-dlp (item N de M numa
 playlist) e só o Cancelar funciona. As escolhas ficam em `[download]`; o
 caminho do yt-dlp é o mesmo `[tools] ytdlp`.
+
+**Separar em faixas:** clique direito numa faixa → "Separar em faixas..."
+corta um arquivo de áudio (um álbum num arquivo só, um set de DJ, um show)
+em vários. Você digita um tempo por linha, como as descrições de vídeos
+marcam capítulos (`0:00 Intro`, `[12:34] Título`, `1:02:03 - Título`; uma
+lista de durações como `Título (3:45)` que soma a duração do arquivo também
+serve); o texto já vem com os capítulos do próprio arquivo, ou os do
+`.info.json` ou da `.description` do yt-dlp ao lado. O que vem antes do
+primeiro tempo também vira faixa. Uma lista mostra cada faixa com as tags, e
+o botão ▶ dela toca o original a partir de onde a faixa começa, para conferir
+o corte. Tags: do texto (como título, artista ou álbum, ou "Artista -
+Título" para os dois), as do original, ou digitadas uma a uma na lista; o
+resto das tags do original, capa inclusive, vai junto, com o número da faixa.
+Os arquivos vão ao lado do original (ou numa pasta nova com o nome dele) como
+`01 - Título.ext`, e podem tomar o lugar dele na playlist. Nada é
+recodificado onde isso custaria qualidade: os formatos com perdas (MP3, AAC,
+Opus, Vorbis) são cortados copiando os pacotes, então cada corte cai a uns
+25 ms do seu tempo; os sem perdas (FLAC, WAV, ALAC, WavPack) são cortados na
+amostra exata. O original nunca é alterado e um arquivo que já existe nunca é
+substituído. Vídeos, música de videogame e MIDI não podem ser separados.
 
 O Kiplay lembra de cada vídeo onde ele parou, as faixas de áudio e
 legenda escolhidas, os atrasos e a proporção (em

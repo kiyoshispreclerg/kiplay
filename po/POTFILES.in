@@ -19,3 +19,4 @@ src/ytdl.c
 ui/prefsdlg.c
 ui/desktop.c
 ui/chatpanel.c
+ui/split.c

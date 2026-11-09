@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: kiplay\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-06 18:28-0300\n"
+"POT-Creation-Date: 2026-11-09 12:37-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -130,7 +130,7 @@ msgstr ""
 msgid "_Import playlist..."
 msgstr ""
 
-#: ui/window.c:237 ui/playlists.c:1240
+#: ui/window.c:237 ui/playlists.c:1275
 msgid "_Export playlist..."
 msgstr ""
 
@@ -150,7 +150,7 @@ msgstr ""
 msgid "_New"
 msgstr ""
 
-#: ui/window.c:245 ui/playlists.c:1239
+#: ui/window.c:245 ui/playlists.c:1274
 msgid "_Properties..."
 msgstr ""
 
@@ -166,11 +166,11 @@ msgstr ""
 msgid "_Search panel"
 msgstr ""
 
-#: ui/window.c:250 ui/playlists.c:937
+#: ui/window.c:250 ui/playlists.c:970
 msgid "_Queue / unqueue"
 msgstr ""
 
-#: ui/window.c:251 ui/playlists.c:942
+#: ui/window.c:251 ui/playlists.c:975
 msgid "Remove _selected"
 msgstr ""
 
@@ -306,19 +306,19 @@ msgstr ""
 msgid "Queue"
 msgstr ""
 
-#: ui/playlists.c:47
+#: ui/playlists.c:47 ui/split.c:809 ui/split.c:831
 msgid "Title"
 msgstr ""
 
-#: ui/playlists.c:48
+#: ui/playlists.c:48 ui/split.c:810 ui/split.c:832
 msgid "Artist"
 msgstr ""
 
-#: ui/playlists.c:49
+#: ui/playlists.c:49 ui/split.c:811 ui/split.c:833
 msgid "Album"
 msgstr ""
 
-#: ui/playlists.c:50
+#: ui/playlists.c:50 ui/split.c:808
 msgid "Length"
 msgstr ""
 
@@ -364,106 +364,110 @@ msgstr ""
 msgid "Add files"
 msgstr ""
 
-#: ui/playlists.c:896
+#: ui/playlists.c:929
 #, c-format
 msgid "could not open the folder: %s"
 msgstr ""
 
-#: ui/playlists.c:936
+#: ui/playlists.c:969
 msgid "_Play"
 msgstr ""
 
-#: ui/playlists.c:939
+#: ui/playlists.c:972
 msgid "Cu_t"
 msgstr ""
 
-#: ui/playlists.c:940
+#: ui/playlists.c:973
 msgid "_Copy"
 msgstr ""
 
-#: ui/playlists.c:941
+#: ui/playlists.c:974
 msgid "_Paste"
 msgstr ""
 
-#: ui/playlists.c:944
+#: ui/playlists.c:977
 msgid "Open containing _folder"
 msgstr ""
 
-#: ui/playlists.c:1244
+#: ui/playlists.c:979
+msgid "Spl_it into tracks…"
+msgstr ""
+
+#: ui/playlists.c:1279
 msgid "Re_move"
 msgstr ""
 
-#: ui/playlists.c:1355 ui/playlists.c:1396
+#: ui/playlists.c:1390 ui/playlists.c:1431
 #, c-format
 msgid "Playlist %zu"
 msgstr ""
 
-#: ui/playlists.c:1407 ui/shortcuts.c:108
+#: ui/playlists.c:1442 ui/shortcuts.c:108
 msgid "Playlist properties"
 msgstr ""
 
-#: ui/playlists.c:1417
+#: ui/playlists.c:1452
 msgid "Mixed"
 msgstr ""
 
-#: ui/playlists.c:1418 ui/download.c:554
+#: ui/playlists.c:1453 ui/download.c:554
 msgid "Audio only"
 msgstr ""
 
-#: ui/playlists.c:1424
+#: ui/playlists.c:1459
 msgid "_Name:"
 msgstr ""
 
-#: ui/playlists.c:1425 ui/download.c:557
+#: ui/playlists.c:1460 ui/download.c:557
 msgid "_Type:"
 msgstr ""
 
-#: ui/playlists.c:1434
+#: ui/playlists.c:1469
 msgid ""
 "In an audio-only playlist every file plays on the light music engine, videos "
 "too (just their sound). Videos opened while it is the current one go to the "
 "next mixed playlist."
 msgstr ""
 
-#: ui/playlists.c:1472
+#: ui/playlists.c:1507
 #, c-format
 msgid "Close the playlist \"%s\"?"
 msgstr ""
 
-#: ui/playlists.c:1475
+#: ui/playlists.c:1510
 #, c-format
 msgid "Its %zu track will be removed from the list (the file stays)."
 msgid_plural "Its %zu tracks will be removed from the list (the files stay)."
 msgstr[0] ""
 msgstr[1] ""
 
-#: ui/playlists.c:1511
+#: ui/playlists.c:1546
 msgid "Playlists (m3u, m3u8, pls)"
 msgstr ""
 
-#: ui/playlists.c:1521
+#: ui/playlists.c:1556
 msgid "Import playlist"
 msgstr ""
 
-#: ui/playlists.c:1542
+#: ui/playlists.c:1577
 #, c-format
 msgid "Cannot read %s"
 msgstr ""
 
-#: ui/playlists.c:1572
+#: ui/playlists.c:1607
 msgid "Export playlist"
 msgstr ""
 
-#: ui/playlists.c:1585
+#: ui/playlists.c:1620
 #, c-format
 msgid "Cannot write %s"
 msgstr ""
 
-#: ui/playlists.c:1640
+#: ui/playlists.c:1675
 msgid "Playlist 1"
 msgstr ""
 
-#: ui/playlists.c:1647 ui/shortcuts.c:107
+#: ui/playlists.c:1682 ui/shortcuts.c:107
 msgid "New playlist"
 msgstr ""
 
@@ -485,7 +489,7 @@ msgstr ""
 msgid "Pause"
 msgstr ""
 
-#: ui/controls.c:221 ui/shortcuts.c:75
+#: ui/controls.c:221 ui/shortcuts.c:75 ui/split.c:959
 msgid "Stop"
 msgstr ""
 
@@ -560,30 +564,30 @@ msgstr ""
 msgid "cannot read the captions %s: %s"
 msgstr ""
 
-#: ui/player.c:597
+#: ui/player.c:600
 #, c-format
 msgid "Resuming at %s"
 msgstr ""
 
-#: ui/player.c:765
+#: ui/player.c:784
 msgid "Muted"
 msgstr ""
 
-#: ui/player.c:765
+#: ui/player.c:784
 msgid "Sound on"
 msgstr ""
 
-#: ui/player.c:867
+#: ui/player.c:886
 #, c-format
 msgid "Could not play %s"
 msgstr ""
 
-#: ui/player.c:956
+#: ui/player.c:975
 #, c-format
 msgid "the player program stopped (%s)"
 msgstr ""
 
-#: ui/player.c:959
+#: ui/player.c:978
 msgid "The player program keeps stopping; giving up for now."
 msgstr ""
 
@@ -985,7 +989,7 @@ msgstr ""
 msgid "Download finished"
 msgstr ""
 
-#: ui/download.c:319
+#: ui/download.c:319 ui/split.c:725
 msgid "Cancelled."
 msgstr ""
 
@@ -1154,7 +1158,7 @@ msgstr ""
 msgid "General"
 msgstr ""
 
-#: ui/prefsdlg.c:196
+#: ui/prefsdlg.c:196 ui/split.c:971
 msgid "Files"
 msgstr ""
 
@@ -1633,4 +1637,177 @@ msgstr ""
 #: ui/chatpanel.c:537
 #, c-format
 msgid "cannot read the chat %s: %s"
+msgstr ""
+
+#. TRANSLATORS: the names the new files get, e.g. "Files: 01 - Intro.mp3, 02 - Song.mp3, …"
+#: ui/split.c:241
+#, c-format
+msgid "Files: %s"
+msgstr ""
+
+#: ui/split.c:247
+#, c-format
+msgid "%s already exists: it would not be replaced."
+msgstr ""
+
+#: ui/split.c:296
+msgid "One track only: add the time where the next one starts."
+msgstr ""
+
+#: ui/split.c:299
+#, c-format
+msgid "%u track"
+msgid_plural "%u tracks"
+msgstr[0] ""
+msgstr[1] ""
+
+#: ui/split.c:301
+msgid "(the times were read as lengths)"
+msgstr ""
+
+#: ui/split.c:309
+msgid "Type one time per line, such as \"0:00 Intro\"."
+msgstr ""
+
+#: ui/split.c:312
+#, c-format
+msgid "Line %d: the time isn't after the one before."
+msgstr ""
+
+#: ui/split.c:318
+#, c-format
+msgid "Line %d: the time is past the end of the file (%s)."
+msgstr ""
+
+#: ui/split.c:367
+msgid "The track isn't in the playlist any more."
+msgstr ""
+
+#: ui/split.c:411
+msgid "Files with video can't be split."
+msgstr ""
+
+#: ui/split.c:413
+msgid "The file has no sound."
+msgstr ""
+
+#: ui/split.c:415
+msgid "Game music and MIDI can't be split."
+msgstr ""
+
+#: ui/split.c:459 ui/split.c:490
+#, c-format
+msgid "Can't split this file: %s"
+msgstr ""
+
+#: ui/split.c:460
+msgid "its length is unknown."
+msgstr ""
+
+#: ui/split.c:467
+msgid "Lossless format: cut on the exact sample, no loss."
+msgstr ""
+
+#: ui/split.c:468
+msgid ""
+"Cut without re-encoding, so no loss: each cut lands within some 25 ms of its "
+"time."
+msgstr ""
+
+#: ui/split.c:570
+msgid "The tracks were made, but the original isn't in the playlist any more."
+msgstr ""
+
+#: ui/split.c:579
+#, c-format
+msgid "Split into %u track."
+msgid_plural "Split into %u tracks."
+msgstr[0] ""
+msgstr[1] ""
+
+#: ui/split.c:589
+#, c-format
+msgid "The file wasn't split: %s"
+msgstr ""
+
+#: ui/split.c:623
+msgid "the engine stopped."
+msgstr ""
+
+#: ui/split.c:652
+#, c-format
+msgid "Can't make the folder %s: %s"
+msgstr ""
+
+#: ui/split.c:676
+msgid "Splitting…"
+msgstr ""
+
+#: ui/split.c:807
+msgid "Start"
+msgstr ""
+
+#: ui/split.c:812
+msgid ""
+"Click ▶ (or double-click a row) to hear the original from where that track "
+"starts."
+msgstr ""
+
+#: ui/split.c:829
+msgid "Use the _text, as the"
+msgstr ""
+
+#: ui/split.c:836
+msgid "\"Artist - Title\" fills _both"
+msgstr ""
+
+#: ui/split.c:844
+msgid "_Keep the original's tags"
+msgstr ""
+
+#: ui/split.c:847
+msgid "Type them _one by one (click a cell in the list)"
+msgstr ""
+
+#: ui/split.c:864
+msgid "In the file's _folder"
+msgstr ""
+
+#: ui/split.c:867
+msgid "In a _new folder named after the file"
+msgstr ""
+
+#: ui/split.c:880
+msgid "_Replace the original in the playlist with the tracks, in its place"
+msgstr ""
+
+#: ui/split.c:912
+#, c-format
+msgid "Split into tracks: %s"
+msgstr ""
+
+#: ui/split.c:918
+msgid "_Split"
+msgstr ""
+
+#: ui/split.c:932
+msgid "Times"
+msgstr ""
+
+#: ui/split.c:934
+msgid ""
+"One line per track: where it starts and its title, as in video descriptions "
+"(\"0:00 Intro\", \"1:02:03 - Title\")."
+msgstr ""
+
+#: ui/split.c:954
+msgid "Tracks"
+msgstr ""
+
+#: ui/split.c:969
+msgid "Tags"
+msgstr ""
+
+#: ui/split.c:973
+msgid "Reading the file…"
 msgstr ""

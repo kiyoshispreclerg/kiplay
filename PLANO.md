@@ -720,6 +720,67 @@ identificadores em inglês; interface pelo gettext com msgids em inglês.
 10. **Extras**: danmaku do Bilibili (`.xml`) e do Niconico, chat da Twitch
     (JSON do TwitchDownloader / chat-downloader), comentários e capítulos do
     `info.json`, equalizador, imagens no danmaku.
+11. **Separar em faixas** *(feita, para a 0.3.0; fora do plano original)*:
+    clique direito numa faixa → "Separar em faixas...", como o mp3splt,
+    mas para qualquer formato de áudio.
+    - `src/splitspec.c`: o texto vira pedaços. Um tempo por linha, como nas
+      descrições de vídeos (`0:00 Intro`, `[12:34] Título`, `1:02:03.5 –
+      Título`, `01. Título - 3:45`, faixas `0:00 - 3:45`); linha sem tempo é
+      ignorada, número de faixa no começo sai, tempo grudado em palavra ou
+      número (`v1:30`, `1.000.000`) não conta. Uma lista que só faz sentido
+      como durações (fora de ordem, ou começando depois de 0) e soma a
+      duração do arquivo (tolerância de 2 s + 1 s por faixa + 1%) é lida
+      como durações (`Título (3:45)` de álbum). O que vem antes do primeiro
+      tempo vira pedaço (menos de 1 s: o primeiro começa em 0). O texto
+      inicial: capítulos do arquivo, senão os `chapters` do `.info.json` do
+      yt-dlp ao lado, senão a `description` dele ou o `.description` (se
+      têm tempos). O `info.json` é lido no locale C (com pt_BR o `14.5`
+      não era lido; o teste roda no pt_BR).
+    - `kiplay-audio --split-info ARQ` (duração, modo, capítulos) e
+      `--split` (o trabalho pela entrada, `progress`, `ok`/`error`), em
+      `audio/split.c`, num processo como o `--tags`. Formatos com perdas:
+      cópia de pacotes (cada pacote vai para o pedaço onde ele começa; o
+      primeiro pedaço leva também o que vem antes de 0, o atraso do
+      encoder), o corte cai na borda do pacote (20–30 ms) e nenhum pacote
+      se perde nem se repete. Sem perdas (`AV_CODEC_PROP_LOSSLESS` com
+      encoder na libav: FLAC, PCM, ALAC, WavPack, TTA): decodifica e
+      recodifica no mesmo formato e bits, corte na amostra exata.
+    - Tags: as do original (arquivo + stream) menos as que só valem para o
+      todo (cuesheet, ganho da faixa, letra, `iTunSMPB`, `encoder`...),
+      título/artista/álbum de cada pedaço e `track` = n/total; no Ogg/Opus
+      as tags vão no stream (o muxer escreve os Vorbis comments de lá). Capa
+      (`attached_pic`) copiada em MP3, FLAC e MP4/M4A; se o muxer recusar,
+      vai sem capa.
+    - Cada pedaço é escrito como `.part` e só no fim todos ganham o nome,
+      por `link()` (nunca sobre um arquivo que existe; sem hard link, como
+      no FAT, confere e renomeia). Erro ou SIGTERM (Cancelar) apagam os
+      `.part`. O original nunca é tocado.
+    - `ui/split.c`: janela não modal (os controles do player continuam à
+      mão). Texto, situação ("4 faixas", "Linha 3: o tempo não vem depois
+      do anterior"), prévia com ▶ por linha (`kp_player_play_from`: toca o
+      original a partir do início da faixa; se ele já está carregado, só
+      busca) e Parar; tags do texto (em Título, Artista ou Álbum, opção
+      "Artista - Título"), as do original, ou uma a uma nas células; pasta
+      do arquivo ou pasta nova; nomes `01 - Título.ext`; aviso se algum já
+      existe. Trocar na playlist (`kp_playlists_replace`): os pedaços no
+      lugar do original, com tags e durações; se o original toca, ele
+      continua e o "próximo" é o pedaço depois do que está sendo ouvido.
+      `[split]` no ini guarda as escolhas e o tamanho.
+    - Conferido: WAV e FLAC divididos e juntos de novo dão o original bit a
+      bit (md5 do PCM); MP3, Ogg Vorbis, Opus e M4A sem pacote perdido
+      (soma dos pacotes = original); capa em MP3/FLAC/M4A; um FLAC de 20 min
+      recodificado em menos de 2 s. No Xvfb: capítulos do `info.json`, ▶
+      (vai a 0:47), "Artista - Título", edição de célula, troca com o
+      original tocando e o "próximo" seguindo pelos pedaços.
+    - Falta (0.3.x): precisão de amostra também nos formatos com perdas sem
+      recodificar: cortar um pacote antes e dizer ao decodificador quanto
+      descartar (cabeçalho LAME delay/padding no MP3, pre-skip e granule
+      final no Opus, edit list no M4A); o pacote a mais também evita o
+      estalo do bit reservoir no começo de um pedaço de MP3. Medido hoje:
+      cada pedaço de Opus herda o pre-skip do original e descarta 312
+      amostras (6,5 ms) no começo; no M4A nada se perde, mas o primeiro
+      pacote de cada pedaço decodifica sem o anterior (a sobreposição do
+      AAC), ~23 ms imperfeitos.
 
 ## Riscos
 

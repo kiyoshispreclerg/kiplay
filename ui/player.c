@@ -566,7 +566,8 @@ static bool start_playing(kp_app *app, const char *location, double at)
 
 /* Plays entry index of playlist id; with remember_it, the entry that was
  * playing goes into the history first ("previous" comes back to it). */
-static void play_entry(kp_app *app, int id, long index, bool remember_it)
+/* from < 0: where the file was left (if that applies), else the start. */
+static void play_entry(kp_app *app, int id, long index, bool remember_it, double from)
 {
     kp_playlist *pl = kp_playlists_get(app, id);
     const kp_entry *e = pl && index >= 0 ? kp_playlist_get(pl, (size_t)index) : NULL;
@@ -588,10 +589,12 @@ static void play_entry(kp_app *app, int id, long index, bool remember_it)
     remember_last(app, id, index);
     load_file_settings(app, e->location);
     kp_tracks_file_changed(app);
-    double start = resume_applies(app, e->location) ? app->playing.file.position : 0;
+    double start = from >= 0                               ? from
+                   : resume_applies(app, e->location) ? app->playing.file.position
+                                                      : 0;
     if (!start_playing(app, e->location, start))
         return;
-    if (start > 0) {
+    if (start > 0 && from < 0) {
         char pos[32], *msg;
         kp_format_duration(pos, sizeof pos, (int64_t)(start * 1000));
         msg = g_strdup_printf(_("Resuming at %s"), pos);
@@ -604,7 +607,23 @@ static void play_entry(kp_app *app, int id, long index, bool remember_it)
 
 void kp_player_play_at(kp_app *app, int id, long index)
 {
-    play_entry(app, id, index, true);
+    play_entry(app, id, index, true, -1);
+}
+
+void kp_player_play_from(kp_app *app, int id, long index, double seconds)
+{
+    kp_playlist *pl = kp_playlists_get(app, id);
+    const kp_entry *e = pl && index >= 0 ? kp_playlist_get(pl, (size_t)index) : NULL;
+    if (!e)
+        return;
+    kp_playing *p = &app->playing;
+    if (p->loaded && p->playlist_id == id && p->index == index && p->location == e->location) {
+        kp_player_seek(app, seconds);
+        if (p->paused)
+            kp_backend_set_pause(p->backend, false);
+        return;
+    }
+    play_entry(app, id, index, true, seconds < 0 ? 0 : seconds);
 }
 
 void kp_player_play(kp_app *app)
@@ -686,7 +705,7 @@ void kp_player_prev(kp_app *app)
             g_array_remove_index(h, h->len - 1);
             long i = ref_index(app, &r);
             if (i >= 0) {
-                play_entry(app, r.id, i, false);
+                play_entry(app, r.id, i, false, -1);
                 return;
             }
         }
@@ -698,7 +717,7 @@ void kp_player_prev(kp_app *app)
     long i = app->playing.index - 1;
     if (i < 0)
         i = n - 1;
-    play_entry(app, app->playing.playlist_id, i, false);
+    play_entry(app, app->playing.playlist_id, i, false, -1);
 }
 
 void kp_player_seek(kp_app *app, double seconds)
