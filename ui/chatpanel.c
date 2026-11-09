@@ -436,12 +436,18 @@ static void overlay_paint(panel *p)
     if (!mpv || ww < 2 || wh < 2)
         return;
     int pw = overlay_width(p, ww);
-    int stride = cairo_format_stride_for_width(CAIRO_FORMAT_ARGB32, pw);
+    /* mpv's window is the area times the video window's density (videowin.c):
+     * the picture is made in its pixels and drawn in logical ones, scaled. */
+    double scale = kp_videowin_scale();
+    int win_w = (int)ceil(ww * scale), win_h = (int)ceil(wh * scale);
+    int pic_w = (int)lround(pw * scale);
+    int stride = cairo_format_stride_for_width(CAIRO_FORMAT_ARGB32, pic_w);
     shm_pic *pic = &p->pics[p->next_pic];
-    if (!pic_ensure(pic, p->next_pic, (size_t)stride * (size_t)wh))
+    if (!pic_ensure(pic, p->next_pic, (size_t)stride * (size_t)win_h))
         return;
     cairo_surface_t *surface = cairo_image_surface_create_for_data(pic->map, CAIRO_FORMAT_ARGB32,
-                                                                   pw, wh, stride);
+                                                                   pic_w, win_h, stride);
+    cairo_surface_set_device_scale(surface, (double)pic_w / pw, (double)win_h / wh);
     cairo_t *cr = cairo_create(surface);
     gtk_widget_ensure_style(p->area);
     paint(p, cr, p->area->style, pw, wh);
@@ -449,8 +455,8 @@ static void overlay_paint(panel *p)
     cairo_surface_flush(surface);
     cairo_surface_destroy(surface);
     /* The margin too, every time: an mpv started again has lost both. */
-    kp_backend_set_margin_right(mpv, (double)pw / ww);
-    kp_backend_overlay(mpv, pic->path, ww - pw, 0, pw, wh, stride);
+    kp_backend_set_margin_right(mpv, (double)pic_w / win_w);
+    kp_backend_overlay(mpv, pic->path, win_w - pic_w, 0, pic_w, win_h, stride);
     p->next_pic ^= 1;
 }
 

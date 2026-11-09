@@ -344,6 +344,14 @@ void kp_videowin_set_density(double density)
     }
     gdk_flush();
     kp_log_debug("videowin: density %g, %dx%d", vw.density, vw.w, vw.h);
+    /* The chat drawn over the video in fullscreen is in this window's pixels. */
+    if (vw.app)
+        kp_chat_overlay_update(vw.app);
+}
+
+double kp_videowin_scale(void)
+{
+    return vw.win && vw.density > 0 ? vw.density : 1.0;
 }
 
 unsigned long kp_videowin_xid(kp_app *app)

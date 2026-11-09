@@ -411,6 +411,10 @@ unsigned long kp_videowin_peek(void);
 /* Renders the video density times the area's size, redirected, and shows
  * a scaled-down copy in the area; below 1 (0), back to a plain window. */
 void kp_videowin_set_density(double density);
+/* Pixels of the video window per logical pixel of the area (the density
+ * while it is redirected, else 1): what to multiply a position or size by
+ * to draw in the backend's own window, as the chat overlay does. */
+double kp_videowin_scale(void);
 
 /* window.c */
 /* Saves everything and closes the window (Quit). */
