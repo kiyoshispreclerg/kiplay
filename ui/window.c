@@ -16,8 +16,10 @@
 typedef struct {
     kp_app app;
     kp_instance *instance;
-    /* Last unmaximized size, for the prefs. */
+    /* Last unmaximized size and place, for the prefs. */
     int width, height;
+    int x, y;
+    bool has_pos;
     bool maximized;
     const kp_window_opts *opts;
     gulong first_expose;
@@ -213,6 +215,10 @@ static void close_window(kp_window *w)
     kp_layout_save(app);
     kp_prefs_set_int(app->prefs, "window", "width", w->width);
     kp_prefs_set_int(app->prefs, "window", "height", w->height);
+    if (w->has_pos) {
+        kp_prefs_set_int(app->prefs, "window", "x", w->x);
+        kp_prefs_set_int(app->prefs, "window", "y", w->y);
+    }
     kp_prefs_set_bool(app->prefs, "window", "maximized", w->maximized);
     if (kp_prefs_save(app->prefs) < 0)
         kp_log_warn(_("could not save the settings: %s"), g_strerror(errno));
@@ -425,14 +431,43 @@ static gboolean on_video_scroll(GtkWidget *w, GdkEventScroll *ev, gpointer data)
     return TRUE;
 }
 
-static gboolean on_configure(GtkWidget *widget, GdkEventConfigure *ev, gpointer data)
+/* Where the window was last closed, if that is still on a screen (a monitor
+ * may be gone since): the title bar's corner must be inside one, or the
+ * window manager places it as usual. */
+#define POS_UNSET (-32768)
+static void restore_position(kp_window *w)
 {
-    (void)widget;
-    kp_window *w = data;
+    kp_prefs *prefs = w->app.prefs;
+    int x = kp_prefs_get_int(prefs, "window", "x", POS_UNSET, POS_UNSET, 32767);
+    int y = kp_prefs_get_int(prefs, "window", "y", POS_UNSET, POS_UNSET, 32767);
+    if (x == POS_UNSET || y == POS_UNSET)
+        return;
+    GdkScreen *screen = gtk_window_get_screen(GTK_WINDOW(w->app.window));
+    bool visible = false;
+    for (int i = 0; i < gdk_screen_get_n_monitors(screen); i++) {
+        GdkRectangle r;
+        gdk_screen_get_monitor_geometry(screen, i, &r);
+        if (x + 40 >= r.x && x + 40 < r.x + r.width && y + 10 >= r.y && y + 10 < r.y + r.height)
+            visible = true;
+    }
+    if (!visible)
+        return;
+    w->x = x;
+    w->y = y;
+    w->has_pos = true;
+    gtk_window_move(GTK_WINDOW(w->app.window), x, y);
+}
+
+static gboolean on_configure(GtkWidget *widget, GdkEventConfigure *ev, gpointer data)
+{    kp_window *w = data;
     /* The size to keep is the normal one (compact mode shrinks it). */
     if (!w->maximized && !w->app.fullscreen && !w->app.compact) {
         w->width = ev->width;
         w->height = ev->height;
+        /* The frame's corner, what gtk_window_move() takes (the event's
+         * x, y are the client's in its parent). */
+        gtk_window_get_position(GTK_WINDOW(widget), &w->x, &w->y);
+        w->has_pos = true;
     }
     return FALSE;
 }
@@ -529,6 +564,7 @@ int kp_window_run(const kp_window_opts *opts)
     w.width = kp_prefs_get_int(app->prefs, "window", "width", 760, 300, 20000);
     w.height = kp_prefs_get_int(app->prefs, "window", "height", 520, 200, 20000);
     gtk_window_set_default_size(GTK_WINDOW(app->window), w.width, w.height);
+    restore_position(&w);
     if (kp_prefs_get_bool(app->prefs, "window", "maximized", false))
         gtk_window_maximize(GTK_WINDOW(app->window));
 
