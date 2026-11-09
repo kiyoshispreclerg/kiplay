@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
+#include <gio/gio.h>
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <math.h>
@@ -13,6 +14,7 @@
 #include "dec.h"
 #include "game.h"
 #include "midi.h"
+#include "split.h"
 #include "tagreader.h"
 #include "tags.h"
 
@@ -165,10 +167,10 @@ static void write_wav(const char *path, double secs)
     fclose(f);
 }
 
-/* A short WAV with RIFF INFO tags (title, artist, album). */
-static void write_tagged_wav(const char *path)
+/* A WAV with RIFF INFO tags (title, artist, album). */
+static void write_tagged_wav_secs(const char *path, double secs)
 {
-    write_wav(path, 0.5);
+    write_wav(path, secs);
     char *data;
     gsize len;
     g_file_get_contents(path, &data, &len, NULL);
@@ -185,6 +187,11 @@ static void write_tagged_wav(const char *path)
     g_file_set_contents(path, (const char *)out->data, out->len, NULL);
     g_byte_array_free(out, TRUE);
     g_free(data);
+}
+
+static void write_tagged_wav(const char *path)
+{
+    write_tagged_wav_secs(path, 0.5);
 }
 
 TEST(reads_tags)
@@ -631,6 +638,192 @@ TEST(plays_through_the_engine)
     g_free(dir);
 }
 
+/* ---- splitting (kiplay-audio --split) ------------------------------------ */
+
+/* secs of A-law (lossy as libav sees it: cut by copying packets). */
+static void write_alaw_wav(const char *path, double secs)
+{
+    const int rate = 8000, n = (int)(rate * secs);
+    FILE *f = fopen(path, "wb");
+    unsigned char h[44] = "RIFF____WAVEfmt ";
+    unsigned data = (unsigned)n, riff = 36 + data, fmt_len = 16, byte_rate = rate;
+    unsigned short alaw = 6, ch = 1, align = 1, bits = 8;
+    memcpy(h + 4, &riff, 4);
+    memcpy(h + 16, &fmt_len, 4);
+    memcpy(h + 20, &alaw, 2);
+    memcpy(h + 22, &ch, 2);
+    memcpy(h + 24, &rate, 4);
+    memcpy(h + 28, &byte_rate, 4);
+    memcpy(h + 32, &align, 2);
+    memcpy(h + 34, &bits, 2);
+    memcpy(h + 36, "data", 4);
+    memcpy(h + 40, &data, 4);
+    fwrite(h, 1, sizeof h, f);
+    for (int i = 0; i < n; i++)
+        fputc((i * 7) & 0xFF, f);
+    fclose(f);
+}
+
+/* The bytes of a WAV's data chunk (g_byte_array_unref it). */
+static GByteArray *wav_data(const char *path)
+{
+    char *raw;
+    gsize len;
+    GByteArray *out = g_byte_array_new();
+    if (!g_file_get_contents(path, &raw, &len, NULL))
+        return out;
+    for (gsize at = 12; at + 8 <= len;) {
+        unsigned n;
+        memcpy(&n, raw + at + 4, 4);
+        if (!memcmp(raw + at, "data", 4)) {
+            g_byte_array_append(out, (const guint8 *)raw + at + 8, MIN(n, (unsigned)(len - at - 8)));
+            break;
+        }
+        at += 8 + n + (n & 1);
+    }
+    g_free(raw);
+    return out;
+}
+
+/* Runs the engine with args, input on stdin: its output (g_free it). */
+static char *run_engine(const char *const *args, const char *input)
+{
+    const char *argv[8] = {KP_AUDIO_BIN};
+    for (int i = 0; i < 6 && args[i]; i++)
+        argv[i + 1] = args[i];
+    GSubprocess *p = g_subprocess_newv(argv, G_SUBPROCESS_FLAGS_STDIN_PIPE | G_SUBPROCESS_FLAGS_STDOUT_PIPE, NULL);
+    char *out = NULL;
+    if (p)
+        g_subprocess_communicate_utf8(p, input, NULL, &out, NULL, NULL);
+    g_clear_object(&p);
+    return out;
+}
+
+static char *split_job(const char *src, const char *dir, const char *ext)
+{
+    return g_strdup_printf("src %s\n"
+                           "piece 0\t1.2\tUm\t\t\t%s/1.%s\n"
+                           "piece 1.2\t2.5\tDois\tOutra\t\t%s/2.%s\n"
+                           "piece 2.5\t-1\t\t\t\t%s/3.%s\n"
+                           "go\n",
+                           src, dir, ext, dir, ext, dir, ext);
+}
+
+TEST(splits_exactly)
+{
+    char *dir = g_dir_make_tmp("kp-test-XXXXXX", NULL);
+    char *src = g_build_filename(dir, "a.wav", NULL);
+    write_tagged_wav_secs(src, 3);
+    const char *info[] = {"--split-info", src, NULL};
+    char *out = run_engine(info, NULL);
+    CHECK_STR_HAS(out, "duration 3.000\n");
+    CHECK_STR_HAS(out, "mode exact\n");
+    g_free(out);
+
+    char *job = split_job(src, dir, "wav");
+    const char *split[] = {"--split", NULL};
+    out = run_engine(split, job);
+    CHECK_STR_HAS(out, "mode exact\n");
+    CHECK(g_str_has_suffix(out, "ok\n"));
+    g_free(out);
+    GByteArray *whole = wav_data(src), *joined = g_byte_array_new();
+    static const char *const titles[] = {"Um", "Dois", "Cancao"};
+    static const char *const artists[] = {"Banda", "Outra", "Banda"};
+    static const double lengths[] = {1.2, 1.3, 0.5};
+    for (int i = 0; i < 3; i++) {
+        char *piece = g_strdup_printf("%s/%d.wav", dir, i + 1);
+        ka_tags t;
+        char err[128];
+        CHECK(ka_tags_read(piece, &t, err, sizeof err));
+        CHECK_STR_EQ(t.title, titles[i]);
+        CHECK_STR_EQ(t.artist, artists[i]);
+        CHECK_STR_EQ(t.album, "Disco");
+        CHECK_MSG(fabs(t.duration - lengths[i]) < 1e-4, "piece %d: %f s", i + 1, t.duration);
+        ka_tags_clear(&t);
+        GByteArray *d = wav_data(piece);
+        g_byte_array_append(joined, d->data, d->len);
+        g_byte_array_unref(d);
+        g_remove(piece);
+        g_free(piece);
+    }
+    /* Played one after the other, they are the original, to the sample. */
+    CHECK_INT_EQ(joined->len, whole->len);
+    CHECK(!memcmp(joined->data, whole->data, whole->len));
+    g_byte_array_unref(whole);
+    g_byte_array_unref(joined);
+    g_remove(src);
+    g_rmdir(dir);
+    g_free(job);
+    g_free(src);
+    g_free(dir);
+}
+
+TEST(splits_by_copying_packets)
+{
+    char *dir = g_dir_make_tmp("kp-test-XXXXXX", NULL);
+    char *src = g_build_filename(dir, "a.wav", NULL);
+    write_alaw_wav(src, 3);
+    char *job = split_job(src, dir, "wav");
+    const char *split[] = {"--split", NULL};
+    char *out = run_engine(split, job);
+    CHECK_STR_HAS(out, "mode copy\n");
+    CHECK(g_str_has_suffix(out, "ok\n"));
+    g_free(out);
+    GByteArray *whole = wav_data(src), *joined = g_byte_array_new();
+    for (int i = 0; i < 3; i++) {
+        char *piece = g_strdup_printf("%s/%d.wav", dir, i + 1);
+        GByteArray *d = wav_data(piece);
+        CHECK(d->len > 0);
+        g_byte_array_append(joined, d->data, d->len);
+        g_byte_array_unref(d);
+        g_remove(piece);
+        g_free(piece);
+    }
+    /* No packet lost or doubled. */
+    CHECK_INT_EQ(joined->len, whole->len);
+    CHECK(!memcmp(joined->data, whole->data, whole->len));
+    g_byte_array_unref(whole);
+    g_byte_array_unref(joined);
+    g_remove(src);
+    g_rmdir(dir);
+    g_free(job);
+    g_free(src);
+    g_free(dir);
+}
+
+TEST(split_never_replaces_a_file)
+{
+    char *dir = g_dir_make_tmp("kp-test-XXXXXX", NULL);
+    char *src = g_build_filename(dir, "a.wav", NULL);
+    char *two = g_build_filename(dir, "2.wav", NULL);
+    write_wav(src, 3);
+    g_file_set_contents(two, "mine", -1, NULL);
+    char *job = split_job(src, dir, "wav");
+    const char *split[] = {"--split", NULL};
+    char *out = run_engine(split, job);
+    CHECK_STR_HAS(out, "error ");
+    CHECK_STR_HAS(out, "already exists");
+    g_free(out);
+    char *mine;
+    CHECK(g_file_get_contents(two, &mine, NULL, NULL));
+    CHECK_STR_EQ(mine, "mine");
+    g_free(mine);
+    /* Nothing else left behind. */
+    GDir *d = g_dir_open(dir, 0, NULL);
+    int files = 0;
+    while (g_dir_read_name(d))
+        files++;
+    g_dir_close(d);
+    CHECK_INT_EQ(files, 2);
+    g_remove(two);
+    g_remove(src);
+    g_rmdir(dir);
+    g_free(job);
+    g_free(two);
+    g_free(src);
+    g_free(dir);
+}
+
 int main(void)
 {
     RUN(parses_commands);
@@ -641,5 +834,8 @@ int main(void)
     RUN(game_music_follows_its_m3u);
     RUN(tag_reader_in_background);
     RUN(plays_through_the_engine);
+    RUN(splits_exactly);
+    RUN(splits_by_copying_packets);
+    RUN(split_never_replaces_a_file);
     return harness_report();
 }

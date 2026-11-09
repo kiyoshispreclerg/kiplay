@@ -11,7 +11,8 @@
  * one line each (cmd.h has the protocol).
  *
  *   kiplay-audio [-d default|ALSA_DEVICE] [-s SOUNDFONT] [-b BUFFER_MS] [-l FD]
- *   kiplay-audio --tags     reads tags instead (tags.h), for the playlist */
+ *   kiplay-audio --tags     reads tags instead (tags.h), for the playlist
+ *   kiplay-audio --split-info FILE | --split   cuts a file in pieces (split.h) */
 #include <errno.h>
 #include <libavformat/avformat.h>
 #include <math.h>
@@ -30,6 +31,7 @@
 #include "levels.h"
 #include "midi.h"
 #include "out.h"
+#include "split.h"
 #include "tags.h"
 
 /* At most this many frames per write (a period is usually less). */
@@ -633,8 +635,14 @@ int main(int argc, char **argv)
             signal(SIGPIPE, SIG_DFL);
             av_log_set_level(AV_LOG_QUIET);
             return ka_tags_serve();
+        } else if (!strcmp(argv[i], "--split-info") && i + 1 < argc) {
+            av_log_set_level(AV_LOG_QUIET);
+            return ka_split_info(argv[i + 1]);
+        } else if (!strcmp(argv[i], "--split")) {
+            av_log_set_level(AV_LOG_QUIET);
+            return ka_split_serve();
         } else {
-            fprintf(stderr, "usage: kiplay-audio [-d default|ALSA_DEVICE] [-s SOUNDFONT] [-b MS] [-l FD] | --tags\n");
+            fprintf(stderr, "usage: kiplay-audio [-d default|ALSA_DEVICE] [-s SOUNDFONT] [-b MS] [-l FD] | --tags | --split-info FILE | --split\n");
             return 2;
         }
     }

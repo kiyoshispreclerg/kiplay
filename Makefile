@@ -31,7 +31,8 @@ LIB_SRC = src/log.c \
       src/chatlog.c \
       src/ytsub_ass.c \
       src/ytdlp.c \
-      src/ytdl.c
+      src/ytdl.c \
+      src/splitspec.c
 VENDOR_SRC = vendor/cjson/cJSON.c
 LIBKP = $(BUILD)/libkp.a
 
@@ -55,12 +56,13 @@ APP_SRC = src/main.c \
       ui/prefsdlg.c \
       ui/desktop.c \
       ui/imgcache.c \
-      ui/chatpanel.c
+      ui/chatpanel.c \
+      ui/split.c
 APP_OBJ = $(patsubst %.c,$(BUILD)/%.o,$(APP_SRC))
 
 # kiplay-audio: the music engine, its own process. No GLib in it: libav,
 # ALSA and pthreads only, to stay small.
-AUDIO_SRC = audio/main.c audio/cmd.c audio/dec.c audio/game.c audio/midi.c audio/out.c audio/tags.c
+AUDIO_SRC = audio/main.c audio/cmd.c audio/dec.c audio/game.c audio/midi.c audio/out.c audio/tags.c audio/split.c
 AUDIO_SRC += $(if $(filter 1,$(PULSE)),audio/pulse.c)
 AUDIO_OBJ = $(patsubst %.c,$(BUILD)/%.o,$(AUDIO_SRC))
 ENGINE_PKGS = alsa libavformat libavcodec libavutil libswresample zlib $(if $(filter 1,$(PULSE)),libpulse)
@@ -170,7 +172,7 @@ TEST_CPPFLAGS = -DKP_FIXTURES_DIR='"$(CURDIR)/tests/fixtures"' \
                 -DKP_AUDIO_BIN='"$(CURDIR)/$(BUILD)/kiplay-audio"'
 
 # test_audio also links the engine's own parts (they aren't in libkp).
-TEST_AUDIO_OBJ = $(BUILD)/audio/cmd.o $(BUILD)/audio/dec.o $(BUILD)/audio/game.o $(BUILD)/audio/midi.o $(BUILD)/audio/tags.o
+TEST_AUDIO_OBJ = $(BUILD)/audio/cmd.o $(BUILD)/audio/dec.o $(BUILD)/audio/game.o $(BUILD)/audio/midi.o $(BUILD)/audio/tags.o $(BUILD)/audio/split.o
 $(BUILD)/tests/test_audio: TEST_EXTRA = $(TEST_AUDIO_OBJ) $(ENGINE_LIBS) -lstdc++
 $(BUILD)/tests/test_audio: TEST_EXTRA_CFLAGS = -Iaudio $(ENGINE_CFLAGS)
 $(BUILD)/tests/test_audio: $(TEST_AUDIO_OBJ) $(BUILD)/kiplay-audio
