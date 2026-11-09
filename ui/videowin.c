@@ -68,6 +68,8 @@ static struct {
     Damage damage;
     Picture src, dst; /* the window, the area */
     guint copy_idle;
+    guint nudge_id;   /* settle timer: see nudge() */
+    bool nudged;      /* the window is 1 px wider until the second step */
     Atom scale_atom, sources_atom;
     bool announce;  /* write _X_DENSITY_SOURCES after the next frame */
     bool announced; /* it is on the main window */
@@ -157,6 +159,42 @@ static void set_transform(void)
     XRenderSetPictureFilter(dpy(), vw.src, s == 1 ? FilterNearest : FilterGood, NULL, 0);
 }
 
+/* After a burst of resizes (fullscreen: the layout changes several times
+ * in a row) mpv's GL surface can be left drawing at an old size while its
+ * window is the new one: the video comes out enlarged, cropped to its own
+ * window, whatever the compositor does with it. One more resize, a pixel
+ * wider and back, makes it take the size again. Only for the dense window,
+ * which is what the compositor samples directly. */
+static gboolean nudge(gpointer data)
+{
+    (void)data;
+    vw.nudge_id = 0;
+    if (!vw.win || !vw.damage)
+        return G_SOURCE_REMOVE;
+    if (!vw.nudged) {
+        vw.nudged = true;
+        XResizeWindow(dpy(), vw.win, (unsigned)vw.w + 1, (unsigned)vw.h);
+        gdk_flush();
+        vw.nudge_id = g_timeout_add(100, nudge, NULL);
+    } else {
+        vw.nudged = false;
+        XResizeWindow(dpy(), vw.win, (unsigned)vw.w, (unsigned)vw.h);
+        gdk_flush();
+    }
+    return G_SOURCE_REMOVE;
+}
+
+static void nudge_later(void)
+{
+    if (vw.nudged) { /* mid-nudge: put it back first */
+        vw.nudged = false;
+        XResizeWindow(dpy(), vw.win, (unsigned)vw.w, (unsigned)vw.h);
+    }
+    if (vw.nudge_id)
+        g_source_remove(vw.nudge_id);
+    vw.nudge_id = vw.damage ? g_timeout_add(200, nudge, NULL) : 0;
+}
+
 /* Whether the window changed size. */
 static bool fit(void)
 {
@@ -170,6 +208,7 @@ static bool fit(void)
     vw.w = w;
     vw.h = h;
     XResizeWindow(dpy(), vw.win, (unsigned)w, (unsigned)h);
+    nudge_later();
     return true;
 }
 
@@ -212,6 +251,10 @@ static void on_unrealize(GtkWidget *video, gpointer data)
     (void)video;
     (void)data;
     vw.win = 0;
+    if (vw.nudge_id)
+        g_source_remove(vw.nudge_id);
+    vw.nudge_id = 0;
+    vw.nudged = false;
     vw.damage = 0;
     vw.src = vw.dst = 0;
     vw.w = vw.h = 0;
